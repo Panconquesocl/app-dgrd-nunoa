@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: dgrd-nunoa-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dgrd
+      POSTGRES_PASSWORD: dgrd
+      POSTGRES_DB: dgrd_nunoa
+    ports:
+      - "5432:5432"
+    volumes:
+      - dgrd-pgdata:/var/lib/postgresql/data
+
+volumes:
+  dgrd-pgdata:
