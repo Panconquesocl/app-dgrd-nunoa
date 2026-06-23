@@ -27,6 +27,16 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
+  // Audit trail: records created by this user (createdBy).
+  eventTypes       EventType[]
+  supplies         Supply[]
+  events           Event[]
+  requests         Request[]
+  deliveries       Delivery[]
+  strategicActions StrategicAction[]
+  activities       Activity[]
+  evidence         Evidence[]
+
   @@unique([email])
   @@map("user")
 }
@@ -78,4 +88,208 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+// ───────────────────────────────────────────────────────────
+// Catálogos de referencia
+// ───────────────────────────────────────────────────────────
+
+model EventType {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events Event[]
+
+  createdBy String
+  creator   User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@map("event_type")
+}
+
+model Supply {
+  id        String   @id @default(cuid())
+  type      String
+  unit      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items DeliveryItem[]
+
+  createdBy String
+  creator   User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@map("supply")
+}
+
+// ───────────────────────────────────────────────────────────
+// Dominio Emergencias
+// ───────────────────────────────────────────────────────────
+
+enum RequestStatus {
+  pending
+  attended
+  cancelled
+}
+
+model Event {
+  id            String   @id @default(cuid())
+  folio         String   @unique
+  date          DateTime
+  sector        String
+  affectedCount Int? // afectados
+  institutions  String
+  actions       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  typeId String
+  type   EventType @relation(fields: [typeId], references: [id], onDelete: Restrict)
+
+  requests   Request[]
+  deliveries Delivery[]
+
+  createdBy String
+  creator   User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@map("event")
+}
+
+model Request {
+  id        String        @id @default(cuid())
+  folio     String        @unique
+  channel   String // medio
+  response  String?
+  status    RequestStatus @default(pending)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // Al eliminar el Evento, la solicitud se desvincula (eventId -> null).
+  eventId String?
+  event   Event?  @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  // Cada solicitud admite a lo sumo una entrega.
+  delivery Delivery?
+
+  createdBy String
+  creator   User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@index([eventId])
+  @@map("request")
+}
+
+model Delivery {
+  id          String   @id @default(cuid())
+  folio       String   @unique
+  beneficiary String
+  jv          String // junta de vecinos
+  contact     String
+  address     String
+  date        DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relación 1 -> 0..1 con Solicitud: al eliminar la solicitud, se borra la
+  // entrega en cascada. requestId es único (una entrega por solicitud).
+  requestId String?  @unique
+  request   Request? @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  // eventId se hereda de la solicitud cuando existe. Al eliminar el evento,
+  // la entrega se desvincula (eventId -> null).
+  eventId String?
+  event   Event?  @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  items DeliveryItem[]
+
+  createdBy String
+  creator   User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@index([eventId])
+  @@map("delivery")
+}
+
+// Tabla de unión N-M entre Entrega e Insumo, con la cantidad entregada.
+model DeliveryItem {
+  id       String @id @default(cuid())
+  quantity Int
+
+  deliveryId String
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  supplyId String
+  supply   Supply @relation(fields: [supplyId], references: [id], onDelete: Restrict)
+
+  @@unique([deliveryId, supplyId])
+  @@index([supplyId])
+  @@map("delivery_item")
+}
+
+// ───────────────────────────────────────────────────────────
+// Dominio Plan RRD
+// ───────────────────────────────────────────────────────────
+
+model StrategicAction {
+  id             String   @id @default(cuid())
+  number         Int
+  year           Int
+  title          String
+  topics         String
+  implementation String // comoDesarrollar
+  startDate      DateTime
+  endDate        DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  activities Activity[]
+
+  createdBy String
+  creator   User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+
+  // El número es único por año.
+  @@unique([year, number])
+  @@map("strategic_action")
+}
+
+model Activity {
+  id           String   @id @default(cuid())
+  date         DateTime
+  objective    String
+  location     String // dirección
+  participants String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Al eliminar la Acción se bloquea si tiene actividades vinculadas.
+  actionId String
+  action   StrategicAction @relation(fields: [actionId], references: [id], onDelete: Restrict)
+
+  evidence Evidence[]
+
+  createdBy String
+  creator   User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@index([actionId])
+  @@map("activity")
+}
+
+// Archivo adjunto a una actividad. El binario vive en S3; aquí se guarda la
+// metadata (filtrable por nombre/tipo/tamaño) y la referencia al objeto (key).
+model Evidence {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  size      Int
+  key       String
+  createdAt DateTime @default(now())
+
+  // Al eliminar la actividad, se borran sus evidencias en cascada.
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  createdBy String
+  creator   User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@index([activityId])
+  @@map("evidence")
 }
