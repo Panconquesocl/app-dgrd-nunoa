@@ -1,14 +1,37 @@
 import type { Metadata } from "next"
 import Image from "next/image"
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
 import { ShieldCheck } from "lucide-react"
 import { LoginForm } from "@/components/auth/login-form"
+import { auth } from "@/lib/auth"
 
 export const metadata: Metadata = {
   title: "Iniciar sesión · DGRD Ñuñoa",
   description: "Acceso al sistema interno de la Dirección de Gestión de Riesgo y Desastres de Ñuñoa.",
 }
 
-export default function LoginPage() {
+/**
+ * Sólo se acepta una ruta interna como destino tras el login; así un enlace
+ * manipulado (`?redirectTo=https://…`) no puede convertir el login en un
+ * redirector abierto.
+ */
+function safeRedirect(target: string | undefined) {
+  if (!target || !target.startsWith("/") || target.startsWith("//") || target.startsWith("/login")) {
+    return "/"
+  }
+  return target
+}
+
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ redirectTo?: string }> }) {
+  // Si ya hay una sesión válida en la base de datos, no tiene sentido el login.
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (session) {
+    redirect("/")
+  }
+
+  const { redirectTo } = await searchParams
+
   return (
     <div className="bg-surface grid min-h-svh flex-1 lg:grid-cols-[1.05fr_1fr]">
       {/* Panel institucional */}
@@ -59,7 +82,7 @@ export default function LoginPage() {
 
       {/* Panel de formulario */}
       <section className="flex items-center justify-center px-6 py-10 sm:px-8">
-        <LoginForm />
+        <LoginForm redirectTo={safeRedirect(redirectTo)} />
       </section>
     </div>
   )

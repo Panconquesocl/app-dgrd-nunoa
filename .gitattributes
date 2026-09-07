@@ -1,0 +1,4 @@
+# Normaliza los archivos de texto a LF en el repositorio, sin importar el
+# core.autocrlf de cada máquina. Evita que Prettier (que espera LF) marque
+# como "sin formato" archivos que Git reescribió en CRLF al hacer checkout.
+* text=auto eol=lf

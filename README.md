@@ -19,7 +19,7 @@ pnpm install
 # 2. Configurar variables de entorno
 cp .env.example .env
 # Edita .env: genera el secret con `openssl rand -base64 32`
-# y completa las credenciales de Google si vas a usar ese login.
+# y define ADMIN_EMAIL / ADMIN_PASSWORD para la cuenta inicial.
 
 # 3. Levantar la base de datos (PostgreSQL en Docker)
 docker compose up -d
@@ -27,7 +27,10 @@ docker compose up -d
 # 4. Aplicar las migraciones y generar el cliente de Prisma
 pnpm prisma migrate dev
 
-# 5. Iniciar el servidor de desarrollo
+# 5. Crear la cuenta de administrador inicial
+pnpm db:seed
+
+# 6. Iniciar el servidor de desarrollo
 pnpm dev
 ```
 
@@ -60,9 +63,14 @@ pnpm prisma studio        # explorar los datos en el navegador
 
 ## Autenticación
 
+Autohospedada con Better Auth, **sólo correo + contraseña** (sin proveedores externos).
+
 - Configuración del servidor: `src/lib/auth.ts` · cliente: `src/lib/auth-client.ts`
 - Acceso restringido al dominio institucional (`ALLOWED_EMAIL_DOMAIN`, por defecto `nunoa.cl`).
-- Soporta email/contraseña y Google OAuth (requiere `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`).
+- **No hay registro público** (`disableSignUp`): la primera cuenta se crea con `pnpm db:seed` y el resto las crea un administrador.
+- Las contraseñas se guardan como hash scrypt en `account.password`; la tabla `user` nunca las contiene.
+- Rutas protegidas: `src/proxy.ts` hace el filtro por cookie y `src/app/(app)/layout.tsx` valida la sesión contra la base de datos.
+- Cerrar sesión (botón en la barra superior) revoca la sesión en la base de datos y redirige al login.
 
 ## Convenciones
 

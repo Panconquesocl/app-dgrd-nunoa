@@ -1,7 +1,7 @@
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col px-5 py-10 sm:px-8">
       <h1 className="text-2xl font-semibold tracking-tight">Hola mundo</h1>
-    </main>
+    </div>
   )
 }
