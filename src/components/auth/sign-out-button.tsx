@@ -30,7 +30,7 @@ export function SignOutButton() {
       type="button"
       onClick={handleSignOut}
       disabled={isPending}
-      className="text-ink-muted focus-visible:ring-brand/60 inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-medium transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:outline-none disabled:opacity-60"
+      className="text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-ring inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:opacity-60"
     >
       <LogOut className="size-3.5" />
       {isPending ? "Cerrando…" : "Cerrar sesión"}
