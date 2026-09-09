@@ -24,13 +24,14 @@ function safeRedirect(target: string | undefined) {
 }
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ redirectTo?: string }> }) {
+  const { redirectTo } = await searchParams
+  const redirectTarget = safeRedirect(redirectTo)
+
   // Si ya hay una sesión válida en la base de datos, no tiene sentido el login.
   const session = await auth.api.getSession({ headers: await headers() })
   if (session) {
-    redirect("/")
+    redirect(redirectTarget)
   }
-
-  const { redirectTo } = await searchParams
 
   return (
     <div className="bg-surface grid min-h-svh flex-1 lg:grid-cols-[1.05fr_1fr]">
@@ -82,7 +83,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
 
       {/* Panel de formulario */}
       <section className="flex items-center justify-center px-6 py-10 sm:px-8">
-        <LoginForm redirectTo={safeRedirect(redirectTo)} />
+        <LoginForm redirectTo={redirectTarget} />
       </section>
     </div>
   )
