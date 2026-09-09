@@ -81,7 +81,7 @@ Domain logic lives in `src/features/<entity>/`, not in the route files. `strateg
 
 REST route handlers under `src/app/api/<entity>/` stay thin: authenticate with `requireUser()`, parse with the zod schema, delegate to the service, and `catch` into `toErrorResponse()`. Error bodies are always `{ message, fieldErrors?, details? }`.
 
-Two gotchas worth knowing: dates are stored as UTC midnight, so format them with `formatDate()` from `src/lib/format.ts` (it forces `timeZone: "UTC"`; the local zone shifts them a day back in Chile), and the `radix-nova` registry has no `form` component — use react-hook-form with the `Field` wrapper in `src/features/strategic-actions/components/field.tsx`.
+Two gotchas worth knowing: dates are stored as UTC midnight, so format them with `formatDate()` from `src/lib/format.ts` (it forces `timeZone: "UTC"`; the local zone shifts them a day back in Chile), and `shadcn add form` is a no-op under `radix-nova` (the registry entry exists but ships no files, unlike `new-york`) — use react-hook-form with the `Field` wrapper in `src/features/strategic-actions/components/field.tsx`.
 
 ### Route protection
 
