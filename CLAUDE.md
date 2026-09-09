@@ -21,6 +21,7 @@ docker compose down                  # stop it (add -v to also wipe the volume/d
 pnpm prisma migrate dev --name <n>   # create + apply a migration in dev
 pnpm prisma generate                 # regenerate the client into src/generated/prisma
 pnpm prisma studio                   # browse the data
+pnpm db:seed                         # create the initial admin (ADMIN_EMAIL / ADMIN_PASSWORD)
 ```
 
 After editing `src/lib/auth.ts` (Better Auth config), regenerate the auth models into the schema before migrating:
@@ -47,7 +48,7 @@ Scopes are optional. Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `style`,
 - **shadcn** (radix-nova style) — add components with `pnpm dlx shadcn@latest add <component>`
 - **TypeScript** strict mode, path alias `@/*` maps to `src/*`
 - **PostgreSQL + Prisma 7** — driver adapter (`@prisma/adapter-pg`); the client is generated to `src/generated/prisma` (gitignored)
-- **Better Auth** — email/password + Google OAuth, with the `admin` plugin
+- **Better Auth** — self-hosted email/password only (no OAuth providers), with the `admin` plugin
 - **TanStack Query** — async client state, wired in `src/providers/`
 
 ## Architecture
@@ -63,4 +64,14 @@ CSS variables for theming are defined in `src/app/globals.css` using `oklch` col
 - **Prisma client** is a global singleton in `src/lib/prisma.ts` (avoids exhausting connections during dev hot-reload). Import it as the default export. Note the generated client lives at `src/generated/prisma/client` and is imported there via a relative path (the `@/` alias is not resolvable by Prisma/Better Auth CLIs).
 - **Better Auth** is configured in `src/lib/auth.ts` (server) and consumed in the browser via `src/lib/auth-client.ts`. The HTTP handler is `src/app/api/auth/[...all]/route.ts`. Use Better Auth's own client hooks (`useSession`, etc.) for auth state — keep TanStack Query for application data.
 - **Roles:** the `admin` plugin owns `role` (admin/regular) and `banned` (active/inactive). Admins manage accounts (create, ban/unban); all non-admin users share the same permissions, so there is no per-user granular permission model.
-- **Domain restriction:** sign-up (password and OAuth) is limited to the institutional domain via `databaseHooks.user.create.before` in `src/lib/auth.ts`, configurable through `ALLOWED_EMAIL_DOMAIN`.
+- **Domain restriction:** account creation is limited to the institutional domain via `databaseHooks.user.create.before` in `src/lib/auth.ts`, configurable through `ALLOWED_EMAIL_DOMAIN`.
+- **Credentials:** passwords are hashed by Better Auth (scrypt) and stored in `account.password` with `providerId: "credential"`. The `user` table never holds a password. Never select or log that column.
+- **No public sign-up:** `emailAndPassword.disableSignUp` is on, so `/api/auth/sign-up/email` is closed. The first account comes from `prisma/seed.ts` (`pnpm db:seed`); the rest are created by an admin through the `admin` plugin.
+- **Brute force:** `rateLimit` runs in memory (5 attempts/minute on `/sign-in/email`). Deployment is a single container with no replicas, so there's no need to persist it in the database.
+
+### Route protection
+
+- `src/proxy.ts` (Next 16 renamed `middleware` to `proxy`) does an optimistic check: it only looks for the session cookie and redirects to `/login?redirectTo=…`. It never touches the database.
+- `src/app/(app)/layout.tsx` is the real gate: it calls `auth.api.getSession()` and redirects when the session is missing or revoked. Every authenticated view goes inside the `(app)` route group so it inherits that check and the header with the sign-out button.
+- The reverse redirect (an authenticated user landing on `/login`) lives in `src/app/login/page.tsx`, not in the proxy: doing it from the cookie alone would loop forever when the cookie is present but the session was revoked server-side.
+- Session cookie caching is disabled so a sign-out or a ban takes effect on the very next request.
