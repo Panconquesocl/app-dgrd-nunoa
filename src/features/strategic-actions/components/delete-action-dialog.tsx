@@ -11,8 +11,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 import { ApiError } from "../api"
 import { useDeleteStrategicAction } from "../queries"
 
@@ -81,6 +79,7 @@ export function DeleteActionDialog({
             <>
               <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
               <AlertDialogAction
+                variant="destructive"
                 disabled={isPending}
                 onClick={(event) => {
                   // El AlertDialog cierra al confirmar; se evita para poder
@@ -88,7 +87,6 @@ export function DeleteActionDialog({
                   event.preventDefault()
                   void handleDelete()
                 }}
-                className={cn(buttonVariants({ variant: "destructive" }))}
               >
                 {isPending ? "Eliminando…" : "Eliminar"}
               </AlertDialogAction>
