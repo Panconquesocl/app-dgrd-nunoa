@@ -14,7 +14,11 @@ export function formatDate(isoDate: string) {
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
-/** Días transcurridos entre dos fechas ISO, ambos extremos incluidos. */
+/**
+ * Días transcurridos entre dos fechas ISO: diferencia simple, sin contar el día
+ * de inicio. Del 1 de enero al 31 de diciembre da 364, que es lo que muestra el
+ * diseño de referencia. Sumar 1 para contar ambos extremos cambiaría ese número.
+ */
 export function daysBetween(startIso: string, endIso: string) {
   return Math.round((new Date(endIso).getTime() - new Date(startIso).getTime()) / MS_PER_DAY)
 }

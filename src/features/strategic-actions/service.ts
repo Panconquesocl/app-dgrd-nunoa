@@ -143,25 +143,38 @@ export async function updateStrategicAction(id: string, input: UpdateStrategicAc
   }
 }
 
+function blockedByActivitiesError(activityCount: number) {
+  return new AppError(
+    409,
+    `No se puede eliminar: la acción tiene ${activityCount} ${
+      activityCount === 1 ? "actividad vinculada" : "actividades vinculadas"
+    }.`,
+    { details: { activityCount } },
+  )
+}
+
 export async function deleteStrategicAction(id: string) {
-  // `Activity.action` usa onDelete: Restrict, así que Prisma fallaría igual.
-  // El conteo previo existe para devolver un 409 con el número de actividades,
-  // que es lo que el front necesita para explicar por qué no se puede borrar.
+  // El conteo previo no es la defensa: `Activity.action` usa onDelete: Restrict
+  // y la base rechaza el borrado igual. Está para dar el número exacto de
+  // actividades en el 409, que es lo que el front necesita para explicarlo.
   const activityCount = await prisma.activity.count({ where: { actionId: id } })
 
   if (activityCount > 0) {
-    throw new AppError(
-      409,
-      `No se puede eliminar: la acción tiene ${activityCount} ${
-        activityCount === 1 ? "actividad vinculada" : "actividades vinculadas"
-      }.`,
-      { details: { activityCount } },
-    )
+    throw blockedByActivitiesError(activityCount)
   }
 
   try {
     await prisma.strategicAction.delete({ where: { id } })
   } catch (error) {
+    // Si entre el conteo y el borrado se creó una actividad, la restricción de
+    // clave foránea salta acá (P2003). Se traduce al mismo 409 en vez de dejar
+    // escapar un 500, para no romper el contrato del front.
+    if (isPrismaError(error, "P2003")) {
+      const currentCount = await prisma.activity.count({ where: { actionId: id } })
+      // Si la actividad culpable ya se borró, el conteo puede volver en cero y
+      // el mensaje quedaría absurdo. El piso mantiene la frase coherente.
+      throw blockedByActivitiesError(Math.max(currentCount, 1))
+    }
     if (isPrismaError(error, "P2025")) {
       throw new AppError(404, "La acción estratégica no existe.")
     }
