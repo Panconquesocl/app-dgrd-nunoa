@@ -81,7 +81,11 @@ Domain logic lives in `src/features/<entity>/`, not in the route files. `strateg
 
 REST route handlers under `src/app/api/<entity>/` stay thin: authenticate with `requireUser()`, parse with the zod schema, delegate to the service, and `catch` into `toErrorResponse()`. Error bodies are always `{ message, fieldErrors?, details? }`.
 
-Two gotchas worth knowing: dates are stored as UTC midnight, so format them with `formatDate()` from `src/lib/format.ts` (it forces `timeZone: "UTC"`; the local zone shifts them a day back in Chile), and `shadcn add form` is a no-op under `radix-nova` (the registry entry exists but ships no files, unlike `new-york`) — use react-hook-form with the `Field` wrapper in `src/features/strategic-actions/components/field.tsx`.
+Three gotchas worth knowing:
+
+- Dates are stored as UTC midnight, so format them with `formatDate()` from `src/lib/format.ts` — it forces `timeZone: "UTC"`, and the local zone shifts them a day back in Chile.
+- **Forms use react-hook-form plus the `field` component** (`Field`, `FieldLabel`, `FieldDescription`, `FieldError`). Don't reach for `form`: that registry entry ships no files under `radix-nova`, `field` is its replacement. `FieldError` takes react-hook-form's error object directly, but neither it nor `FieldDescription` wires `aria-describedby` — give them ids and point the control at them, as `strategic-action-form-dialog.tsx` does.
+- `shadcn add` hangs on the overwrite prompt when a dependency already exists (`button`, `label`, `separator`), and it rewrites `cn` imports to the external `cn` package instead of `@/lib/utils`. Check both after adding a component.
 
 ### Route protection
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useId } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { ApiError } from "../api"
@@ -24,7 +25,15 @@ import {
   type StrategicActionFormValues,
   type StrategicActionListItem,
 } from "../schemas"
-import { Field } from "./field"
+/**
+ * `FieldDescription` y `FieldError` de shadcn se renderizan junto al control
+ * pero no lo referencian: hay que enlazarlos a mano para que el lector de
+ * pantalla los anuncie al enfocar el campo, no solo al aparecer.
+ */
+function describedBy(id: string, hasError: boolean, hasHint: boolean) {
+  const ids = [hasError && `${id}-error`, hasHint && `${id}-hint`].filter(Boolean)
+  return { "aria-invalid": hasError, "aria-describedby": ids.join(" ") || undefined }
+}
 
 /** "2026-01-01T00:00:00.000Z" -> "2026-01-01", que es lo que espera <input type="date">. */
 function toDateInputValue(isoDate: string) {
@@ -41,6 +50,14 @@ function toFormValues(action: StrategicActionListItem | StrategicActionDetail | 
     implementation: action?.implementation ?? "",
     topics: action?.topics ?? "",
   }
+}
+
+function Required() {
+  return (
+    <span className="text-destructive" aria-hidden="true">
+      *
+    </span>
+  )
 }
 
 type Props = {
@@ -97,6 +114,8 @@ export function StrategicActionFormDialog({ open, onOpenChange, action }: Props)
   })
 
   const { errors } = form.formState
+  const formId = useId()
+  const id = (field: keyof StrategicActionFormValues) => `${formId}-${field}`
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -112,54 +131,102 @@ export function StrategicActionFormDialog({ open, onOpenChange, action }: Props)
 
         <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4 px-6 py-5">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="N° de acción" required hint="Único por año." error={errors.number?.message}>
-              {(props) => <Input {...props} {...form.register("number")} placeholder="Ej. 1" inputMode="numeric" />}
+            <Field data-invalid={Boolean(errors.number)}>
+              <FieldLabel htmlFor={id("number")}>
+                N° de acción <Required />
+              </FieldLabel>
+              <Input
+                id={id("number")}
+                inputMode="numeric"
+                placeholder="Ej. 1"
+                {...describedBy(id("number"), Boolean(errors.number), true)}
+                {...form.register("number")}
+              />
+              <FieldDescription id={`${id("number")}-hint`}>Único por año.</FieldDescription>
+              <FieldError id={`${id("number")}-error`} errors={[errors.number]} />
             </Field>
 
-            <Field label="Año" required error={errors.year?.message}>
-              {(props) => <Input {...props} {...form.register("year")} inputMode="numeric" />}
+            <Field data-invalid={Boolean(errors.year)}>
+              <FieldLabel htmlFor={id("year")}>
+                Año <Required />
+              </FieldLabel>
+              <Input
+                id={id("year")}
+                inputMode="numeric"
+                {...describedBy(id("year"), Boolean(errors.year), false)}
+                {...form.register("year")}
+              />
+              <FieldError id={`${id("year")}-error`} errors={[errors.year]} />
             </Field>
           </div>
 
-          <Field label="Título" required error={errors.title?.message}>
-            {(props) => (
-              <Input
-                {...props}
-                {...form.register("title")}
-                placeholder="Ej. Fortalecer la red comunitaria de respuesta ante emergencias"
-              />
-            )}
+          <Field data-invalid={Boolean(errors.title)}>
+            <FieldLabel htmlFor={id("title")}>
+              Título <Required />
+            </FieldLabel>
+            <Input
+              id={id("title")}
+              placeholder="Ej. Fortalecer la red comunitaria de respuesta ante emergencias"
+              {...describedBy(id("title"), Boolean(errors.title), false)}
+              {...form.register("title")}
+            />
+            <FieldError id={`${id("title")}-error`} errors={[errors.title]} />
           </Field>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Fecha de inicio" required error={errors.startDate?.message}>
-              {(props) => <Input {...props} {...form.register("startDate")} type="date" />}
+            <Field data-invalid={Boolean(errors.startDate)}>
+              <FieldLabel htmlFor={id("startDate")}>
+                Fecha de inicio <Required />
+              </FieldLabel>
+              <Input
+                id={id("startDate")}
+                type="date"
+                {...describedBy(id("startDate"), Boolean(errors.startDate), false)}
+                {...form.register("startDate")}
+              />
+              <FieldError id={`${id("startDate")}-error`} errors={[errors.startDate]} />
             </Field>
 
-            <Field label="Fecha de término" required error={errors.endDate?.message}>
-              {(props) => <Input {...props} {...form.register("endDate")} type="date" />}
+            <Field data-invalid={Boolean(errors.endDate)}>
+              <FieldLabel htmlFor={id("endDate")}>
+                Fecha de término <Required />
+              </FieldLabel>
+              <Input
+                id={id("endDate")}
+                type="date"
+                {...describedBy(id("endDate"), Boolean(errors.endDate), false)}
+                {...form.register("endDate")}
+              />
+              <FieldError id={`${id("endDate")}-error`} errors={[errors.endDate]} />
             </Field>
           </div>
 
-          <Field label="Cómo desarrollarla" required error={errors.implementation?.message}>
-            {(props) => (
-              <Textarea
-                {...props}
-                {...form.register("implementation")}
-                rows={4}
-                placeholder="Describe la estrategia y los pasos para desarrollar esta acción…"
-              />
-            )}
+          <Field data-invalid={Boolean(errors.implementation)}>
+            <FieldLabel htmlFor={id("implementation")}>
+              Cómo desarrollarla <Required />
+            </FieldLabel>
+            <Textarea
+              id={id("implementation")}
+              rows={4}
+              placeholder="Describe la estrategia y los pasos para desarrollar esta acción…"
+              {...describedBy(id("implementation"), Boolean(errors.implementation), false)}
+              {...form.register("implementation")}
+            />
+            <FieldError id={`${id("implementation")}-error`} errors={[errors.implementation]} />
           </Field>
 
-          <Field label="Temas" required hint="Ejes o temas que aborda la acción." error={errors.topics?.message}>
-            {(props) => (
-              <Input
-                {...props}
-                {...form.register("topics")}
-                placeholder="Ej. Organización comunitaria · Primera respuesta · Mapas de riesgo"
-              />
-            )}
+          <Field data-invalid={Boolean(errors.topics)}>
+            <FieldLabel htmlFor={id("topics")}>
+              Temas <Required />
+            </FieldLabel>
+            <Input
+              id={id("topics")}
+              placeholder="Ej. Organización comunitaria · Primera respuesta · Mapas de riesgo"
+              {...describedBy(id("topics"), Boolean(errors.topics), true)}
+              {...form.register("topics")}
+            />
+            <FieldDescription id={`${id("topics")}-hint`}>Ejes o temas que aborda la acción.</FieldDescription>
+            <FieldError id={`${id("topics")}-error`} errors={[errors.topics]} />
           </Field>
 
           <DialogFooter className="-mx-6 mt-2 -mb-5 border-t px-6 py-4">
