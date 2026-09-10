@@ -68,10 +68,28 @@ CSS variables for theming are defined in `src/app/globals.css` using `oklch` col
 - **Credentials:** passwords are hashed by Better Auth (scrypt) and stored in `account.password` with `providerId: "credential"`. The `user` table never holds a password. Never select or log that column.
 - **No public sign-up:** `emailAndPassword.disableSignUp` is on, so `/api/auth/sign-up/email` is closed. The first account comes from `prisma/seed.ts` (`pnpm db:seed`); the rest are created by an admin through the `admin` plugin.
 - **Brute force:** `rateLimit` runs in memory (5 attempts/minute on `/sign-in/email`). Deployment is a single container with no replicas, so there's no need to persist it in the database.
+- **Session helper:** `getSession()` and `requireUser()` live in `src/lib/session.ts`. `getSession()` is wrapped in React `cache()` so the layout guard and the page share one query per request; `requireUser()` throws a 401 `AppError` and is what API routes use.
+
+### Feature modules
+
+Domain logic lives in `src/features/<entity>/`, not in the route files. `strategic-actions` is the reference implementation; copy its shape for Events, Requests, Deliveries, Activities and Evidence.
+
+- `schemas.ts` — zod schemas (single source of truth for types and error messages, all in Spanish) plus the output DTOs. **Dates cross the wire as ISO strings, never `Date`.**
+- `service.ts` — Prisma queries and business rules. Throws `AppError(status, message, { fieldErrors, details })` from `src/lib/api-error.ts`; knows nothing about `Request`/`Response`.
+- `api.ts` / `queries.ts` — typed `fetch` wrappers and the TanStack Query hooks, with hierarchical query keys.
+- `components/` — the client views.
+
+REST route handlers under `src/app/api/<entity>/` stay thin: authenticate with `requireUser()`, parse with the zod schema, delegate to the service, and `catch` into `toErrorResponse()`. Error bodies are always `{ message, fieldErrors?, details? }`.
+
+Three gotchas worth knowing:
+
+- Dates are stored as UTC midnight, so format them with `formatDate()` from `src/lib/format.ts` — it forces `timeZone: "UTC"`, and the local zone shifts them a day back in Chile.
+- **Forms use react-hook-form plus the `field` component** (`Field`, `FieldLabel`, `FieldDescription`, `FieldError`). Don't reach for `form`: that registry entry ships no files under `radix-nova`, `field` is its replacement. `FieldError` takes react-hook-form's error object directly, but neither it nor `FieldDescription` wires `aria-describedby` — give them ids and point the control at them, as `strategic-action-form-dialog.tsx` does.
+- `shadcn add` hangs on the overwrite prompt when a dependency already exists (`button`, `label`, `separator`), and it rewrites `cn` imports to the external `cn` package instead of `@/lib/utils`. Check both after adding a component.
 
 ### Route protection
 
 - `src/proxy.ts` (Next 16 renamed `middleware` to `proxy`) does an optimistic check: it only looks for the session cookie and redirects to `/login?redirectTo=…`. It never touches the database.
-- `src/app/(app)/layout.tsx` is the real gate: it calls `auth.api.getSession()` and redirects when the session is missing or revoked. Every authenticated view goes inside the `(app)` route group so it inherits that check and the header with the sign-out button.
+- `src/app/(app)/layout.tsx` is the real gate: it calls `getSession()` and redirects when the session is missing or revoked. Every authenticated view goes inside the `(app)` route group so it inherits that check plus the shell (sidebar, topbar, toasts).
 - The reverse redirect (an authenticated user landing on `/login`) lives in `src/app/login/page.tsx`, not in the proxy: doing it from the cookie alone would loop forever when the cookie is present but the session was revoked server-side.
 - Session cookie caching is disabled so a sign-out or a ban takes effect on the very next request.
