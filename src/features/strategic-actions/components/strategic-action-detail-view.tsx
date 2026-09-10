@@ -19,7 +19,7 @@ import { AppTopbar } from "@/components/layout/app-topbar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { daysBetween, formatDate } from "@/lib/format"
+import { durationInDays, formatDate } from "@/lib/format"
 import type { StrategicActionActivity, StrategicActionDetail } from "../schemas"
 import { useStrategicAction } from "../queries"
 import { DeleteActionDialog, type DeletableAction } from "./delete-action-dialog"
@@ -124,7 +124,7 @@ function Header({
           </span>
           <span className="flex items-center gap-1.5">
             <Clock aria-hidden="true" className="size-4" />
-            {daysBetween(action.startDate, action.endDate)} días
+            {pluralizeDays(durationInDays(action.startDate, action.endDate))}
           </span>
         </div>
       </div>
@@ -146,6 +146,10 @@ function Header({
       </div>
     </div>
   )
+}
+
+function pluralizeDays(days: number) {
+  return days === 1 ? "1 día" : `${days} días`
 }
 
 function ActivitiesCard({ activities }: { activities: StrategicActionActivity[] }) {

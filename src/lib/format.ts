@@ -15,10 +15,12 @@ export function formatDate(isoDate: string) {
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 /**
- * Días transcurridos entre dos fechas ISO: diferencia simple, sin contar el día
- * de inicio. Del 1 de enero al 31 de diciembre da 364, que es lo que muestra el
- * diseño de referencia. Sumar 1 para contar ambos extremos cambiaría ese número.
+ * Duración de un período en días, contando ambos extremos: una acción que
+ * empieza y termina el mismo día dura 1 día, y del 1 de enero al 31 de
+ * diciembre son los 365 del año. Es la convención de planificación, donde una
+ * tarea de lunes a viernes son 5 días y no 4.
  */
-export function daysBetween(startIso: string, endIso: string) {
-  return Math.round((new Date(endIso).getTime() - new Date(startIso).getTime()) / MS_PER_DAY)
+export function durationInDays(startIso: string, endIso: string) {
+  const elapsed = new Date(endIso).getTime() - new Date(startIso).getTime()
+  return Math.round(elapsed / MS_PER_DAY) + 1
 }
