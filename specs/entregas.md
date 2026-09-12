@@ -58,13 +58,13 @@ salida pero no en el payload de entrada.
 
 ## Plan por fases
 
-- [ ] **F0 · migración** — `contact String?` en `prisma/schema.prisma`, migración
+- [x] **F0 · migración** — `contact String?` en `prisma/schema.prisma`, migración
       `delivery_contact_optional` y `prisma generate`.
   - [x] `DIRECT_URL` para la CLI: `prisma.config.ts` usa `DIRECT_URL` y cae a
         `DATABASE_URL` si no está definida o viene vacía. Quien use Docker no define
         `DIRECT_URL` y no nota el cambio.
   - [x] `.env.example`: `DIRECT_URL` documentada y **comentada**, no vacía.
-  - [ ] Revisar que `migration.sql` contenga solo el `DROP NOT NULL`.
+  - [x] Revisar que `migration.sql` contenga solo el `DROP NOT NULL`.
 - [ ] **F1 · `schemas.ts`** — zod de servidor (`createDeliverySchema`,
       `updateDeliverySchema` = `.partial()`, `listDeliveriesQuerySchema` con `q`, `from`,
       `to`), zod de formulario aparte (strings), DTOs de salida y `toDeliveryPayload()`.

@@ -184,7 +184,7 @@ model Delivery {
   folio       String   @unique
   beneficiary String
   jv          String // junta de vecinos
-  contact     String
+  contact     String?
   address     String
   date        DateTime
   createdAt   DateTime @default(now())
