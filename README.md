@@ -26,6 +26,7 @@ docker compose up -d
 
 # 4. Aplicar las migraciones y generar el cliente de Prisma
 pnpm prisma migrate dev
+pnpm prisma generate
 
 # 5. Crear la cuenta de administrador inicial
 pnpm db:seed
@@ -60,6 +61,37 @@ pnpm prisma studio        # explorar los datos en el navegador
 ```
 
 > El `DATABASE_URL` por defecto en `.env.example` ya apunta a este contenedor.
+
+## Actualización: migración de juntas vecinales
+
+La migración `20261015000000_neighborhood_associations` sustituye el texto libre
+`Delivery.jv` por una referencia obligatoria al catálogo de juntas vecinales.
+
+- **Base sin entregas:** se aplica normalmente. Después de migrar, genera el
+  cliente de Prisma y registra las juntas en `/juntas-vecinales` antes de crear
+  nuevas entregas.
+- **Base con entregas existentes:** la migración se detiene antes de cambiar
+  datos. No deduce números oficiales ni asociaciones a partir de `jv`.
+  Se necesita un procedimiento de backfill revisado: identificar la junta
+  correcta para cada texto antiguo, cargar su número y nombre, asociar cada
+  entrega por id y comprobar que todas las referencias estén resueltas antes
+  de retirar la columna anterior. Coordina ese procedimiento antes de desplegar
+  esta rama sobre una base con entregas.
+
+Para una base sin entregas, aplica las migraciones pendientes y actualiza el cliente:
+
+```bash
+pnpm prisma migrate deploy
+pnpm prisma generate
+```
+
+No borres entregas ni uses un reset para saltarte esta protección. Tampoco edites
+una migración ya aplicada en otras bases ni la marques como aplicada sin completar
+y verificar sus cambios. Si un intento ya quedó registrado como fallido, la
+recuperación del estado de Prisma debe formar parte del procedimiento revisado.
+
+El modelo, las restricciones y la protección transaccional están documentados en
+[specs/juntas-vecinales.md](./specs/juntas-vecinales.md).
 
 ## Autenticación
 

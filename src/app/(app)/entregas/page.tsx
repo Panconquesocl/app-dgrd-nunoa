@@ -1,13 +1,17 @@
 import type { Metadata } from "next"
-import { ModulePlaceholder } from "@/components/layout/module-placeholder"
-
+import { AppTopbar } from "@/components/layout/app-topbar"
+import { DeliveriesView } from "@/features/deliveries/components/deliveries-view"
+import { getSession } from "@/lib/session"
 export const metadata: Metadata = { title: "Entregas · DGRD Ñuñoa" }
-
-export default function EntregasPage() {
+export default async function EntregasPage() {
+  const session = await getSession()
   return (
-    <ModulePlaceholder
-      crumbs={[{ label: "Ayudas primera respuesta" }, { label: "Entregas", current: true }]}
-      title="Entregas"
-    />
+    <>
+      <AppTopbar
+        crumbs={[{ label: "Ayudas primera respuesta" }, { label: "Entregas", current: true }]}
+        user={session?.user}
+      />
+      <DeliveriesView />
+    </>
   )
 }

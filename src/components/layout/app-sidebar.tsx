@@ -3,7 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { CalendarRange, FileText, Home, Package, Siren } from "lucide-react"
+import { Box, CalendarRange, FileText, Home, Package, Siren, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type NavItem = {
@@ -28,7 +28,11 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Ayudas primera respuesta",
-    items: [{ href: "/entregas", label: "Entregas", icon: Package }],
+    items: [
+      { href: "/entregas", label: "Entregas", icon: Package },
+      { href: "/insumos", label: "Insumos", icon: Box },
+      { href: "/juntas-vecinales", label: "Juntas vecinales", icon: Users },
+    ],
   },
   {
     label: "Plan RRD",
