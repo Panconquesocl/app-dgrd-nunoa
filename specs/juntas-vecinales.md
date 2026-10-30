@@ -53,15 +53,15 @@ neighborhoodAssociation NeighborhoodAssociation @relation(
 
 - `/juntas-vecinales`: listado, búsqueda por número/nombre, filtro de estado,
   creación, edición y borrado.
-- `/juntas-vecinales/[id]`: entregas asociadas ordenables por fecha, conteo y
-  unidades distribuidas, con enlaces a cada entrega.
+- `/juntas-vecinales/[id]`: historial con filtros por periodo e insumo, orden por
+  fecha, desglose por insumo/unidad y enlaces a las entregas. Ver B24–B25 abajo.
 - Navegación en barra lateral y pestañas de Ayudas primera respuesta.
 - Enlaces desde el listado y el detalle de entregas hacia la junta.
 
 ```text
 GET    /api/neighborhood-associations?q&status=all|active|inactive
 POST   /api/neighborhood-associations
-GET    /api/neighborhood-associations/:id?order=asc|desc
+GET    /api/neighborhood-associations/:id?order=asc|desc&from&to&supplyId
 PATCH  /api/neighborhood-associations/:id
 DELETE /api/neighborhood-associations/:id
 ```
@@ -104,3 +104,84 @@ filtros por identidad, juntas inactivas, preservación de asociaciones al correg
 etiquetas y FK de borrado. Se prueba la protección de datos legados ejecutando la
 migración contra una tabla temporal en una conexión aislada, sin modificar tablas
 públicas. Los fixtures de negocio se eliminan al terminar.
+
+## Desglose por junta — B24 y B25
+
+El detalle permite consultar qué insumos se distribuyeron en una junta y acceder
+a las entregas que explican cada cantidad. No requiere migración de base de datos.
+Administradores y usuarios normales pueden consultar; solo los primeros gestionan
+el catálogo, según [permisos](./permisos.md).
+
+### Filtros y reglas de cálculo
+
+- `from` y `to`: fechas calendario `AAAA-MM-DD`, opcionales y combinables; ambos
+  días se incluyen. La consulta usa medianoche UTC desde el inicio y un límite
+  exclusivo al día siguiente de `to`. Se rechazan fechas imposibles y rangos
+  invertidos con 400 y errores por campo.
+- `supplyId`: CUID opcional. Filtra entregas que contienen ese insumo y devuelve
+  exclusivamente sus ítems para calcular y presentar el resultado. No incluye
+  las cantidades de otros insumos que viajaron en la misma entrega.
+- `order`: `asc` o `desc` por fecha, con desempate por id. Por defecto `desc`.
+- La consulta siempre se limita a la junta indicada; las inactivas conservan su
+  historial. Un insumo válido sin entregas en la junta produce un resultado vacío.
+- Los selectores incluyen los insumos usados en todo el historial de esa junta,
+  independientemente del periodo actual. Así pueden ampliarse filtros vacíos.
+- Se agrupa por id de insumo, mostrando nombre y unidad actuales del catálogo.
+  No se fusionan insumos por nombre ni se suman unidades diferentes.
+- Los beneficiarios se muestran en cada entrega; no se presentan conteos de
+  personas únicas mientras su identidad siga sin definirse.
+
+### Respuesta del detalle
+
+Se conserva el DTO anterior y se agregan:
+
+- `filteredDeliveryCount`: entregas que coinciden con los filtros.
+- `availableSupplies`: `{ id, type, unit }[]` del historial completo de la junta.
+- `supplyBreakdown`: `{ id, type, unit, quantity, deliveryCount }[]`, ordenado por
+  nombre, unidad e id. Cada entrega cuenta una vez para cada insumo.
+- `totalsByUnit`: `{ unit, quantity }[]` con totales independientes por unidad.
+- Cada ítem de `deliveries` ahora incluye `quantity` y `supply: { id, type, unit }`.
+
+`_count.deliveries` conserva el total histórico global, incluso al filtrar: es
+necesario para advertencias y restricciones de borrado. El antiguo `totalUnits`
+se mantiene por compatibilidad de API, referido al resultado filtrado, pero la
+interfaz deja de mostrarlo porque puede mezclar magnitudes incompatibles.
+
+### Interfaz y caché
+
+Los filtros se aplican al enviar el formulario y pueden limpiarse juntos.
+“Ver entregas” desde un insumo selecciona ese insumo conservando el periodo
+aplicado y lleva al historial. Cada entrega muestra beneficiario, fecha e insumos
+con sus cantidades y unidades, además de un enlace a su detalle.
+
+La vista usa tarjetas y filas que se ajustan al ancho móvil, con filtros en una
+columna en pantallas pequeñas. Hay estados de carga, actualización, error,
+historial vacío y resultados vacíos por filtros. El historial global sigue
+visible como indicador separado de los resultados.
+
+Las claves de TanStack Query incluyen junta, periodo, insumo y orden. Durante
+un cambio de filtro se conserva el resultado previo de la misma junta con un
+indicador de actualización. No se reutilizan datos de otra junta. Las mutaciones
+de entregas, juntas e insumos invalidan los desgloses afectados.
+
+### Verificación del desglose
+
+Las pruebas unitarias cubren fechas y rangos inválidos, agregados por identidad y
+unidad, resultados vacíos, serialización de filtros HTTP y claves de caché.
+Las pruebas de rutas verifican la transmisión de filtros y el rechazo 400 antes
+de invocar servicios. El renderizado comprueba filtros, cantidades con unidad,
+enlaces y permisos de gestión.
+
+La integración PostgreSQL crea fixtures aislados y los elimina al terminar.
+Cubre extremos inclusivos, un solo día, límites abiertos, orden, filtro por
+insumo en entregas mixtas, aislamiento entre juntas, selectores independientes
+del periodo, resultados vacíos y consulta de juntas inactivas.
+
+```bash
+pnpm test:associations
+RUN_ASSOCIATION_INTEGRATION=1 pnpm test:associations
+pnpm test:permissions
+pnpm lint
+pnpm exec tsc --noEmit
+pnpm exec next build --webpack
+```

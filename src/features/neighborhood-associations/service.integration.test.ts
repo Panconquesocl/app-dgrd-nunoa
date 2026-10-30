@@ -177,3 +177,107 @@ test("la migración aborta sin modificar entregas con jv legado", { skip: !enabl
     await client.end()
   }
 })
+
+test(
+  "desglose por junta: fechas inclusivas, insumos, agregados e historial inactivo",
+  { skip: !enabled, timeout: 60000 },
+  async () => {
+    const userId = `association-breakdown-${randomUUID()}`
+    let created = false
+    try {
+      await prisma.user.create({ data: { id: userId, name: userId, email: `${userId}@example.invalid` } })
+      created = true
+      const number = randomInt(1000000000, 2000000000)
+      const association = await createNeighborhoodAssociation({ number, name: userId, active: true }, userId)
+      const other = await createNeighborhoodAssociation({ number: number + 1, name: userId, active: true }, userId)
+      const kg = await prisma.supply.create({ data: { type: userId, unit: "kg", createdBy: userId } })
+      const box = await prisma.supply.create({ data: { type: userId, unit: "caja", createdBy: userId } })
+      const unrelated = await prisma.supply.create({
+        data: { type: `${userId}-otro`, unit: "litro", createdBy: userId },
+      })
+      const dates = ["2026-01-01", "2026-01-31", "2026-02-01"]
+      const ids: string[] = []
+      for (const [index, date] of dates.entries()) {
+        const delivery = await prisma.delivery.create({
+          data: {
+            folio: `${userId}-${index}`,
+            beneficiary: "Beneficiario de prueba",
+            address: "Prueba",
+            date: new Date(date),
+            neighborhoodAssociationId: association.id,
+            createdBy: userId,
+            items: {
+              create: [
+                { supplyId: kg.id, quantity: index + 1 },
+                ...(index === 0 ? [{ supplyId: box.id, quantity: 8 }] : []),
+              ],
+            },
+          },
+        })
+        ids.push(delivery.id)
+      }
+      await prisma.delivery.create({
+        data: {
+          folio: `${userId}-otra-junta`,
+          beneficiary: "Otro",
+          address: "Prueba",
+          date: new Date("2026-01-01"),
+          neighborhoodAssociationId: other.id,
+          createdBy: userId,
+          items: { create: [{ supplyId: unrelated.id, quantity: 100 }] },
+        },
+      })
+      const january = await getNeighborhoodAssociation(association.id, {
+        from: "2026-01-01",
+        to: "2026-01-31",
+        order: "asc",
+      })
+      assert.equal(january._count.deliveries, 3) // Global count must remain safe for delete dialogs.
+      assert.equal(january.filteredDeliveryCount, 2)
+      assert.deepEqual(
+        january.deliveries.map((row) => row.id),
+        ids.slice(0, 2),
+      )
+      assert.equal(january.supplyBreakdown.find((row) => row.id === kg.id)?.quantity, 3)
+      assert.equal(january.supplyBreakdown.find((row) => row.id === kg.id)?.deliveryCount, 2)
+      assert.deepEqual(january.totalsByUnit, [
+        { unit: "caja", quantity: 8 },
+        { unit: "kg", quantity: 3 },
+      ])
+      const selected = await getNeighborhoodAssociation(association.id, { supplyId: box.id, to: "2026-01-31" })
+      assert.equal(selected.filteredDeliveryCount, 1)
+      assert.equal(selected.deliveries[0].items.length, 1)
+      assert.equal(selected.deliveries[0].items[0].supply.id, box.id)
+      assert.equal(selected.supplyBreakdown[0].quantity, 8)
+      const singleDay = await getNeighborhoodAssociation(association.id, { from: "2026-01-31", to: "2026-01-31" })
+      assert.deepEqual(
+        singleDay.deliveries.map((row) => row.id),
+        [ids[1]],
+      )
+      const empty = await getNeighborhoodAssociation(association.id, { from: "2027-01-01" })
+      assert.equal(empty.filteredDeliveryCount, 0)
+      assert.deepEqual(empty.totalsByUnit, [])
+      assert.deepEqual(new Set(empty.availableSupplies.map((row) => row.id)), new Set([kg.id, box.id]))
+      assert.equal(
+        (await getNeighborhoodAssociation(association.id, { supplyId: unrelated.id })).filteredDeliveryCount,
+        0,
+      )
+      assert.equal((await getNeighborhoodAssociation(association.id, { to: "2025-12-31" })).filteredDeliveryCount, 0)
+      await updateNeighborhoodAssociation(association.id, { active: false })
+      assert.equal((await getNeighborhoodAssociation(association.id)).filteredDeliveryCount, 3)
+      assert.deepEqual(
+        (await getNeighborhoodAssociation(association.id, "asc")).deliveries.map((row) => row.id),
+        ids,
+      )
+    } finally {
+      if (created)
+        await prisma.$transaction([
+          prisma.delivery.deleteMany({ where: { createdBy: userId } }),
+          prisma.supply.deleteMany({ where: { createdBy: userId } }),
+          prisma.neighborhoodAssociation.deleteMany({ where: { createdBy: userId } }),
+          prisma.user.deleteMany({ where: { id: userId } }),
+        ])
+      await prisma.$disconnect()
+    }
+  },
+)

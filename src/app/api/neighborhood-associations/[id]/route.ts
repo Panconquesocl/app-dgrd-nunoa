@@ -15,8 +15,8 @@ export async function GET(request: NextRequest, { params }: Context) {
   try {
     await requirePermission("neighborhood-associations", "read")
     const { id } = await params
-    const { order } = associationHistoryQuerySchema.parse(Object.fromEntries(request.nextUrl.searchParams))
-    return NextResponse.json(await getNeighborhoodAssociation(id, order))
+    const query = associationHistoryQuerySchema.parse(Object.fromEntries(request.nextUrl.searchParams))
+    return NextResponse.json(await getNeighborhoodAssociation(id, query))
   } catch (error) {
     return toErrorResponse(error)
   }

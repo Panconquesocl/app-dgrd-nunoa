@@ -1,3 +1,5 @@
+import { summarizeAssociationHistory } from "./history"
+import type { AssociationHistoryQuery } from "./schemas"
 import prisma from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import { AppError } from "@/lib/api-error"
@@ -32,20 +34,52 @@ export async function listNeighborhoodAssociations({ q, status = "all" }: ListNe
   })
   return { data }
 }
-export async function getNeighborhoodAssociation(id: string, order: "asc" | "desc" = "desc") {
-  const association = await prisma.neighborhoodAssociation.findUnique({
-    where: { id },
-    select: {
-      ...select,
-      deliveries: {
-        select: { id: true, folio: true, beneficiary: true, date: true, items: { select: { quantity: true } } },
-        orderBy: [{ date: order }, { id: order }],
+export async function getNeighborhoodAssociation(id: string, query: AssociationHistoryQuery | "asc" | "desc" = {}) {
+  // Preserve the existing internal order-only call signature.
+  const { order = "desc", from, to, supplyId } = typeof query === "string" ? { order: query } : query
+  const where: Prisma.DeliveryWhereInput = {
+    ...((from || to) && {
+      date: {
+        ...(from && { gte: new Date(`${from}T00:00:00.000Z`) }),
+        ...(to && { lt: new Date(new Date(`${to}T00:00:00.000Z`).getTime() + 86400000) }),
       },
-    },
-  })
+    }),
+    ...(supplyId && { items: { some: { supplyId } } }),
+  }
+  const [association, availableSupplies] = await Promise.all([
+    prisma.neighborhoodAssociation.findUnique({
+      where: { id },
+      select: {
+        ...select,
+        deliveries: {
+          where,
+          select: {
+            id: true,
+            folio: true,
+            beneficiary: true,
+            date: true,
+            items: {
+              ...(supplyId && { where: { supplyId } }),
+              select: { quantity: true, supply: { select: { id: true, type: true, unit: true } } },
+              orderBy: { supplyId: "asc" },
+            },
+          },
+          orderBy: [{ date: order }, { id: order }],
+        },
+      },
+    }),
+    // Options cover this association's entire history, independently of current filters.
+    prisma.supply.findMany({
+      where: { items: { some: { delivery: { neighborhoodAssociationId: id } } } },
+      select: { id: true, type: true, unit: true },
+      orderBy: [{ type: "asc" }, { unit: "asc" }, { id: "asc" }],
+    }),
+  ])
   if (!association) throw new AppError(404, "La junta vecinal no existe.")
   return {
     ...association,
+    availableSupplies,
+    ...summarizeAssociationHistory(association.deliveries),
     totalUnits: association.deliveries.reduce(
       (sum, delivery) => sum + delivery.items.reduce((total, item) => total + item.quantity, 0),
       0,
