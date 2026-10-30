@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server"
-import { requireUser } from "@/lib/session"
+import { requirePermission } from "@/lib/session"
 import { toErrorResponse } from "@/lib/api-error"
 import {
   createNeighborhoodAssociationSchema,
@@ -11,7 +11,7 @@ import {
 } from "@/features/neighborhood-associations/service"
 export async function GET(request: NextRequest) {
   try {
-    await requireUser()
+    await requirePermission("neighborhood-associations", "read")
     const query = listNeighborhoodAssociationsQuerySchema.parse(Object.fromEntries(request.nextUrl.searchParams))
     return NextResponse.json(await listNeighborhoodAssociations(query))
   } catch (error) {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 }
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireUser()
+    const user = await requirePermission("neighborhood-associations", "create")
     const input = createNeighborhoodAssociationSchema.parse(await request.json())
     return NextResponse.json(await createNeighborhoodAssociation(input, user.id), { status: 201 })
   } catch (error) {

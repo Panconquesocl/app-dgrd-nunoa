@@ -1,4 +1,5 @@
 "use client"
+import { usePermission } from "@/providers/permissions"
 import { useState } from "react"
 import Link from "next/link"
 import { Eye, Pencil, Plus, Search, Trash2, Users } from "lucide-react"
@@ -14,6 +15,7 @@ import { DeleteAssociationDialog } from "./delete-association-dialog"
 import "@/features/deliveries/components/deliveries.css"
 
 export function AssociationsView() {
+  const canManage = usePermission("neighborhood-associations", "update")
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState<NonNullable<ListNeighborhoodAssociationsQuery["status"]>>("all")
   const [form, setForm] = useState<{ association?: NeighborhoodAssociationListItem } | null>(null)
@@ -28,10 +30,12 @@ export function AssociationsView() {
           <h1>Juntas vecinales</h1>
           <p>Catálogo de juntas vecinales y sus entregas asociadas.</p>
         </div>
-        <Button onClick={() => setForm({})}>
-          <Plus size={16} />
-          Nueva junta
-        </Button>
+        {canManage && (
+          <Button onClick={() => setForm({})}>
+            <Plus size={16} />
+            Nueva junta
+          </Button>
+        )}
       </div>
       <div className="delivery-toolbar justify-end">
         <select
@@ -81,19 +85,23 @@ export function AssociationsView() {
             <p>
               {filtered
                 ? "No se encontraron juntas con los filtros aplicados."
-                : "Registra la primera junta para poder asociar entregas."}
+                : canManage
+                  ? "Registra la primera junta para poder asociar entregas."
+                  : "Un administrador debe registrar las juntas para poder asociar entregas."}
             </p>
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (filtered) {
-                  setSearch("")
-                  setStatus("all")
-                } else setForm({})
-              }}
-            >
-              {filtered ? "Limpiar filtros" : "Nueva junta"}
-            </Button>
+            {(filtered || canManage) && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (filtered) {
+                    setSearch("")
+                    setStatus("all")
+                  } else setForm({})
+                }}
+              >
+                {filtered ? "Limpiar filtros" : "Nueva junta"}
+              </Button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -136,23 +144,27 @@ export function AssociationsView() {
                             <Eye size={16} />
                           </Link>
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Editar junta ${association.number}`}
-                          onClick={() => setForm({ association })}
-                        >
-                          <Pencil size={16} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive"
-                          aria-label={`Eliminar junta ${association.number}`}
-                          onClick={() => setDeleting(association)}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
+                        {canManage && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Editar junta ${association.number}`}
+                            onClick={() => setForm({ association })}
+                          >
+                            <Pencil size={16} />
+                          </Button>
+                        )}
+                        {canManage && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive"
+                            aria-label={`Eliminar junta ${association.number}`}
+                            onClick={() => setDeleting(association)}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -162,8 +174,8 @@ export function AssociationsView() {
           </div>
         )}
       </div>
-      {form && <AssociationFormDialog association={form.association} onClose={() => setForm(null)} />}
-      {deleting && <DeleteAssociationDialog association={deleting} onClose={() => setDeleting(null)} />}
+      {canManage && form && <AssociationFormDialog association={form.association} onClose={() => setForm(null)} />}
+      {canManage && deleting && <DeleteAssociationDialog association={deleting} onClose={() => setDeleting(null)} />}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { toErrorResponse } from "@/lib/api-error"
-import { requireUser } from "@/lib/session"
+import { requirePermission } from "@/lib/session"
 import { updateDeliverySchema } from "@/features/deliveries/schemas"
 import { deleteDelivery, getDelivery, updateDelivery } from "@/features/deliveries/service"
 
@@ -8,7 +8,7 @@ type RouteContext = { params: Promise<{ id: string }> }
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {
   try {
-    await requireUser()
+    await requirePermission("deliveries", "read")
     const { id } = await params
 
     return NextResponse.json(await getDelivery(id))
@@ -19,7 +19,7 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   try {
-    await requireUser()
+    await requirePermission("deliveries", "update")
     const { id } = await params
     const input = updateDeliverySchema.parse(await request.json())
 
@@ -31,7 +31,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
 export async function DELETE(_request: NextRequest, { params }: RouteContext) {
   try {
-    await requireUser()
+    await requirePermission("deliveries", "delete")
     const { id } = await params
     await deleteDelivery(id)
 

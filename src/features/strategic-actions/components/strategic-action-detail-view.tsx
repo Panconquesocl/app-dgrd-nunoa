@@ -1,5 +1,6 @@
 "use client"
 
+import { usePermission } from "@/providers/permissions"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -31,6 +32,7 @@ type Props = {
 }
 
 export function StrategicActionDetailView({ id, user }: Props) {
+  const canManage = usePermission("strategic-actions", "update")
   const router = useRouter()
   const { data: action, isPending, isError, error } = useStrategicAction(id)
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -81,12 +83,16 @@ export function StrategicActionDetailView({ id, user }: Props) {
               <InfoCard action={action} />
             </div>
 
-            <StrategicActionFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} action={action} />
-            <DeleteActionDialog
-              action={pendingDelete}
-              onOpenChange={(open) => !open && setPendingDelete(null)}
-              onDeleted={() => router.push("/plan/acciones")}
-            />
+            {canManage && (
+              <>
+                <StrategicActionFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} action={action} />
+                <DeleteActionDialog
+                  action={pendingDelete}
+                  onOpenChange={(open) => !open && setPendingDelete(null)}
+                  onDeleted={() => router.push("/plan/acciones")}
+                />
+              </>
+            )}
           </>
         )}
       </div>
@@ -103,6 +109,7 @@ function Header({
   onEdit: () => void
   onDelete: () => void
 }) {
+  const canManage = usePermission("strategic-actions", "update")
   return (
     <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0">
@@ -130,19 +137,23 @@ function Header({
       </div>
 
       <div className="flex items-center gap-2">
-        <Button variant="outline" onClick={onEdit}>
-          <Pencil className="size-4" />
-          Editar
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Eliminar acción"
-          onClick={onDelete}
-          className="text-muted-foreground hover:text-destructive"
-        >
-          <Trash2 className="size-4" />
-        </Button>
+        {canManage && (
+          <Button variant="outline" onClick={onEdit}>
+            <Pencil className="size-4" />
+            Editar
+          </Button>
+        )}
+        {canManage && (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Eliminar acción"
+            onClick={onDelete}
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        )}
       </div>
     </div>
   )
