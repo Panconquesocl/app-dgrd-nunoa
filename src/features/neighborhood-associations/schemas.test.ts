@@ -1,6 +1,7 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
 import {
+  associationHistoryQuerySchema,
   createNeighborhoodAssociationSchema,
   updateNeighborhoodAssociationSchema,
   neighborhoodAssociationFormSchema,
@@ -43,4 +44,18 @@ test("las entregas requieren una referencia CUID, no texto libre", () => {
     true,
   )
   assert.deepEqual(updateDeliverySchema.parse({ contact: null }), { contact: null })
+})
+
+test("historial: fechas calendario, rango inclusivo, insumo y orden válidos", () => {
+  assert.deepEqual(associationHistoryQuerySchema.parse({}), { order: "desc" })
+  const query = { from: "2026-10-01", to: "2026-10-01", supplyId: "clxxxxxxxxxxxxxxxxxxxxxxx", order: "asc" }
+  assert.deepEqual(associationHistoryQuerySchema.parse(query), query)
+  for (const invalid of [
+    { from: "2026-02-30" },
+    { to: "2026-01-01T00:00:00Z" },
+    { from: "2026-10-02", to: "2026-10-01" },
+    { supplyId: "insumo" },
+    { order: "invalid" },
+  ])
+    assert.equal(associationHistoryQuerySchema.safeParse(invalid).success, false)
 })

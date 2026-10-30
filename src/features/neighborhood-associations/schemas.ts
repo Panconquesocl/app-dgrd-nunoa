@@ -19,9 +19,27 @@ export const listNeighborhoodAssociationsQuerySchema = z.object({
   q: z.string().trim().max(500, "La búsqueda es demasiado larga.").optional(),
   status: z.enum(["all", "active", "inactive"], "El estado no es válido.").default("all"),
 })
-export const associationHistoryQuerySchema = z.object({
-  order: z.enum(["asc", "desc"], "El orden no es válido.").default("desc"),
-})
+export const associationHistoryQuerySchema = z
+  .object({
+    order: z.enum(["asc", "desc"], "El orden no es válido.").default("desc"),
+    from: z.iso.date("La fecha desde no es válida.").optional(),
+    to: z.iso.date("La fecha hasta no es válida.").optional(),
+    supplyId: z.cuid("El insumo no es válido.").optional(),
+  })
+  .refine((value) => !value.from || !value.to || value.from <= value.to, {
+    message: "La fecha desde no puede ser posterior a la fecha hasta.",
+    path: ["to"],
+  })
+export type AssociationHistoryQuery = { order?: "asc" | "desc"; from?: string; to?: string; supplyId?: string }
+export type AssociationSupply = { id: string; type: string; unit: string }
+export type AssociationHistoryDelivery = {
+  id: string
+  folio: string
+  beneficiary: string
+  date: string
+  items: { quantity: number; supply: AssociationSupply }[]
+}
+export type AssociationSupplySummary = AssociationSupply & { quantity: number; deliveryCount: number }
 export const neighborhoodAssociationFormSchema = neighborhoodAssociationFieldsSchema.extend({
   number: z
     .string()
@@ -44,8 +62,13 @@ export type NeighborhoodAssociationListItem = {
 }
 export type NeighborhoodAssociationListResponse = { data: NeighborhoodAssociationListItem[] }
 export type NeighborhoodAssociationDetail = NeighborhoodAssociationListItem & {
+  /** Legacy aggregate kept for API compatibility; do not display across mixed units. */
   totalUnits: number
-  deliveries: { id: string; folio: string; beneficiary: string; date: string; items: { quantity: number }[] }[]
+  filteredDeliveryCount: number
+  availableSupplies: AssociationSupply[]
+  supplyBreakdown: AssociationSupplySummary[]
+  totalsByUnit: { unit: string; quantity: number }[]
+  deliveries: AssociationHistoryDelivery[]
 }
 export function toNeighborhoodAssociationPayload(
   values: NeighborhoodAssociationFormValues,

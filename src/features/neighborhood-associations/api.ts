@@ -1,4 +1,5 @@
 import type {
+  AssociationHistoryQuery,
   ListNeighborhoodAssociationsQuery,
   NeighborhoodAssociationDetail,
   NeighborhoodAssociationListItem,
@@ -44,8 +45,10 @@ export function listNeighborhoodAssociations(query: ListNeighborhoodAssociations
   if (query.status) params.set("status", query.status)
   return request<NeighborhoodAssociationListResponse>(`${BASE_URL}?${params}`)
 }
-export function getNeighborhoodAssociation(id: string, order: "asc" | "desc" = "desc") {
-  return request<NeighborhoodAssociationDetail>(`${BASE_URL}/${id}?order=${order}`)
+export function getNeighborhoodAssociation(id: string, query: AssociationHistoryQuery = {}) {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(query)) if (value) params.set(key, value)
+  return request<NeighborhoodAssociationDetail>(`${BASE_URL}/${id}?${params}`)
 }
 export function createNeighborhoodAssociation(payload: NeighborhoodAssociationPayload) {
   return request<NeighborhoodAssociationListItem>(BASE_URL, { method: "POST", body: JSON.stringify(payload) })

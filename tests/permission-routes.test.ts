@@ -8,6 +8,7 @@ import type { Resource, Action } from "../src/lib/permissions"
 
 let user: { id: string; role: string } | null = null
 let calls: string[] = []
+let lastArgs: unknown[] = []
 const file = (path: string) => pathToFileURL(resolve(path)).href
 mock.module(file("src/lib/session.ts"), {
   namedExports: {
@@ -27,7 +28,8 @@ for (const [resource, singular, plural] of entities) {
     namedExports: Object.fromEntries(
       names.map((name) => [
         name,
-        async () => {
+        async (...args: unknown[]) => {
+          lastArgs = args
           calls.push(name)
           return { id: "record-by-another-user" }
         },
@@ -99,5 +101,29 @@ test("handlers reales: autorización antes de leer datos o llamar a los servicio
         }
       }
     }
+  }
+})
+
+test("historial de junta: transmite filtros y rechaza consultas inválidas sin llamar al servicio", async () => {
+  const { GET } = await import("../src/app/api/neighborhood-associations/[id]/route")
+  user = { id: "operator", role: "user" }
+  const context = { params: Promise.resolve({ id: "junta" }) }
+  const response = await GET(
+    new NextRequest(
+      "http://localhost/api/neighborhood-associations/junta?from=2026-01-01&to=2026-01-31&order=asc&supplyId=clxxxxxxxxxxxxxxxxxxxxxxx",
+    ),
+    context,
+  )
+  assert.equal(response.status, 200)
+  assert.deepEqual(lastArgs, [
+    "junta",
+    { from: "2026-01-01", to: "2026-01-31", order: "asc", supplyId: "clxxxxxxxxxxxxxxxxxxxxxxx" },
+  ])
+  for (const query of ["from=2026-02-30", "from=2026-02-01&to=2026-01-01", "supplyId=invalid"]) {
+    calls = []
+    const invalid = await GET(new NextRequest(`http://localhost/api/neighborhood-associations/junta?${query}`), context)
+    assert.equal(invalid.status, 400)
+    assert.deepEqual(calls, [])
+    assert.ok((await invalid.json()).fieldErrors)
   }
 })

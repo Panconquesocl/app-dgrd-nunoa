@@ -2,6 +2,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import * as api from "./api"
 import { supplyKeys } from "./keys"
+import { neighborhoodAssociationKeys } from "@/features/neighborhood-associations/keys"
 import { deliveryKeys } from "@/features/deliveries/keys"
 import type { ListSuppliesQuery, SupplyPayload, SupplyPatch } from "./schemas"
 
@@ -26,6 +27,7 @@ function useInvalidateSupplies() {
       client.invalidateQueries({ queryKey: supplyKeys.all }),
       // El nombre se resuelve desde el catálogo, también en entregas históricas.
       client.invalidateQueries({ queryKey: deliveryKeys.all }),
+      client.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all }),
     ])
 }
 export function useCreateSupply() {
@@ -45,6 +47,7 @@ export function useDeleteSupply() {
       return Promise.all([
         client.invalidateQueries({ queryKey: supplyKeys.lists() }),
         client.invalidateQueries({ queryKey: deliveryKeys.all }),
+        client.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all }),
       ])
     },
   })

@@ -5,6 +5,7 @@ import { neighborhoodAssociationKeys } from "./keys"
 import { supplyKeys } from "@/features/supplies/keys"
 import { deliveryKeys } from "@/features/deliveries/keys"
 import type {
+  AssociationHistoryQuery,
   ListNeighborhoodAssociationsQuery,
   NeighborhoodAssociationPayload,
   NeighborhoodAssociationPatch,
@@ -17,10 +18,12 @@ export function useNeighborhoodAssociations(query: ListNeighborhoodAssociationsQ
     placeholderData: keepPreviousData,
   })
 }
-export function useNeighborhoodAssociation(id: string, order: "asc" | "desc" = "desc") {
+export function useNeighborhoodAssociation(id: string, query: AssociationHistoryQuery = {}) {
   return useQuery({
-    queryKey: neighborhoodAssociationKeys.history(id, order),
-    queryFn: () => api.getNeighborhoodAssociation(id, order),
+    queryKey: neighborhoodAssociationKeys.history(id, query),
+    queryFn: () => api.getNeighborhoodAssociation(id, query),
+    // Keep the current association visible during filtering, never a different one.
+    placeholderData: (previous) => (previous?.id === id ? previous : undefined),
     enabled: Boolean(id),
   })
 }

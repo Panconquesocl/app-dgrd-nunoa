@@ -83,8 +83,8 @@ confirmar cómo se aplica la regla a juntas vecinales y si distingue insumos.
 - **NTH:** mejora deseada posterior al flujo operativo principal.
 - **Por validar:** idea sugerida, sin compromiso de implementación.
 
-Los ítems siguientes están pendientes salvo B20–B21, implementados para los
-módulos existentes en esta rama; ver [permisos por rol](./permisos.md). Su
+Los ítems siguientes están pendientes salvo B20–B21 y B24–B25, implementados
+para los módulos existentes en esta rama; ver [permisos por rol](./permisos.md). Su
 aplicación a módulos futuros sigue siendo parte del alcance de cada módulo.
 Algunos ítems amplían funciones existentes. No se han asignado responsables, estimaciones ni fechas.
 
@@ -133,8 +133,8 @@ revisar arquitectura, rutas, folios, permisos e invalidación de datos relaciona
 | B18 | Alta      | Alertas por junta                              | Aplicar la regla de más de una entrega en seis meses, precisando su evaluación por junta y su relación con el responsable de la solicitud. El canal confirmado es la solicitud y el efecto es informativo; no agregar un aviso distinto en entregas sin definirlo.                        |
 | B22 | Alta      | Búsqueda por campos                            | Filtros independientes por beneficiario, evento y junta, combinables con fecha e insumo. Mostrar los filtros activos y permitir limpiarlos.                                                                                                                                               |
 | B23 | Media     | Búsqueda general                               | Entrada única para localizar beneficiarios, eventos y juntas. Definir si abarca un listado o todo el sistema; respetar permisos en los resultados.                                                                                                                                        |
-| B24 | Alta      | Insumos distribuidos por junta                 | Consultar junta, periodo e insumo; mostrar cantidades en su unidad y las entregas que componen el resultado. Aprovechar los filtros existentes.                                                                                                                                           |
-| B25 | Alta      | Desglose por junta                             | Ampliar el detalle actual con totales por insumo/unidad, beneficiarios, fechas y enlaces a entregas. Evitar sumar como una misma magnitud unidades incompatibles.                                                                                                                         |
+| B24 | Alta      | Insumos distribuidos por junta                 | Implementado: filtro por periodo e insumo, cantidades por unidad y entregas que componen el resultado. Ver [juntas vecinales](./juntas-vecinales.md#desglose-por-junta--b24-y-b25).                                                                                                       |
+| B25 | Alta      | Desglose por junta                             | Implementado: totales por insumo/unidad, beneficiario y fecha en cada entrega, enlaces al detalle y presentación adaptable a móvil. No se cuentan personas únicas.                                                                                                                        |
 
 El canal confirmado es un aviso informativo en la solicitud al crearla. Correos,
 un centro de notificaciones y avisos adicionales posteriores no están confirmados.

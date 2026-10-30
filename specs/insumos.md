@@ -37,7 +37,8 @@ y el estilo visual de entregas. No añade existencias, movimientos ni inventario
 - Acceso desde la barra lateral y pestañas de Ayudas primera respuesta.
 - Desde el detalle de una entrega, el nombre del insumo lleva a su historial.
 - Las mutaciones invalidan las cachés relacionadas: insumos actualiza las
-  opciones y datos de entregas; entregas actualiza conteos e historiales de insumos.
+  opciones y datos de entregas y los desgloses de juntas vecinales; entregas actualiza
+  conteos e historiales de insumos.
 
 ## Contrato
 

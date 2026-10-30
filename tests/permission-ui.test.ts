@@ -4,6 +4,11 @@ import { pathToFileURL } from "node:url"
 import { resolve } from "node:path"
 import { createElement } from "react"
 import { renderToStaticMarkup } from "react-dom/server"
+import type {
+  AssociationSupply,
+  AssociationSupplySummary,
+  AssociationHistoryDelivery,
+} from "../src/features/neighborhood-associations/schemas"
 import { PermissionsProvider } from "../src/providers/permissions"
 
 const file = (path: string) => pathToFileURL(resolve(path)).href
@@ -17,7 +22,11 @@ const association = {
   active: true,
   _count: { deliveries: 0 },
   totalUnits: 0,
-  deliveries: [],
+  filteredDeliveryCount: 0,
+  availableSupplies: [] as AssociationSupply[],
+  supplyBreakdown: [] as AssociationSupplySummary[],
+  totalsByUnit: [] as { unit: string; quantity: number }[],
+  deliveries: [] as AssociationHistoryDelivery[],
 }
 const strategicAction = {
   id: "accion",
@@ -141,4 +150,44 @@ test("listados poblados y detalles conservan consulta sin acciones administrativ
     assert.equal(action.includes("ADMIN_DIALOG"), current === "admin")
   }
   populated = false
+})
+
+test("desglose de junta muestra cantidades con unidad, filtros y enlaces a entregas", async () => {
+  const { AssociationDetailView } =
+    await import("../src/features/neighborhood-associations/components/association-detail-view")
+  const kg = { id: "kg", type: "Alimentos", unit: "kg" }
+  const box = { id: "box", type: "Alimentos", unit: "caja" }
+  association.availableSupplies = [kg, box]
+  association.supplyBreakdown = [
+    { ...kg, quantity: 5, deliveryCount: 1 },
+    { ...box, quantity: 2, deliveryCount: 1 },
+  ]
+  association.totalsByUnit = [
+    { unit: "kg", quantity: 5 },
+    { unit: "caja", quantity: 2 },
+  ]
+  association.filteredDeliveryCount = 1
+  association.deliveries = [
+    {
+      id: "entrega",
+      folio: "ENT-2026-001",
+      date: "2026-01-01",
+      beneficiary: "Vecina de prueba",
+      items: [
+        { supply: kg, quantity: 5 },
+        { supply: box, quantity: 2 },
+      ],
+    },
+  ]
+  const html = renderToStaticMarkup(
+    createElement(PermissionsProvider, { role: "user" }, createElement(AssociationDetailView, { id: "junta" })),
+  )
+  assert.ok(html.includes("Desglose por insumo"))
+  assert.ok(html.includes('type="date"'))
+  assert.ok(html.includes("Todos los insumos"))
+  assert.ok(html.includes("5 kg"))
+  assert.ok(html.includes("2 caja"))
+  assert.ok(html.includes('href="/entregas/entrega"'))
+  assert.ok(html.includes("Vecina de prueba"))
+  assert.ok(!html.includes("Unidades distribuidas"))
 })
