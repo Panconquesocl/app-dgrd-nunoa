@@ -66,8 +66,9 @@ PATCH  /api/neighborhood-associations/:id
 DELETE /api/neighborhood-associations/:id
 ```
 
-Alta: `{ number, name, active }`. PATCH parcial. Sesión obligatoria; permisos
-iguales a los otros módulos. Errores mediante `AppError`, con 409 por número
+Alta: `{ number, name, active }`. PATCH parcial. Sesión obligatoria: administradores y usuarios normales pueden consultar
+el catálogo y su historial; solo administradores pueden crear, editar,
+activar/desactivar o eliminar juntas. Ver [permisos por rol](./permisos.md). Errores mediante `AppError`, con 409 por número
 repetido o borrado de una junta en uso. Fechas de salida ISO.
 
 ## Migración

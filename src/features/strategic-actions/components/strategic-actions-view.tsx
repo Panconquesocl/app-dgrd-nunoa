@@ -1,5 +1,6 @@
 "use client"
 
+import { usePermission } from "@/providers/permissions"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -21,6 +22,7 @@ import { StrategicActionFormDialog } from "./strategic-action-form-dialog"
 const ALL_YEARS = "all"
 
 export function StrategicActionsView() {
+  const canManage = usePermission("strategic-actions", "update")
   const router = useRouter()
   const [search, setSearch] = useState("")
   const [year, setYear] = useState(ALL_YEARS)
@@ -58,10 +60,12 @@ export function StrategicActionsView() {
           </p>
         </div>
 
-        <Button onClick={() => setIsFormOpen(true)}>
-          <Plus className="size-4" />
-          Nueva acción
-        </Button>
+        {canManage && (
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="size-4" />
+            Nueva acción
+          </Button>
+        )}
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -114,7 +118,9 @@ export function StrategicActionsView() {
             description={
               hasFilters
                 ? "Prueba con otro término de búsqueda o cambia el año."
-                : "Crea la primera acción para empezar a registrar el Plan RRD."
+                : canManage
+                  ? "Crea la primera acción para empezar a registrar el Plan RRD."
+                  : "Un administrador debe registrar las acciones del Plan RRD."
             }
             action={
               hasFilters ? (
@@ -127,12 +133,12 @@ export function StrategicActionsView() {
                 >
                   Limpiar filtros
                 </Button>
-              ) : (
+              ) : canManage ? (
                 <Button onClick={() => setIsFormOpen(true)}>
                   <Plus className="size-4" />
                   Nueva acción
                 </Button>
-              )
+              ) : null
             }
           />
         ) : (
@@ -199,18 +205,20 @@ export function StrategicActionsView() {
                             Ver
                           </Link>
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Eliminar la acción N°${action.number} de ${action.year}`}
-                          className="text-muted-foreground hover:text-destructive"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            openDelete(action)
-                          }}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
+                        {canManage && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Eliminar la acción N°${action.number} de ${action.year}`}
+                            className="text-muted-foreground hover:text-destructive"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              openDelete(action)
+                            }}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -221,8 +229,10 @@ export function StrategicActionsView() {
         )}
       </div>
 
-      <StrategicActionFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} />
-      <DeleteActionDialog action={pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)} />
+      {canManage && <StrategicActionFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} />}
+      {canManage && (
+        <DeleteActionDialog action={pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)} />
+      )}
     </div>
   )
 }

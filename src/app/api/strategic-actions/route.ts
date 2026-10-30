@@ -1,12 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { toErrorResponse } from "@/lib/api-error"
-import { requireUser } from "@/lib/session"
+import { requirePermission } from "@/lib/session"
 import { createStrategicActionSchema, listStrategicActionsQuerySchema } from "@/features/strategic-actions/schemas"
 import { createStrategicAction, listStrategicActions } from "@/features/strategic-actions/service"
 
 export async function GET(request: NextRequest) {
   try {
-    await requireUser()
+    await requirePermission("strategic-actions", "read")
 
     const { searchParams } = request.nextUrl
     const query = listStrategicActionsQuerySchema.parse({
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await requireUser()
+    const user = await requirePermission("strategic-actions", "create")
     const input = createStrategicActionSchema.parse(await request.json())
 
     return NextResponse.json(await createStrategicAction(input, user.id), { status: 201 })

@@ -1,4 +1,5 @@
 "use client"
+import { usePermission } from "@/providers/permissions"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -11,6 +12,7 @@ import { AssociationFormDialog } from "./association-form-dialog"
 import { DeleteAssociationDialog } from "./delete-association-dialog"
 import "@/features/deliveries/components/deliveries.css"
 export function AssociationDetailView({ id }: { id: string }) {
+  const canManage = usePermission("neighborhood-associations", "update")
   const [order, setOrder] = useState<"asc" | "desc">("desc")
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -52,19 +54,23 @@ export function AssociationDetailView({ id }: { id: string }) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setEditing(true)}>
-            <Pencil size={15} />
-            Editar
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-destructive"
-            aria-label="Eliminar junta"
-            onClick={() => setDeleting(true)}
-          >
-            <Trash2 size={16} />
-          </Button>
+          {canManage && (
+            <Button variant="outline" onClick={() => setEditing(true)}>
+              <Pencil size={15} />
+              Editar
+            </Button>
+          )}
+          {canManage && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-destructive"
+              aria-label="Eliminar junta"
+              onClick={() => setDeleting(true)}
+            >
+              <Trash2 size={16} />
+            </Button>
+          )}
         </div>
       </div>
       <div className="delivery-stats">
@@ -124,8 +130,8 @@ export function AssociationDetailView({ id }: { id: string }) {
           </div>
         )}
       </section>
-      {editing && <AssociationFormDialog association={association} onClose={() => setEditing(false)} />}
-      {deleting && (
+      {canManage && editing && <AssociationFormDialog association={association} onClose={() => setEditing(false)} />}
+      {canManage && deleting && (
         <DeleteAssociationDialog
           association={association}
           onClose={() => setDeleting(false)}

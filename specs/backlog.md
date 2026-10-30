@@ -83,29 +83,30 @@ confirmar cómo se aplica la regla a juntas vecinales y si distingue insumos.
 - **NTH:** mejora deseada posterior al flujo operativo principal.
 - **Por validar:** idea sugerida, sin compromiso de implementación.
 
-Todos los ítems siguientes están pendientes en el alcance descrito, aunque algunos
-amplían funciones existentes. No se han asignado responsables, estimaciones ni fechas.
+Los ítems siguientes están pendientes salvo B20–B21, implementados para los
+módulos existentes en esta rama; ver [permisos por rol](./permisos.md). Su
+aplicación a módulos futuros sigue siendo parte del alcance de cada módulo.
+Algunos ítems amplían funciones existentes. No se han asignado responsables, estimaciones ni fechas.
 
 ## 4. Acceso y administración
 
-| ID  | Prioridad | Ítem                         | Alcance y criterio de aceptación propuesto                                                                                                                                        |
-| --- | --------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| B20 | Alta      | Permisos por rol en servidor | Aplicar la matriz de permisos a consultas y mutaciones de todos los módulos existentes y nuevos. Una operación sin permiso debe rechazarse aunque se invoque directamente la API. |
-| B21 | Alta      | Interfaz según rol           | Mostrar navegación y acciones permitidas; resolver el acceso a información relacionada desde una entrega. Ocultar botones no reemplaza la validación del servidor.                |
-| B08 | Media     | Administración de usuarios   | Listar, crear y editar cuentas; gestionar roles, activación y contraseñas. Proteger la propia cuenta y definir el tratamiento de usuarios con historial.                          |
-| B01 | Alta      | Catálogo de tipos de evento  | Listar, crear, editar y eliminar tipos; bloquear el borrado de tipos en uso. Administración exclusiva del rol administrador.                                                      |
+| ID  | Prioridad | Ítem                         | Alcance y criterio de aceptación propuesto                                                                                                                                           |
+| --- | --------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| B20 | Alta      | Permisos por rol en servidor | Implementado para los módulos actuales: política central y guards de lectura/escritura; 401 sin sesión y 403 sin permiso. Aplicar a futuros endpoints al implementarlos.             |
+| B21 | Alta      | Interfaz según rol           | Implementado para los módulos actuales: navegación, controles y diálogos según permisos; páginas restringidas protegidas en servidor. Aplicar a futuras pantallas al implementarlas. |
+| B08 | Media     | Administración de usuarios   | Listar, crear y editar cuentas; gestionar roles, activación y contraseñas. Proteger la propia cuenta y definir el tratamiento de usuarios con historial.                             |
+| B01 | Alta      | Catálogo de tipos de evento  | Listar, crear, editar y eliminar tipos; bloquear el borrado de tipos en uso. Administración exclusiva del rol administrador.                                                         |
 
-### Matriz de acceso
+### Matriz de acceso (actualizada con la definición de B20–B21)
 
-| Recurso                         | Usuario normal                                                                                | Administrador    |
-| ------------------------------- | --------------------------------------------------------------------------------------------- | ---------------- |
-| Entregas                        | Acceso y modificación de registros de todos; eliminación según B11                            | Gestión completa |
-| Actividades                     | Acceso y modificación de registros de todos; eliminación según B11                            | Gestión completa |
-| Materiales / insumos            | Acceso y modificación de registros de todos; confirmar equivalencia de términos y eliminación | Gestión completa |
-| Solicitudes y eventos           | Sin acceso directo; resolver lectura de datos relacionados desde entregas                     | Gestión completa |
-| Juntas y acciones estratégicas  | Sin gestión; definir lectura necesaria para los módulos permitidos                            | Gestión completa |
-| Evidencia, resumen y cronograma | Definir acceso según los módulos permitidos                                                   | Gestión completa |
-| Usuarios y tipos de evento      | Sin administración                                                                            | Gestión completa |
+| Recurso                        | Usuario normal                                                                 | Administrador    |
+| ------------------------------ | ------------------------------------------------------------------------------ | ---------------- |
+| Entregas e insumos             | CRUD de registros de todos los autores; restricciones de integridad actuales   | Gestión completa |
+| Juntas y acciones estratégicas | Listados, detalles e historiales; sin gestión                                  | Gestión completa |
+| Solicitudes y eventos          | Sin acceso al módulo; selector y datos mínimos relacionados desde entregas     | Gestión completa |
+| Resumen actual                 | Acceso al placeholder                                                          | Acceso completo  |
+| Actividades y evidencia        | CRUD de cualquier autor definido en la política; pendiente implementar módulos | Gestión completa |
+| Usuarios y tipos de evento     | Sin administración                                                             | Gestión completa |
 
 Esta matriz reemplaza la suposición anterior de que todos los usuarios
 autenticados comparten permisos sobre el dominio.
@@ -216,23 +217,23 @@ que permita posponer la consistencia de datos o el uso móvil.
 Las respuestas deben registrarse aquí antes de convertir los ítems afectados en
 especificaciones cerradas.
 
-| ID  | Tema                                   | Pregunta                                                                                                                                                                                                       | Afecta            |
-| --- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| Q01 | Alertas: parcialmente resuelto         | Confirmado: más de una entrega en seis meses. Precisar cuántas entregas previas disparan el aviso al crear la solicitud, fecha de referencia, extremos del periodo y aplicación por junta/insumo.              | B17–B18           |
-| Q02 | Efecto y canal: resuelto               | Solo informa y aparece en la solicitud al crearla, tras revisar las entregas anteriores del mismo responsable. No bloquea ni exige autorización.                                                               | B17–B18           |
-| Q04 | Roles: parcialmente resuelto           | Confirmado: administrador gestiona todo, incluidas juntas y acciones. Falta confirmar equivalencia materiales/insumos y lectura del usuario normal en evidencia, resumen, cronograma y catálogos relacionados. | B20–B21           |
-| Q05 | Propiedad: resuelto; lectura pendiente | Confirmado: el usuario normal modifica registros de todos dentro de sus módulos. Definir lectura de relaciones con solicitudes/eventos; eliminación según Q06. Incorporar logs posteriormente (B34).           | B20–B21, B11, B34 |
-| Q06 | Eliminación                            | ¿Se mantiene la cascada al borrar una solicitud o se bloquea el borrado/conserva historial?                                                                                                                    | B03–B04, B11      |
-| Q07 | Estados                                | ¿Qué permite marcar una solicitud como atendida o cancelada? ¿Se exige respuesta o entrega?                                                                                                                    | B03               |
-| Q08 | Folios                                 | ¿Eventos y solicitudes usarán correlativo anual? ¿Se permite reutilizar el último número si se elimina?                                                                                                        | B02–B03           |
-| Q09 | Fotografías                            | ¿Son opcionales, cuántas se permiten y qué deben documentar? ¿Se permite reemplazarlas o eliminarlas después?                                                                                                  | B26–B27           |
-| Q10 | Almacenamiento                         | ¿Dónde se guardarán fotos y evidencia en producción? ¿Qué tipos, tamaños y plazos de conservación se necesitan?                                                                                                | B06, B27          |
-| Q11 | Búsqueda                               | ¿La búsqueda general abarca todo el sistema o el listado actual? ¿Qué campos deben buscar coincidencias exactas o parciales?                                                                                   | B22–B23           |
-| Q12 | Datos iniciales                        | ¿Qué planillas se importarán y quién valida las juntas oficiales y la correspondencia histórica?                                                                                                               | B12, B19          |
-| Q13 | Actividades                            | ¿Se permiten fechas fuera del periodo de la acción estratégica?                                                                                                                                                | B05–B07           |
-| Q14 | Indicadores                            | ¿El resumen es global o filtrable por periodo? ¿Qué gráficos y decisiones operativas son prioritarios?                                                                                                         | B09, B30–B31      |
-| Q15 | Ubicación                              | ¿Se ubica el lugar de entrega o el domicilio del beneficiario? ¿Qué precisión y acceso se requieren?                                                                                                           | B32–B33           |
-| Q16 | Priorización                           | ¿Se confirma el orden propuesto? ¿Visualización y georreferenciación siguen siendo NTH?                                                                                                                        | Plan de ejecución |
+| ID  | Tema                                   | Pregunta                                                                                                                                                                                                                                                                                               | Afecta            |
+| --- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- |
+| Q01 | Alertas: parcialmente resuelto         | Confirmado: más de una entrega en seis meses. Precisar cuántas entregas previas disparan el aviso al crear la solicitud, fecha de referencia, extremos del periodo y aplicación por junta/insumo.                                                                                                      | B17–B18           |
+| Q02 | Efecto y canal: resuelto               | Solo informa y aparece en la solicitud al crearla, tras revisar las entregas anteriores del mismo responsable. No bloquea ni exige autorización.                                                                                                                                                       | B17–B18           |
+| Q04 | Roles: resuelto para módulos actuales  | Administrador gestiona todo. Usuario normal gestiona entregas e insumos de todos, consulta juntas y acciones, y conserva selector/datos mínimos de solicitudes desde entregas. Resumen actual permitido; actividades/evidencia quedan preparadas en la política.                                       | B20–B21           |
+| Q05 | Propiedad: resuelto; lectura pendiente | Confirmado: el usuario normal modifica registros de todos dentro de sus módulos. Lectura mínima y selector desde entregas autorizados; eliminación de entregas, actividades e insumos autorizada con restricciones actuales. Q06 sigue abierto para solicitudes. Incorporar logs posteriormente (B34). | B20–B21, B11, B34 |
+| Q06 | Eliminación                            | ¿Se mantiene la cascada al borrar una solicitud o se bloquea el borrado/conserva historial?                                                                                                                                                                                                            | B03–B04, B11      |
+| Q07 | Estados                                | ¿Qué permite marcar una solicitud como atendida o cancelada? ¿Se exige respuesta o entrega?                                                                                                                                                                                                            | B03               |
+| Q08 | Folios                                 | ¿Eventos y solicitudes usarán correlativo anual? ¿Se permite reutilizar el último número si se elimina?                                                                                                                                                                                                | B02–B03           |
+| Q09 | Fotografías                            | ¿Son opcionales, cuántas se permiten y qué deben documentar? ¿Se permite reemplazarlas o eliminarlas después?                                                                                                                                                                                          | B26–B27           |
+| Q10 | Almacenamiento                         | ¿Dónde se guardarán fotos y evidencia en producción? ¿Qué tipos, tamaños y plazos de conservación se necesitan?                                                                                                                                                                                        | B06, B27          |
+| Q11 | Búsqueda                               | ¿La búsqueda general abarca todo el sistema o el listado actual? ¿Qué campos deben buscar coincidencias exactas o parciales?                                                                                                                                                                           | B22–B23           |
+| Q12 | Datos iniciales                        | ¿Qué planillas se importarán y quién valida las juntas oficiales y la correspondencia histórica?                                                                                                                                                                                                       | B12, B19          |
+| Q13 | Actividades                            | ¿Se permiten fechas fuera del periodo de la acción estratégica?                                                                                                                                                                                                                                        | B05–B07           |
+| Q14 | Indicadores                            | ¿El resumen es global o filtrable por periodo? ¿Qué gráficos y decisiones operativas son prioritarios?                                                                                                                                                                                                 | B09, B30–B31      |
+| Q15 | Ubicación                              | ¿Se ubica el lugar de entrega o el domicilio del beneficiario? ¿Qué precisión y acceso se requieren?                                                                                                                                                                                                   | B32–B33           |
+| Q16 | Priorización                           | ¿Se confirma el orden propuesto? ¿Visualización y georreferenciación siguen siendo NTH?                                                                                                                                                                                                                | Plan de ejecución |
 
 ### Q03 — Identificación del responsable (crítica, revisar al final)
 

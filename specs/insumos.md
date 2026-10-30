@@ -24,8 +24,8 @@ y el estilo visual de entregas. No añade existencias, movimientos ni inventario
 - **Concurrencia:** edición y borrado bloquean la fila del insumo con `FOR UPDATE`.
   Las entregas adquieren `FOR SHARE` sobre sus insumos, en orden de id. Así el
   control de referencias no puede quedar obsoleto mientras se cambia la unidad.
-- **Permisos:** cualquier usuario autenticado puede gestionar el catálogo, como
-  en el spike y en el resto de módulos de dominio.
+- **Permisos:** administradores y usuarios normales pueden gestionar el catálogo de
+  cualquier autor. Ver [permisos por rol](./permisos.md).
 
 ## Interfaz
 

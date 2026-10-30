@@ -104,6 +104,16 @@ Autohospedada con Better Auth, **sólo correo + contraseña** (sin proveedores e
 - Rutas protegidas: `src/proxy.ts` hace el filtro por cookie y `src/app/(app)/layout.tsx` valida la sesión contra la base de datos.
 - Cerrar sesión (botón en la barra superior) revoca la sesión en la base de datos y redirige al login.
 
+## Permisos por rol
+
+Los usuarios normales gestionan entregas e insumos de cualquier autor y consultan
+juntas vecinales y acciones estratégicas. Solo los administradores gestionan estos
+dos catálogos y acceden a Solicitudes y Eventos. Los permisos se validan en el
+servidor y se reflejan en la interfaz. La política también contempla actividades y
+evidencia para sus futuros módulos.
+
+Consulta la [matriz de permisos y verificación](./specs/permisos.md).
+
 ## Convenciones
 
 - Usa `pnpm commit` (commitizen) en lugar de `git commit`. Husky valida formato con Prettier y mensajes con commitlint (conventional commits).

@@ -1,3 +1,5 @@
+import { authorizeUser } from "./authorization"
+import type { Resource, Action } from "./permissions"
 import { cache } from "react"
 import { headers } from "next/headers"
 import { auth } from "./auth"
@@ -25,4 +27,10 @@ export async function requireUser() {
   }
 
   return session.user
+}
+
+/** Comprueba permisos con el rol actual de la sesión, nunca con datos del cliente. */
+export async function requirePermission(resource: Resource, action: Action) {
+  const session = await getSession()
+  return authorizeUser(session?.user, resource, action)
 }

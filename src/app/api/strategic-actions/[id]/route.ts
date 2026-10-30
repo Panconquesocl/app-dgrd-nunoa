@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { toErrorResponse } from "@/lib/api-error"
-import { requireUser } from "@/lib/session"
+import { requirePermission } from "@/lib/session"
 import { updateStrategicActionSchema } from "@/features/strategic-actions/schemas"
 import { deleteStrategicAction, getStrategicAction, updateStrategicAction } from "@/features/strategic-actions/service"
 
@@ -8,7 +8,7 @@ type RouteContext = { params: Promise<{ id: string }> }
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {
   try {
-    await requireUser()
+    await requirePermission("strategic-actions", "read")
     const { id } = await params
 
     return NextResponse.json(await getStrategicAction(id))
@@ -19,7 +19,7 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   try {
-    await requireUser()
+    await requirePermission("strategic-actions", "update")
     const { id } = await params
     const input = updateStrategicActionSchema.parse(await request.json())
 
@@ -31,7 +31,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
 export async function DELETE(_request: NextRequest, { params }: RouteContext) {
   try {
-    await requireUser()
+    await requirePermission("strategic-actions", "delete")
     const { id } = await params
     await deleteStrategicAction(id)
 
