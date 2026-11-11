@@ -1,9 +1,10 @@
-import { getSession } from "@/lib/session"
-import { can } from "@/lib/permissions"
-import { AccessDenied } from "@/components/layout/access-denied"
-import { redirect } from "next/navigation"
 import type { Metadata } from "next"
-import { ModulePlaceholder } from "@/components/layout/module-placeholder"
+import { redirect } from "next/navigation"
+import { AccessDenied } from "@/components/layout/access-denied"
+import { AppTopbar } from "@/components/layout/app-topbar"
+import { RequestsView } from "@/features/requests/components/requests-view"
+import { can } from "@/lib/permissions"
+import { getSession } from "@/lib/session"
 
 export const metadata: Metadata = { title: "Solicitudes · DGRD Ñuñoa" }
 
@@ -12,9 +13,9 @@ export default async function SolicitudesPage() {
   if (!session) redirect("/login")
   if (!can(session.user.role, "requests", "read")) return <AccessDenied />
   return (
-    <ModulePlaceholder
-      crumbs={[{ label: "Emergencias" }, { label: "Solicitudes", current: true }]}
-      title="Solicitudes"
-    />
+    <>
+      <AppTopbar crumbs={[{ label: "Emergencias" }, { label: "Solicitudes", current: true }]} user={session.user} />
+      <RequestsView />
+    </>
   )
 }

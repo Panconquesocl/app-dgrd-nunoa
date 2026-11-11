@@ -1,7 +1,7 @@
 # Entregas (tabla `delivery`)
 
 Rama: `feat/entregas`. Implementación del módulo de entregas de
-`origin/spike/test-mockup`, adaptado al patrón de features de esta rama:
+el spike (tag `archive/spike-test-mockup`), adaptado al patrón de features de esta rama:
 `schemas` → `service` → rutas REST → `api`/`queries` → `components`.
 
 ## Alcance y decisiones

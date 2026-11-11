@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useDelivery } from "../queries"
 import { formatDate } from "@/lib/format"
+import { usePermission } from "@/providers/permissions"
 import { DeliveryFormDialog } from "./delivery-form-dialog"
 import { DeleteDeliveryDialog } from "./delete-delivery-dialog"
 import "./deliveries.css"
@@ -21,6 +22,8 @@ export function DeliveryDetailView({
   onDeleted?: () => void
 }) {
   const query = useDelivery(id)
+  // El usuario normal no accede a solicitudes: para él el folio queda como texto.
+  const canReadRequests = usePermission("requests", "read")
   const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -156,7 +159,13 @@ export function DeliveryDetailView({
             <h2>Solicitud asociada</h2>
             {delivery.request ? (
               <div className="delivery-related">
-                <strong>{delivery.request.folio}</strong>
+                {canReadRequests ? (
+                  <Link href={`/solicitudes/${delivery.request.id}`} className="font-semibold hover:underline">
+                    {delivery.request.folio}
+                  </Link>
+                ) : (
+                  <strong>{delivery.request.folio}</strong>
+                )}
                 <span>{delivery.request.channel}</span>
               </div>
             ) : (

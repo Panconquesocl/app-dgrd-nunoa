@@ -3,7 +3,7 @@
 Actualizado: 30 de octubre de 2026.
 
 Este documento consolida la revisión de `dev` frente a
-`origin/spike/test-mockup` y los requerimientos posteriores de la contraparte.
+el spike (archivado en el tag `archive/spike-test-mockup`) y los requerimientos posteriores de la contraparte.
 El objetivo es completar los flujos del spike e incorporar las nuevas necesidades
 operativas. Las prioridades y el orden de ejecución son propuestas, pendientes de
 validación. Los identificadores B01–B34 conservan la numeración de la conversación.
@@ -19,19 +19,21 @@ Según la revisión local de la rama `dev` en el commit `a572546`:
 | Entregas              | CRUD, insumos, filtros, indicadores, detalle y asociación a solicitud   | Integración contextual con solicitudes/eventos, fotos, alertas y mejoras móviles |
 | Insumos               | CRUD e historial de distribución                                        | Consulta específica por junta vecinal                                            |
 | Juntas vecinales      | CRUD, activación/desactivación e historial de entregas                  | Desglose ampliado por insumo y beneficiario                                      |
-| Solicitudes y eventos | Modelos de datos; pantallas placeholder                                 | Gestión completa                                                                 |
+| Solicitudes           | CRUD, folio, estados, filtros, evento opcional y entrega vinculada      | Creación con contexto desde eventos y alerta de recurrencia                      |
+| Eventos               | Modelo de datos; pantalla placeholder                                   | Gestión completa                                                                 |
 | Cronograma y resumen  | Base de datos disponible para construirlos                              | Vistas funcionales                                                               |
 | Administración        | Base de autenticación con roles                                         | Gestión visual de cuentas y tipos de evento                                      |
 
 La referencia a lo implementado no sustituye la validación funcional de cada
-entrega. Existe trabajo recuperable en `origin/feat/solicitudes`, que requiere
-adaptación a la arquitectura de `dev` antes de integrarlo.
+entrega. El trabajo de la rama `feat/solicitudes` (PR #8) se integró adaptado a
+la arquitectura actual; ver [solicitudes](./solicitudes.md).
 
 Documentación de los módulos existentes:
 
 - [Entregas](./entregas.md).
 - [Insumos](./insumos.md).
 - [Juntas vecinales](./juntas-vecinales.md).
+- [Solicitudes](./solicitudes.md).
 
 ## 2. Requerimientos confirmados y decisiones abiertas
 
@@ -116,13 +118,14 @@ autenticados comparten permisos sobre el dominio.
 | ID  | Prioridad | Ítem                               | Alcance y criterio de aceptación propuesto                                                                                                                                                                    |
 | --- | --------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | B02 | Alta      | Gestión de eventos                 | CRUD, folio, búsqueda, filtros y detalle con solicitudes y entregas relacionadas. Depende de B01 y de la definición de permisos.                                                                              |
-| B03 | Alta      | Gestión de solicitudes             | CRUD, folio, medio de ingreso, respuesta, estados y evento opcional. Revisar `origin/feat/solicitudes` y adaptar lo reutilizable.                                                                             |
+| B03 | Alta      | Gestión de solicitudes             | CRUD, folio, medio de ingreso, respuesta, estados y evento opcional. Implementado: ver [solicitudes](./solicitudes.md).                                                                                       |
 | B04 | Alta      | Flujo evento → solicitud → entrega | Crear registros con contexto precargado, navegar entre relaciones y actualizar las vistas afectadas. Sincronizar el evento de la entrega al cambiar el evento de su solicitud dentro de la misma transacción. |
 | B11 | Alta      | Reglas de eliminación              | Confirmar consecuencias y mostrarlas antes de eliminar. Actualmente borrar una solicitud elimina su entrega en cascada; no cambiar esta regla sin definición explícita.                                       |
 
-La rama de solicitudes usa Server Actions y rutas fuera de `(app)`, introduce
-rutas que se solapan con las actuales y genera folios UUID. Su integración requiere
-revisar arquitectura, rutas, folios, permisos e invalidación de datos relacionados.
+B03 se integró a partir de la rama de solicitudes, reemplazando sus Server
+Actions, rutas fuera de `(app)` y folios UUID por el patrón de módulos, permisos
+por rol, folio correlativo e invalidación de datos relacionados. B04 queda
+parcial: la sincronización del evento con la entrega ya está implementada.
 
 ## 6. Entregas, alertas, búsquedas y juntas vecinales
 

@@ -1,6 +1,6 @@
 # Insumos — catálogo sin stock
 
-Implementación del catálogo del spike `origin/spike/test-mockup` en `feat/entregas`.
+Implementación del catálogo del spike (tag `archive/spike-test-mockup`) en `feat/entregas`.
 Mantiene la arquitectura `schemas → service → rutas REST → api/queries → components`
 y el estilo visual de entregas. No añade existencias, movimientos ni inventario.
 
