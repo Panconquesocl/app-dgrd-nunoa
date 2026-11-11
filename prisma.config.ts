@@ -10,6 +10,10 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // Este archivo solo lo lee la CLI (migrate, generate, studio, seed); la app se
+    // conecta con DATABASE_URL desde src/lib/prisma.ts. Con un pooler como el de Neon,
+    // Migrate necesita la conexión directa. Se usa `||` y no `??` para que una
+    // DIRECT_URL vacía también caiga a DATABASE_URL.
+    url: process.env["DIRECT_URL"] || process.env["DATABASE_URL"],
   },
 })

@@ -1,9 +1,10 @@
 "use client"
 
+import { usePermission } from "@/providers/permissions"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { CalendarRange, FileText, Home, Package, Siren } from "lucide-react"
+import { Box, CalendarRange, FileText, Home, Package, Siren, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type NavItem = {
@@ -28,7 +29,11 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Ayudas primera respuesta",
-    items: [{ href: "/entregas", label: "Entregas", icon: Package }],
+    items: [
+      { href: "/entregas", label: "Entregas", icon: Package },
+      { href: "/insumos", label: "Insumos", icon: Box },
+      { href: "/juntas-vecinales", label: "Juntas vecinales", icon: Users },
+    ],
   },
   {
     label: "Plan RRD",
@@ -38,6 +43,7 @@ const NAV_GROUPS: NavGroup[] = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const canReadEmergencies = usePermission("requests", "read")
 
   return (
     <aside className="bg-ink hidden w-[248px] shrink-0 flex-col text-white lg:flex">
@@ -61,7 +67,7 @@ export function AppSidebar() {
       </Link>
 
       <nav className="flex flex-1 flex-col gap-6 px-3 py-4">
-        {NAV_GROUPS.map((group) => (
+        {NAV_GROUPS.filter((group) => group.label !== "Emergencias" || canReadEmergencies).map((group) => (
           <div key={group.label}>
             <p className="text-ink-muted px-2 pb-2 text-[10px] font-semibold tracking-[0.09em] uppercase">
               {group.label}

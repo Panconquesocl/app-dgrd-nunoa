@@ -28,14 +28,15 @@ model User {
   accounts      Account[]
 
   // Audit trail: records created by this user (createdBy).
-  eventTypes       EventType[]
-  supplies         Supply[]
-  events           Event[]
-  requests         Request[]
-  deliveries       Delivery[]
-  strategicActions StrategicAction[]
-  activities       Activity[]
-  evidence         Evidence[]
+  eventTypes               EventType[]
+  supplies                 Supply[]
+  neighborhoodAssociations NeighborhoodAssociation[]
+  events                   Event[]
+  requests                 Request[]
+  deliveries               Delivery[]
+  strategicActions         StrategicAction[]
+  activities               Activity[]
+  evidence                 Evidence[]
 
   @@unique([email])
   @@map("user")
@@ -120,7 +121,25 @@ model Supply {
   createdBy String
   creator   User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
 
+  // Índice único funcional lower(btrim(type)), lower(btrim(unit)) en SQL:
+  // supply_type_unit_normalized_key. Prisma no representa índices de expresión.
   @@map("supply")
+}
+
+model NeighborhoodAssociation {
+  id        String   @id @default(cuid())
+  number    Int      @unique
+  name      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deliveries Delivery[]
+
+  createdBy String
+  creator   User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@map("neighborhood_association")
 }
 
 // ───────────────────────────────────────────────────────────
@@ -180,15 +199,16 @@ model Request {
 }
 
 model Delivery {
-  id          String   @id @default(cuid())
-  folio       String   @unique
-  beneficiary String
-  jv          String // junta de vecinos
-  contact     String
-  address     String
-  date        DateTime
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                        String                  @id @default(cuid())
+  folio                     String                  @unique
+  beneficiary               String
+  neighborhoodAssociationId String
+  neighborhoodAssociation   NeighborhoodAssociation @relation(fields: [neighborhoodAssociationId], references: [id], onDelete: Restrict)
+  contact                   String?
+  address                   String
+  date                      DateTime
+  createdAt                 DateTime                @default(now())
+  updatedAt                 DateTime                @updatedAt
 
   // Relación 1 -> 0..1 con Solicitud: al eliminar la solicitud, se borra la
   // entrega en cascada. requestId es único (una entrega por solicitud).
@@ -206,6 +226,7 @@ model Delivery {
   creator   User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
 
   @@index([eventId])
+  @@index([neighborhoodAssociationId])
   @@map("delivery")
 }
 
