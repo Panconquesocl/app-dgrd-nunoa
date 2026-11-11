@@ -81,6 +81,10 @@ for (const [path, name] of [
 mock.module(file("src/components/layout/module-placeholder.tsx"), {
   namedExports: { ModulePlaceholder: () => createElement("div", null, "RESTRICTED_CONTENT") },
 })
+// Solicitudes ya no es placeholder: su vista cliente cuenta como contenido restringido.
+mock.module(file("src/features/requests/components/requests-view.tsx"), {
+  namedExports: { RequestsView: () => createElement("div", null, "RESTRICTED_CONTENT") },
+})
 
 test("navegación, estados vacíos y diálogos respetan ambos roles", async () => {
   const { AppSidebar } = await import("../src/components/layout/app-sidebar")

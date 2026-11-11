@@ -5,6 +5,8 @@ import * as api from "./api"
 import { deliveryKeys } from "./keys"
 import { neighborhoodAssociationKeys } from "@/features/neighborhood-associations/keys"
 import { supplyKeys } from "@/features/supplies/keys"
+// Listado y detalle de solicitudes muestran la entrega vinculada.
+import { requestKeys } from "@/features/requests/keys"
 import type { ListDeliveriesQuery, DeliveryPatch, DeliveryPayload } from "./schemas"
 
 /**
@@ -40,6 +42,7 @@ export function useCreateDelivery() {
       queryClient.invalidateQueries({ queryKey: supplyKeys.all })
       queryClient.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.options() })
+      queryClient.invalidateQueries({ queryKey: requestKeys.all })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.lists() })
     },
   })
@@ -54,6 +57,7 @@ export function useUpdateDelivery(id: string) {
       queryClient.invalidateQueries({ queryKey: supplyKeys.all })
       queryClient.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.options() })
+      queryClient.invalidateQueries({ queryKey: requestKeys.all })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.lists() })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.detail(id) })
     },
@@ -69,6 +73,7 @@ export function useDeleteDelivery() {
       queryClient.invalidateQueries({ queryKey: supplyKeys.all })
       queryClient.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.options() })
+      queryClient.invalidateQueries({ queryKey: requestKeys.all })
       queryClient.removeQueries({ queryKey: deliveryKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.lists() })
     },

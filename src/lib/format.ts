@@ -24,3 +24,16 @@ export function durationInDays(startIso: string, endIso: string) {
   const elapsed = new Date(endIso).getTime() - new Date(startIso).getTime()
   return Math.round(elapsed / MS_PER_DAY) + 1
 }
+
+const dateTimeFormatter = new Intl.DateTimeFormat("es-CL", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  // A diferencia de las fechas de calendario, createdAt/updatedAt son instantes
+  // reales: se muestran en la hora de Chile.
+  timeZone: "America/Santiago",
+})
+
+/** Instante (timestamp) en hora de Chile: "16 sept 2026, 13:56" */
+export function formatDateTime(isoDate: string) {
+  return dateTimeFormatter.format(new Date(isoDate))
+}

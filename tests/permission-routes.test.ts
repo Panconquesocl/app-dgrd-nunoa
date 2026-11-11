@@ -20,10 +20,17 @@ const entities = [
   ["supplies", "Supply", "Supplies"],
   ["neighborhood-associations", "NeighborhoodAssociation", "NeighborhoodAssociations"],
   ["strategic-actions", "StrategicAction", "StrategicActions"],
+  ["requests", "Request", "Requests"],
 ] as const
+// Recursos con un endpoint `/options` que alimenta los selectores del formulario.
+const optionsServices: Partial<Record<(typeof entities)[number][0], string>> = {
+  deliveries: "getDeliveryOptions",
+  requests: "getRequestOptions",
+}
 for (const [resource, singular, plural] of entities) {
   const names = [`create${singular}`, `update${singular}`, `delete${singular}`, `get${singular}`, `list${plural}`]
-  if (resource === "deliveries") names.push("getDeliveryOptions")
+  const optionsService = optionsServices[resource]
+  if (optionsService) names.push(optionsService)
   mock.module(file(`src/features/${resource}/service.ts`), {
     namedExports: Object.fromEntries(
       names.map((name) => [
@@ -42,14 +49,15 @@ test("handlers reales: autorización antes de leer datos o llamar a los servicio
   for (const [resource, singular, plural] of entities) {
     const collection = await import(file(`src/app/api/${resource}/route.ts`))
     const detail = await import(file(`src/app/api/${resource}/[id]/route.ts`))
-    const options = resource === "deliveries" ? await import(file("src/app/api/deliveries/options/route.ts")) : null
+    const optionsService = optionsServices[resource]
+    const options = optionsService ? await import(file(`src/app/api/${resource}/options/route.ts`)) : null
     const cases = [
       [collection, "GET", `list${plural}`],
       [collection, "POST", `create${singular}`],
       [detail, "GET", `get${singular}`],
       [detail, "PATCH", `update${singular}`],
       [detail, "DELETE", `delete${singular}`],
-      ...(options ? [[options, "GET", "getDeliveryOptions"]] : []),
+      ...(options && optionsService ? [[options, "GET", optionsService]] : []),
     ] as const
     for (const [handler, method, service] of cases) {
       for (const role of [null, "user", "admin", "unknown"]) {
@@ -60,9 +68,11 @@ test("handlers reales: autorización antes de leer datos o llamar a los servicio
           method,
           ...(method === "POST" || method === "PATCH" ? { body: "{" } : {}),
         })
+        // Solicitudes es solo de administración: el usuario normal ni siquiera las lee.
         const forbidden =
           role === "unknown" ||
-          (role === "user" && resource !== "deliveries" && resource !== "supplies" && method !== "GET")
+          (role === "user" &&
+            (resource === "requests" || (resource !== "deliveries" && resource !== "supplies" && method !== "GET")))
         if (role === null || forbidden) {
           const response = await handler[method](request, { params: Promise.resolve({ id: "other-authors-record" }) })
           assert.equal(response.status, role === null ? 401 : 403, `${role} ${method} ${resource}`)
@@ -78,6 +88,7 @@ test("handlers reales: autorización antes de leer datos o llamar a los servicio
               items: [{ supplyId: "cm12345678901234567890124", quantity: 1 }],
             },
             supplies: { type: "Agua", unit: "litro" },
+            requests: { channel: "Teléfono" },
             "neighborhood-associations": { number: 1, name: "Junta", active: true },
             "strategic-actions": {
               number: 1,
