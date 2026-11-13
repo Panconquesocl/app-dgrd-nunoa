@@ -1,0 +1,5 @@
+{
+  "permissions": {
+    "allow": ["mcp__clic__update_task", "mcp__clic__update_feature", "mcp__clic__create_task"]
+  }
+}
