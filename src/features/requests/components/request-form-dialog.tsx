@@ -20,7 +20,7 @@ import {
   type RequestListItem,
 } from "../schemas"
 
-const FIELDS = ["channel", "response", "status", "eventId"] as const
+const FIELDS = ["channel", "description", "response", "status", "eventId"] as const
 
 export function RequestFormDialog({
   request,
@@ -36,6 +36,7 @@ export function RequestFormDialog({
     resolver: zodResolver(requestFormSchema),
     defaultValues: {
       channel: request?.channel ?? "",
+      description: request?.description ?? "",
       response: request?.response ?? "",
       status: request?.status ?? "pending",
       eventId: request?.eventId ?? "",
@@ -63,6 +64,7 @@ export function RequestFormDialog({
       const saved = await mutation.mutateAsync({
         channel: values.channel,
         status: values.status,
+        description: values.description || null,
         response: values.response || null,
         eventId: values.eventId || null,
       })
@@ -104,7 +106,7 @@ export function RequestFormDialog({
           </DialogTitle>
           <DialogDescription>
             {request
-              ? "Actualiza el medio, el estado, la respuesta o el evento asociado."
+              ? "Actualiza los datos, el estado o el evento asociado."
               : "El folio, la fecha y el usuario se registran automáticamente."}
           </DialogDescription>
         </DialogHeader>
@@ -135,6 +137,20 @@ export function RequestFormDialog({
               />
               <FieldError id={`${id}-channel-error`} errors={[errors.channel]} />
             </Field>
+            <Field data-invalid={Boolean(errors.description)}>
+              <FieldLabel htmlFor={`${id}-description`}>
+                Descripción <span className="text-muted-foreground font-normal">Opcional</span>
+              </FieldLabel>
+              <Textarea
+                id={`${id}-description`}
+                rows={4}
+                placeholder="Describe lo solicitado."
+                {...form.register("description")}
+                aria-invalid={Boolean(errors.description)}
+                aria-describedby={`${id}-description-error`}
+              />
+              <FieldError id={`${id}-description-error`} errors={[errors.description]} />
+            </Field>
             <Field data-invalid={Boolean(errors.status)}>
               <FieldLabel htmlFor={`${id}-status`}>Estado</FieldLabel>
               <select
@@ -142,7 +158,7 @@ export function RequestFormDialog({
                 className="delivery-select"
                 {...form.register("status")}
                 aria-invalid={Boolean(errors.status)}
-                aria-describedby={`${id}-status-error`}
+                aria-describedby={`${id}-status-hint ${id}-status-error`}
               >
                 {REQUEST_STATUSES.map((value) => (
                   <option key={value} value={value}>
@@ -150,6 +166,10 @@ export function RequestFormDialog({
                   </option>
                 ))}
               </select>
+              <FieldDescription id={`${id}-status-hint`}>
+                Atendida requiere una respuesta o una entrega vinculada. Registrar una entrega no cambia el estado
+                automáticamente.
+              </FieldDescription>
               <FieldError id={`${id}-status-error`} errors={[errors.status]} />
             </Field>
             <Field data-invalid={Boolean(errors.eventId)}>

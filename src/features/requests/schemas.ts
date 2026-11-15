@@ -16,6 +16,13 @@ export const requestFieldsSchema = z.object({
     .trim()
     .min(1, "Indica el medio o fuente de la solicitud.")
     .max(200, "El medio no puede superar los 200 caracteres."),
+  description: z
+    .string()
+    .trim()
+    .max(2000, "La descripción no puede superar los 2000 caracteres.")
+    .nullable()
+    .optional()
+    .transform((value) => value || null),
   response: z
     .string()
     .trim()
@@ -37,6 +44,7 @@ export const updateRequestSchema = requestFieldsSchema.partial()
 /** Valores del formulario: los selects y textareas siempre entregan strings. */
 export const requestFormSchema = z.object({
   channel: requestFieldsSchema.shape.channel,
+  description: z.string().trim().max(2000, "La descripción no puede superar los 2000 caracteres."),
   response: z.string().trim().max(2000, "La respuesta no puede superar los 2000 caracteres."),
   status,
   eventId: z.union([z.literal(""), z.cuid("Selecciona un evento válido.")]),
@@ -50,7 +58,7 @@ export const listRequestsQuerySchema = z.object({
 
 /**
  * DELETE /api/requests/[id]?expectedDeliveryId=… — la entrega que el usuario vio
- * al confirmar ("" = ninguna). Si cambió, el borrado en cascada se rechaza con 409.
+ * al confirmar ("" = ninguna). Si cambió, se rechaza con 409. Una entrega vinculada siempre bloquea el borrado.
  */
 export const deleteRequestQuerySchema = z.object({
   expectedDeliveryId: z.union([z.literal(""), z.cuid("La entrega esperada no es válida.")]).optional(),
@@ -69,6 +77,7 @@ export type RequestListItem = {
   id: string
   folio: string
   channel: string
+  description: string | null
   response: string | null
   status: RequestStatus
   eventId: string | null

@@ -14,6 +14,7 @@ const eventId = "cm12345678901234567890123"
 test("alta: normaliza textos, estado por defecto y evento opcional", () => {
   assert.deepEqual(createRequestSchema.parse({ channel: "  Teléfono ", response: "  " }), {
     channel: "Teléfono",
+    description: null,
     response: null,
     status: "pending",
     eventId: null,
@@ -35,9 +36,16 @@ test("PATCH conserva omitidos y distingue desvincular el evento", () => {
 })
 
 test("el formulario entrega valores que el servidor acepta", () => {
-  const values = requestFormSchema.parse({ channel: "Presencial", response: "", status: "pending", eventId: "" })
+  const values = requestFormSchema.parse({
+    description: "",
+    channel: "Presencial",
+    response: "",
+    status: "pending",
+    eventId: "",
+  })
   assert.deepEqual(createRequestSchema.parse(values), {
     channel: "Presencial",
+    description: null,
     response: null,
     status: "pending",
     eventId: null,
@@ -63,4 +71,11 @@ test("folio correlativo por año, comparando sufijos como números", () => {
   assert.equal(nextRequestFolio(["SOL-2026-999", "SOL-2026-1000"], 2026), "SOL-2026-1001")
   // Folios heredados (UUID de la rama original) no rompen el correlativo.
   assert.equal(nextRequestFolio(["SOL-6f1c2b9e-uuid", "SOL-2026-abc"], 2026), "SOL-2026-001")
+})
+
+test("descripción opcional: normalización, límite y edición parcial", () => {
+  assert.equal(createRequestSchema.parse({ channel: "Correo", description: "  Ayuda  " }).description, "Ayuda")
+  assert.equal(createRequestSchema.safeParse({ channel: "Correo", description: "x".repeat(2001) }).success, false)
+  assert.equal("description" in updateRequestSchema.parse({ channel: "Correo" }), false)
+  assert.equal(updateRequestSchema.parse({ description: " " }).description, null)
 })

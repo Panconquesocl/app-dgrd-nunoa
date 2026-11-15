@@ -58,7 +58,7 @@ export function RequestsView() {
           />
           <Input
             className="w-full pl-9 sm:w-[280px]"
-            placeholder="Buscar por folio, medio o respuesta…"
+            placeholder="Buscar por folio, medio, descripción o respuesta…"
             aria-label="Buscar solicitudes"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
