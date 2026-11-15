@@ -16,8 +16,8 @@ function useInvalidateEvents() {
   const client = useQueryClient()
   return () =>
     Promise.all(
-      ["events", "requests", "deliveries", "event-types", "supplies", "neighborhood-associations"].map((key) =>
-        client.invalidateQueries({ queryKey: [key] }),
+      ["summary", "events", "requests", "deliveries", "event-types", "supplies", "neighborhood-associations"].map(
+        (key) => client.invalidateQueries({ queryKey: [key] }),
       ),
     )
 }

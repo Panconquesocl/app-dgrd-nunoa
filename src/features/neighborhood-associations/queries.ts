@@ -31,6 +31,7 @@ function useInvalidateNeighborhoodAssociations() {
   const client = useQueryClient()
   return () =>
     Promise.all([
+      client.invalidateQueries({ queryKey: ["summary"] }),
       client.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all }),
       // El nombre se resuelve desde el catálogo, también en entregas históricas.
       client.invalidateQueries({ queryKey: deliveryKeys.all }),
@@ -56,6 +57,7 @@ export function useDeleteNeighborhoodAssociation() {
   return useMutation({
     mutationFn: api.deleteNeighborhoodAssociation,
     onSuccess: (_data, id) => {
+      client.invalidateQueries({ queryKey: ["summary"] })
       client.removeQueries({ queryKey: neighborhoodAssociationKeys.detail(id) })
       return Promise.all([
         client.invalidateQueries({ queryKey: neighborhoodAssociationKeys.lists() }),

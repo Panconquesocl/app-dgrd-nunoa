@@ -41,6 +41,7 @@ export function useCreateStrategicAction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: strategicActionKeys.lists() })
       queryClient.invalidateQueries({ queryKey: ["activities"] })
+      queryClient.invalidateQueries({ queryKey: ["summary"] })
     },
   })
 }
@@ -53,6 +54,7 @@ export function useUpdateStrategicAction(id: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: strategicActionKeys.lists() })
       queryClient.invalidateQueries({ queryKey: ["activities"] })
+      queryClient.invalidateQueries({ queryKey: ["summary"] })
       queryClient.invalidateQueries({ queryKey: strategicActionKeys.detail(id) })
     },
   })
@@ -67,6 +69,7 @@ export function useDeleteStrategicAction() {
       queryClient.removeQueries({ queryKey: strategicActionKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: strategicActionKeys.lists() })
       queryClient.invalidateQueries({ queryKey: ["activities"] })
+      queryClient.invalidateQueries({ queryKey: ["summary"] })
     },
   })
 }

@@ -160,6 +160,8 @@ aunque pueden compartir infraestructura de almacenamiento.
 
 ## 8. Plan RRD y vistas generales
 
+B09 y la página inicial de B10 están implementados en la rama actual; ver [Resumen anual](./resumen.md).
+
 | ID  | Prioridad | Ítem                        | Alcance y criterio de aceptación propuesto                                                                                                                          |
 | --- | --------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | B05 | Alta      | Gestión de actividades      | Crear, editar, eliminar y consultar actividades de una acción: fecha, objetivo, dirección y participantes. Definir si pueden quedar fuera del periodo de su acción. |
