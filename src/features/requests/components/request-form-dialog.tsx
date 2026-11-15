@@ -28,7 +28,9 @@ export function RequestFormDialog({
   request,
   onClose,
   onSaved,
+  initialEventId,
 }: {
+  initialEventId?: string
   request?: RequestListItem | RequestDetail
   onClose: () => void
   onSaved?: (saved: RequestListItem) => void
@@ -41,7 +43,7 @@ export function RequestFormDialog({
       description: request?.description ?? "",
       response: request?.response ?? "",
       status: request?.status ?? "pending",
-      eventId: request?.eventId ?? "",
+      eventId: request?.eventId ?? initialEventId ?? "",
     },
   })
   const options = useRequestOptions()

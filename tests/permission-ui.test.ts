@@ -86,6 +86,14 @@ mock.module(file("src/features/requests/components/requests-view.tsx"), {
   namedExports: { RequestsView: () => createElement("div", null, "RESTRICTED_CONTENT") },
 })
 
+mock.module(file("src/features/events/components/events-view.tsx"), {
+  namedExports: { EventsView: () => createElement("div", null, "RESTRICTED_CONTENT") },
+})
+
+mock.module(file("src/features/events/components/event-detail-view.tsx"), {
+  namedExports: { EventDetailView: () => createElement("div", null, "RESTRICTED_CONTENT") },
+})
+
 test("navegación, estados vacíos y diálogos respetan ambos roles", async () => {
   const { AppSidebar } = await import("../src/components/layout/app-sidebar")
   const { AssociationsView } = await import("../src/features/neighborhood-associations/components/associations-view")
@@ -112,16 +120,20 @@ test("navegación, estados vacíos y diálogos respetan ambos roles", async () =
 })
 
 test("acceso directo a solicitudes/eventos no monta contenido restringido", async () => {
-  for (const modulePath of ["../src/app/(app)/solicitudes/page", "../src/app/(app)/eventos/page"]) {
+  for (const modulePath of [
+    "../src/app/(app)/solicitudes/page",
+    "../src/app/(app)/eventos/page",
+    "../src/app/(app)/eventos/[id]/page",
+  ]) {
     const { default: Page } = await import(modulePath)
     for (const current of ["user", "admin"]) {
       role = current
-      const html = renderToStaticMarkup(await Page())
+      const html = renderToStaticMarkup(await Page({ params: Promise.resolve({ id: "event" }) }))
       assert.equal(html.includes("RESTRICTED_CONTENT"), current === "admin")
       assert.equal(html.includes("Sin permisos"), current === "user")
     }
     role = null
-    await assert.rejects(Page(), /redirect/)
+    await assert.rejects(Page({ params: Promise.resolve({ id: "event" }) }), /redirect/)
   }
 })
 
