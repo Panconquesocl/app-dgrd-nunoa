@@ -106,6 +106,7 @@ model EventType {
   createdBy String
   creator   User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
 
+  // Índice funcional único lower(btrim(name)) definido en SQL.
   @@map("event_type")
 }
 
