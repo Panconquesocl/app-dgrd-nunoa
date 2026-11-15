@@ -1,46 +1,120 @@
 "use client"
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Eye, FileText, Pencil, Plus, Search, Trash2 } from "lucide-react"
+import { useRef, useState, useSyncExternalStore } from "react"
+import { Popover } from "radix-ui"
+import { Check, Eye, FileText, ListFilter, Pencil, Plus, Rows3, Search, Table2, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useDebouncedValue } from "@/hooks/use-debounced-value"
-import { formatDateTime } from "@/lib/format"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { usePermission } from "@/providers/permissions"
 import { useRequests } from "../queries"
 import { REQUEST_STATUSES, REQUEST_STATUS_LABELS, type RequestListItem, type RequestStatus } from "../schemas"
 import { RequestFormDialog } from "./request-form-dialog"
 import { DeleteRequestDialog } from "./delete-request-dialog"
 import { RequestStatusBadge } from "./request-status-badge"
+import { RequestDetailView } from "./request-detail-view"
 import "@/features/deliveries/components/deliveries.css"
+import "./requests.css"
 
-type EventFilter = "all" | "with" | "without"
+const VIEW_KEY = "dgrd_sol_vista"
+function subscribeView(callback: () => void) {
+  window.addEventListener("storage", callback)
+  window.addEventListener("request-view", callback)
+  return () => {
+    window.removeEventListener("storage", callback)
+    window.removeEventListener("request-view", callback)
+  }
+}
+function readView() {
+  try {
+    return localStorage.getItem(VIEW_KEY) === "compacta"
+  } catch {
+    return false
+  }
+}
+const serverView = () => false
+const createdDate = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Santiago",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+})
+const displayDate = new Intl.DateTimeFormat("es-CL", {
+  timeZone: "America/Santiago",
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+})
 
 export function RequestsView() {
   const [search, setSearch] = useState("")
-  const [event, setEvent] = useState<EventFilter>("all")
+  const [event, setEvent] = useState<"all" | "with" | "without">("all")
   const [status, setStatus] = useState<RequestStatus | "">("")
+  const [from, setFrom] = useState("")
+  const [to, setTo] = useState("")
+  const [order, setOrder] = useState("desc")
+  const compact = useSyncExternalStore(subscribeView, readView, serverView)
+  const [temporaryView, setTemporaryView] = useState<boolean | null>(null)
+  const isCompact = temporaryView ?? compact
+  function setView(value: boolean) {
+    setTemporaryView(value)
+    try {
+      localStorage.setItem(VIEW_KEY, value ? "compacta" : "detallada")
+      window.dispatchEvent(new Event("request-view"))
+    } catch {
+      /* La vista funciona también sin almacenamiento. */
+    }
+  }
   const [form, setForm] = useState<{ request?: RequestListItem } | null>(null)
   const [deleting, setDeleting] = useState<RequestListItem | null>(null)
+  const [selected, setSelected] = useState<RequestListItem | null>(null)
+  const opener = useRef<HTMLElement | null>(null)
   const canCreate = usePermission("requests", "create")
   const canUpdate = usePermission("requests", "update")
   const canDelete = usePermission("requests", "delete")
-  const query = useRequests({ q: useDebouncedValue(search) || undefined, event, status: status || undefined })
-  const router = useRouter()
-  const hasFilters = Boolean(search || event !== "all" || status)
+  // El endpoint devuelve el listado completo; filtros y contadores comparten la misma instantánea.
+  const query = useRequests()
+  const data = query.data?.data ?? []
+  const rows = data
+    .filter((request) => {
+      const day = createdDate.format(new Date(request.createdAt))
+      return (
+        (!status || request.status === status) &&
+        (event === "all" || (event === "with" ? Boolean(request.eventId) : !request.eventId)) &&
+        (!from || day >= from) &&
+        (!to || day <= to) &&
+        [request.folio, request.channel, request.description, request.response]
+          .join(" ")
+          .toLocaleLowerCase("es")
+          .includes(search.trim().toLocaleLowerCase("es"))
+      )
+    })
+    .sort((a, b) => (a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id)) * (order === "asc" ? 1 : -1))
+  const advancedCount =
+    Number(event !== "all") +
+    Number(status === "attended" || status === "cancelled") +
+    Number(Boolean(from || to)) +
+    Number(order !== "desc")
+  const hasFilters = Boolean(search || event !== "all" || status || from || to || order !== "desc")
   function clear() {
     setSearch("")
     setEvent("all")
     setStatus("")
+    setFrom("")
+    setTo("")
+    setOrder("desc")
+  }
+  function openDetail(request: RequestListItem, target: HTMLElement) {
+    opener.current = target
+    setSelected(request)
   }
   return (
-    <div className="deliveries delivery-page">
+    <div className="requests deliveries delivery-page">
       <div className="delivery-page-head">
         <div>
+          <span className="requests-eyebrow">Emergencias</span>
           <h1>Solicitudes</h1>
-          <p>Solicitudes de ayuda recibidas, con su medio de ingreso, respuesta y evento asociado.</p>
+          <p>Registro y seguimiento de solicitudes recibidas por distintos medios.</p>
         </div>
         {canCreate && (
           <Button onClick={() => setForm({})}>
@@ -49,50 +123,117 @@ export function RequestsView() {
           </Button>
         )}
       </div>
-      <div className="delivery-toolbar">
-        <div className="relative">
-          <Search
-            size={15}
-            aria-hidden="true"
-            className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2"
-          />
+      <div className="requests-toolbar">
+        <div className="requests-segment" aria-label="Estado de solicitudes">
+          <button aria-pressed={!status} onClick={() => setStatus("")}>
+            Todas <span>{query.isPending ? "—" : data.length}</span>
+          </button>
+          <button aria-pressed={status === "pending"} onClick={() => setStatus("pending")}>
+            Pendientes <span>{query.isPending ? "—" : data.filter((row) => row.status === "pending").length}</span>
+          </button>
+        </div>
+        <div className="requests-toolbar-spacer" />
+        <div className="requests-segment" aria-label="Vista de solicitudes">
+          <button aria-pressed={!isCompact} onClick={() => setView(false)}>
+            <Table2 size={14} />
+            Detallada
+          </button>
+          <button aria-pressed={isCompact} onClick={() => setView(true)}>
+            <Rows3 size={14} />
+            Compacta
+          </button>
+        </div>
+        <Popover.Root>
+          <Popover.Trigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="requests-filter-trigger"
+              aria-label={`Filtros avanzados${advancedCount ? ` (${advancedCount} activos)` : ""}`}
+            >
+              <ListFilter size={17} />
+              {advancedCount > 0 && <span>{advancedCount}</span>}
+            </Button>
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Content className="requests-filter-menu" align="end" sideOffset={8} collisionPadding={16}>
+              <h2>Filtros avanzados</h2>
+              <fieldset className="requests-filter-options">
+                <legend>Estado</legend>
+                {(["", ...REQUEST_STATUSES] as const).map((value) => (
+                  <button key={value} aria-pressed={status === value} onClick={() => setStatus(value)}>
+                    <span>{value ? REQUEST_STATUS_LABELS[value] : "Todas"}</span>
+                    {status === value && <Check size={15} />}
+                  </button>
+                ))}
+              </fieldset>
+              <fieldset className="requests-filter-options">
+                <legend>Evento asociado</legend>
+                {(
+                  [
+                    ["all", "Todas"],
+                    ["with", "Con evento"],
+                    ["without", "Sin evento"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button key={value} aria-pressed={event === value} onClick={() => setEvent(value)}>
+                    <span>{label}</span>
+                    {event === value && <Check size={15} />}
+                  </button>
+                ))}
+              </fieldset>
+              <div className="requests-filter-dates">
+                <label>
+                  Desde
+                  <input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} />
+                </label>
+                <label>
+                  Hasta
+                  <input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} />
+                </label>
+              </div>
+              <fieldset className="requests-filter-options">
+                <legend>Ordenar por fecha</legend>
+                {(
+                  [
+                    ["desc", "Más recientes primero"],
+                    ["asc", "Más antiguas primero"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button key={value} aria-pressed={order === value} onClick={() => setOrder(value)}>
+                    <span>{label}</span>
+                    {order === value && <Check size={15} />}
+                  </button>
+                ))}
+              </fieldset>
+              <button className="requests-clear" disabled={!hasFilters} onClick={clear}>
+                Limpiar filtros
+              </button>
+            </Popover.Content>
+          </Popover.Portal>
+        </Popover.Root>
+        <div className="requests-search">
+          <Search size={16} aria-hidden="true" />
           <Input
-            className="w-full pl-9 sm:w-[280px]"
-            placeholder="Buscar por folio, medio, descripción o respuesta…"
-            aria-label="Buscar solicitudes"
+            placeholder="Buscar por folio, medio o respuesta…"
+            aria-label="Buscar por folio, medio, descripción o respuesta"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <select
-          className="delivery-select w-auto"
-          aria-label="Filtrar por evento"
-          value={event}
-          onChange={(e) => setEvent(e.target.value as EventFilter)}
-        >
-          <option value="all">Todas las solicitudes</option>
-          <option value="with">Con evento</option>
-          <option value="without">Sin evento</option>
-        </select>
-        <select
-          className="delivery-select w-auto"
-          aria-label="Filtrar por estado"
-          value={status}
-          onChange={(e) => setStatus(e.target.value as RequestStatus | "")}
-        >
-          <option value="">Todos los estados</option>
-          {REQUEST_STATUSES.map((value) => (
-            <option key={value} value={value}>
-              {REQUEST_STATUS_LABELS[value]}
-            </option>
-          ))}
-        </select>
-        {hasFilters && (
-          <Button variant="ghost" onClick={clear}>
-            Limpiar filtros
-          </Button>
-        )}
       </div>
+      {hasFilters && (
+        <div className="requests-filter-summary">
+          <span>
+            {REQUEST_STATUS_LABELS[status as RequestStatus] ?? "Todos los estados"}
+            {event !== "all" && ` · ${event === "with" ? "Con evento" : "Sin evento"}`}
+            {from && ` · Desde ${from}`}
+            {to && ` · Hasta ${to}`}
+            {order === "asc" && " · Más antiguas primero"}
+          </span>
+          <button onClick={clear}>Limpiar filtros</button>
+        </div>
+      )}
       <div className="delivery-panel" aria-busy={query.isFetching}>
         {query.isError ? (
           <div className="delivery-empty" role="alert">
@@ -108,82 +249,101 @@ export function RequestsView() {
               <Skeleton key={index} className="h-12 w-full" />
             ))}
           </div>
-        ) : !query.data?.data.length ? (
+        ) : !rows.length ? (
           <div className="delivery-empty">
             <FileText size={28} />
             <h2>No hay solicitudes</h2>
             <p>
-              {hasFilters ? "No se encontraron solicitudes con esos filtros." : "Aún no se han registrado solicitudes."}
+              {hasFilters
+                ? "No se encontraron solicitudes con los filtros aplicados."
+                : "Aún no se han registrado solicitudes de emergencia."}
             </p>
-            {(hasFilters || canCreate) && (
-              <Button variant="outline" onClick={() => (hasFilters ? clear() : setForm({}))}>
-                {hasFilters ? "Limpiar filtros" : "Nueva solicitud"}
+            {canCreate && (
+              <Button onClick={() => setForm({})}>
+                <Plus size={16} />
+                Nueva solicitud
               </Button>
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="delivery-table min-w-[820px]">
+          <div className="requests-table-scroll">
+            <table className={`delivery-table requests-table ${isCompact ? "requests-table-compact" : ""}`}>
               <thead>
                 <tr>
                   <th>Folio</th>
-                  <th>Creada</th>
-                  <th>Medio/fuente</th>
+                  {!isCompact && <th>Medio / fuente</th>}
+                  <th>Lo solicitado</th>
+                  {!isCompact && <th>Respuesta</th>}
                   <th>Estado</th>
-                  <th>Evento</th>
-                  <th>Entrega</th>
+                  {!isCompact && (
+                    <>
+                      <th>Evento</th>
+                      <th>Creada</th>
+                    </>
+                  )}
                   <th>
                     <span className="sr-only">Acciones</span>
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {query.data.data.map((request) => (
+                {rows.map((request) => (
                   <tr
                     key={request.id}
-                    className="cursor-pointer"
-                    onClick={() => router.push(`/solicitudes/${request.id}`)}
+                    onClick={(e) => {
+                      const button = e.currentTarget.querySelector<HTMLButtonElement>("button")
+                      if (button) openDetail(request, button)
+                    }}
                   >
-                    <td className="font-mono text-xs font-semibold whitespace-nowrap">
-                      <Link
-                        href={`/solicitudes/${request.id}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="hover:underline"
+                    <td>
+                      <button
+                        className="requests-folio"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          openDetail(request, e.currentTarget)
+                        }}
                       >
                         {request.folio}
-                      </Link>
+                      </button>
                     </td>
-                    <td className="text-xs whitespace-nowrap">{formatDateTime(request.createdAt)}</td>
-                    <td className="max-w-[240px] truncate">{request.channel}</td>
+                    {!isCompact && (
+                      <td className="font-semibold">
+                        <span className="requests-clamp">{request.channel}</span>
+                      </td>
+                    )}
+                    <td className={isCompact ? "font-semibold" : "text-muted-foreground"}>
+                      <span className="requests-clamp">{request.description || "—"}</span>
+                    </td>
+                    {!isCompact && (
+                      <td className="text-muted-foreground">
+                        <span className="requests-clamp">{request.response || "—"}</span>
+                      </td>
+                    )}
                     <td>
                       <RequestStatusBadge status={request.status} />
                     </td>
-                    <td>
-                      {request.event ? (
-                        <span className="delivery-badge delivery-badge-event">{request.event.folio}</span>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td className="font-mono text-xs">
-                      {request.delivery ? (
-                        <Link
-                          href={`/entregas/${request.delivery.id}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="hover:underline"
-                        >
-                          {request.delivery.folio}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
+                    {!isCompact && (
+                      <>
+                        <td>
+                          <span className={`requests-event ${request.event ? "requests-event-linked" : ""}`}>
+                            {request.event && <span aria-hidden="true">●</span>}
+                            {request.event?.folio ?? "Sin evento"}
+                          </span>
+                        </td>
+                        <td className="text-muted-foreground font-mono text-xs whitespace-nowrap">
+                          {displayDate.format(new Date(request.createdAt))}
+                        </td>
+                      </>
+                    )}
                     <td onClick={(e) => e.stopPropagation()}>
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" asChild>
-                          <Link href={`/solicitudes/${request.id}`} aria-label={`Ver solicitud ${request.folio}`}>
-                            <Eye size={16} />
-                          </Link>
+                      <div className="requests-row-actions">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Ver solicitud ${request.folio}`}
+                          onClick={(e) => openDetail(request, e.currentTarget)}
+                        >
+                          <Eye size={16} />
                         </Button>
                         {canUpdate && (
                           <Button
@@ -217,6 +377,29 @@ export function RequestsView() {
       </div>
       {form && <RequestFormDialog request={form.request} onClose={() => setForm(null)} />}
       {deleting && <DeleteRequestDialog key={deleting.id} request={deleting} onClose={() => setDeleting(null)} />}
+      <Dialog
+        open={Boolean(selected)}
+        onOpenChange={(open) => {
+          if (!open) setSelected(null)
+        }}
+      >
+        <DialogContent
+          placement="right"
+          className="requests-drawer"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault()
+            opener.current?.focus()
+          }}
+        >
+          <DialogHeader className="requests-drawer-header">
+            <DialogDescription className="font-mono">{selected?.folio}</DialogDescription>
+            <DialogTitle>Solicitud</DialogTitle>
+          </DialogHeader>
+          <div className="requests-drawer-body">
+            {selected && <RequestDetailView id={selected.id} embedded onClose={() => setSelected(null)} />}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
