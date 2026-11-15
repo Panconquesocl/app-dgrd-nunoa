@@ -40,6 +40,7 @@ export function useCreateStrategicAction() {
     mutationFn: (payload: StrategicActionPayload) => api.createStrategicAction(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: strategicActionKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: ["activities"] })
     },
   })
 }
@@ -51,6 +52,7 @@ export function useUpdateStrategicAction(id: string) {
     mutationFn: (payload: StrategicActionPatch) => api.updateStrategicAction(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: strategicActionKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: ["activities"] })
       queryClient.invalidateQueries({ queryKey: strategicActionKeys.detail(id) })
     },
   })
@@ -64,6 +66,7 @@ export function useDeleteStrategicAction() {
     onSuccess: (_data, id) => {
       queryClient.removeQueries({ queryKey: strategicActionKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: strategicActionKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: ["activities"] })
     },
   })
 }

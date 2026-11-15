@@ -1,5 +1,6 @@
 "use client"
 
+import { PlanTabs } from "@/features/activities/components/plan-tabs"
 import { usePermission } from "@/providers/permissions"
 import { useState } from "react"
 import Link from "next/link"
@@ -50,6 +51,7 @@ export function StrategicActionsView() {
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col px-5 py-6 sm:px-7">
+      <PlanTabs active="actions" />
       <Tabs />
 
       <div className="mt-7 flex flex-wrap items-start justify-between gap-4">
