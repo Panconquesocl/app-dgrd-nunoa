@@ -8,7 +8,7 @@ import { auth } from "@/lib/auth"
 
 export const metadata: Metadata = {
   title: "Iniciar sesión · DGRD Ñuñoa",
-  description: "Acceso al sistema interno de la Dirección de Gestión de Riesgo y Desastres de Ñuñoa.",
+  description: "Acceso al sistema interno de la Dirección de Gestión del Riesgo de Desastres de Ñuñoa.",
 }
 
 /**
@@ -72,7 +72,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             Sistema interno · Acceso restringido
           </div>
           <h2 className="text-[30px] leading-[1.18] font-semibold tracking-tight">
-            Dirección de Gestión de Riesgo y Desastres
+            Dirección de Gestión del Riesgo de Desastres
           </h2>
           <p className="text-ink-muted mt-3.5 text-[15px] leading-relaxed">
             Registro y seguimiento de solicitudes, eventos de emergencia, entregas de insumos y el Plan de Reducción del

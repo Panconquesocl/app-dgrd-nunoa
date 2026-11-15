@@ -13,6 +13,7 @@ import { PermissionsProvider } from "../src/providers/permissions"
 
 const file = (path: string) => pathToFileURL(resolve(path)).href
 mock.module(file("src/features/deliveries/components/deliveries.css"), { namedExports: {} })
+mock.module(file("src/components/layout/app-sidebar.css"), { namedExports: {} })
 mock.module(file("src/features/activities/components/plan-tabs.tsx"), { namedExports: { PlanTabs: () => null } })
 mock.module(file("src/features/activities/components/activity-form-dialog.tsx"), {
   namedExports: { ActivityFormDialog: () => createElement("div", null, "ACTIVITY_DIALOG") },

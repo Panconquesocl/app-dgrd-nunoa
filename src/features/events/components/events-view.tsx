@@ -1,6 +1,8 @@
 "use client"
 import { useRef, useState } from "react"
-import { Eye, Pencil, Plus, Search, Siren, Trash2 } from "lucide-react"
+import { ChevronDown, Eye, Pencil, Plus, Search, Siren, Trash2 } from "lucide-react"
+import { SpikeFilterIcon } from "@/components/layout/spike-filter-icon"
+import "@/components/layout/filter-controls.css"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -60,7 +62,7 @@ export function EventsView() {
           </Button>
         )}
       </div>
-      <div className="delivery-toolbar">
+      <div className="spike-toolbar">
         <div className="requests-search">
           <Search size={16} aria-hidden="true" />
           <Input
@@ -70,25 +72,24 @@ export function EventsView() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <select
-          className="delivery-select w-auto"
-          aria-label="Filtrar por tipo"
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-        >
-          <option value="">Todos los tipos</option>
-          {types.data?.data.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name}
-            </option>
-          ))}
-        </select>
-        <label className="delivery-period">
-          Desde
+        <div className="spike-filter-select">
+          <SpikeFilterIcon size={15} />
+          <select aria-label="Filtrar por tipo" value={type} onChange={(e) => setType(e.target.value)}>
+            <option value="">Todos los tipos</option>
+            {types.data?.data.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+          <ChevronDown size={14} />
+        </div>
+        <label className="spike-filter-select">
+          <span>Desde</span>
           <input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} />
         </label>
-        <label className="delivery-period">
-          Hasta
+        <label className="spike-filter-select">
+          <span>Hasta</span>
           <input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} />
         </label>
         {filtered && (
