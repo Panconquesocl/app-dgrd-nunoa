@@ -7,8 +7,15 @@ export type Crumb = { label: string; current?: boolean }
  * Barra superior de las vistas autenticadas: ruta actual a la izquierda e
  * identidad a la derecha.
  */
-export function AppTopbar({ crumbs, user }: { crumbs: Crumb[]; user?: { name: string; email: string } | null }) {
-  const initials = user?.name
+export function AppTopbar({
+  crumbs,
+  user,
+}: {
+  crumbs: Crumb[]
+  user?: { name: string; email: string; lastName?: string | null } | null
+}) {
+  const fullName = user ? [user.name, user.lastName].filter(Boolean).join(" ") : ""
+  const initials = fullName
     .split(" ")
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
@@ -38,7 +45,7 @@ export function AppTopbar({ crumbs, user }: { crumbs: Crumb[]; user?: { name: st
             {initials}
           </span>
           <span className="hidden leading-tight sm:block">
-            <span className="block text-[12.5px] font-semibold">{user.name}</span>
+            <span className="block text-[12.5px] font-semibold">{fullName}</span>
             <span className="text-muted-foreground block text-[11.5px]">{user.email}</span>
           </span>
           <span aria-hidden="true" className="bg-border ml-1 h-6 w-px" />

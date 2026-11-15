@@ -92,6 +92,8 @@ Algunos ítems amplían funciones existentes. No se han asignado responsables, e
 
 ## 4. Acceso y administración
 
+B08 está implementado en la rama actual; reglas, migración y verificación en [Administración de usuarios](./usuarios.md).
+
 | ID  | Prioridad | Ítem                         | Alcance y criterio de aceptación propuesto                                                                                                                                           |
 | --- | --------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | B20 | Alta      | Permisos por rol en servidor | Implementado para los módulos actuales: política central y guards de lectura/escritura; 401 sin sesión y 403 sin permiso. Aplicar a futuros endpoints al implementarlos.             |

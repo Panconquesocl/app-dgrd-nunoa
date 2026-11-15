@@ -12,7 +12,9 @@ import { AppError } from "./api-error"
  * vuelve a pedirla para la topbar: sin esto serían dos consultas por render.
  */
 export const getSession = cache(async () => {
-  return auth.api.getSession({ headers: await headers() })
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (session?.user.banned && (!session.user.banExpires || new Date(session.user.banExpires) > new Date())) return null
+  return session
 })
 
 /**

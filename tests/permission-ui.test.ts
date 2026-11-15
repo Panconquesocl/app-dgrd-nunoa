@@ -99,6 +99,11 @@ mock.module(file("src/features/events/components/event-detail-view.tsx"), {
   namedExports: { EventDetailView: () => createElement("div", null, "RESTRICTED_CONTENT") },
 })
 
+mock.module(file("src/features/users/components/users-view.tsx"), {
+  namedExports: { UsersView: () => createElement("div", null, "RESTRICTED_CONTENT") },
+})
+mock.module(file("src/features/users/service.ts"), { namedExports: { allowedUserDomain: () => "nunoa.cl" } })
+
 test("navegación, estados vacíos y diálogos respetan ambos roles", async () => {
   const { AppSidebar } = await import("../src/components/layout/app-sidebar")
   const { AssociationsView } = await import("../src/features/neighborhood-associations/components/associations-view")
@@ -116,6 +121,7 @@ test("navegación, estados vacíos y diálogos respetan ambos roles", async () =
     const nav = render(AppSidebar)
     assert.equal(nav.includes('href="/solicitudes"'), current === "admin")
     assert.equal(nav.includes('href="/eventos"'), current === "admin")
+    assert.equal(nav.includes('href="/admin/usuarios"'), current === "admin")
     assert.ok(nav.includes('href="/juntas-vecinales"'))
     assert.equal(render(AssociationsView).includes("Nueva junta"), current === "admin")
     const strategic = render(StrategicActionsView)
@@ -129,6 +135,7 @@ test("acceso directo a solicitudes/eventos no monta contenido restringido", asyn
     "../src/app/(app)/solicitudes/page",
     "../src/app/(app)/eventos/page",
     "../src/app/(app)/eventos/[id]/page",
+    "../src/app/(app)/admin/usuarios/page",
   ]) {
     const { default: Page } = await import(modulePath)
     for (const current of ["user", "admin"]) {
