@@ -39,6 +39,7 @@ export function useCreateDelivery() {
   return useMutation({
     mutationFn: (payload: DeliveryPayload) => api.createDelivery(payload),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["summary"] })
       queryClient.invalidateQueries({ queryKey: supplyKeys.all })
       queryClient.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.options() })
@@ -55,6 +56,7 @@ export function useUpdateDelivery(id: string) {
   return useMutation({
     mutationFn: (payload: DeliveryPatch) => api.updateDelivery(id, payload),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["summary"] })
       queryClient.invalidateQueries({ queryKey: supplyKeys.all })
       queryClient.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.options() })
@@ -72,6 +74,7 @@ export function useDeleteDelivery() {
   return useMutation({
     mutationFn: (id: string) => api.deleteDelivery(id),
     onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: ["summary"] })
       queryClient.invalidateQueries({ queryKey: supplyKeys.all })
       queryClient.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.options() })

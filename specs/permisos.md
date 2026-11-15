@@ -9,7 +9,7 @@ Implementación de B20–B21 en `feat/permisos-por-rol`.
 | Entregas e insumos                       | Consultar, crear, editar y eliminar registros de cualquier autor             | Gestión completa |
 | Juntas vecinales y acciones estratégicas | Consultar listados, detalles e historiales                                   | Gestión completa |
 | Solicitudes y eventos                    | Sin acceso al módulo; datos mínimos y selector de solicitudes desde entregas | Acceso completo  |
-| Resumen actual                           | Consultar placeholder                                                        | Acceso completo  |
+| Resumen actual                           | Consultar entregas, insumos, acciones y actividades del año                  | Acceso completo  |
 | Actividades y evidencia                  | Política preparada para CRUD de cualquier autor; módulos pendientes          | Gestión completa |
 | Usuarios y tipos de evento               | Sin administración                                                           | Gestión completa |
 
@@ -99,5 +99,5 @@ PostgreSQL de cada módulo, que requieren sus flags de activación existentes.
 - Aplicar estos guards a Solicitudes, Eventos, Actividades, Evidencia y
   administración cuando se implementen sus APIs y pantallas reales.
 - Los logs de auditoría se implementarán en B34.
-- El resumen futuro debe limitar sus datos al alcance de lectura del rol.
+- El resumen anual excluye solicitudes y eventos para usuarios normales, incluidas cifras y años disponibles. Ver [Resumen](./resumen.md).
 - El menú móvil y la nueva administración de cuentas no forman parte de B20–B21.

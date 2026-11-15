@@ -104,6 +104,10 @@ mock.module(file("src/features/users/components/users-view.tsx"), {
 })
 mock.module(file("src/features/users/service.ts"), { namedExports: { allowedUserDomain: () => "nunoa.cl" } })
 
+mock.module(file("src/features/summary/components/summary-view.tsx"), {
+  namedExports: { SummaryView: () => createElement("div", null, "SUMMARY_CONTENT") },
+})
+
 test("navegación, estados vacíos y diálogos respetan ambos roles", async () => {
   const { AppSidebar } = await import("../src/components/layout/app-sidebar")
   const { AssociationsView } = await import("../src/features/neighborhood-associations/components/associations-view")
@@ -218,4 +222,16 @@ test("desglose de junta muestra cantidades con unidad, filtros y enlaces a entre
   assert.ok(html.includes('href="/entregas/entrega"'))
   assert.ok(html.includes("Vecina de prueba"))
   assert.ok(!html.includes("Unidades distribuidas"))
+})
+
+test("resumen disponible para ambos roles y protegido sin sesión o con rol desconocido", async () => {
+  const { default: Page } = await import("../src/app/(app)/resumen/page")
+  for (const current of ["user", "admin", "unknown"]) {
+    role = current
+    const html = renderToStaticMarkup(await Page())
+    assert.equal(html.includes("SUMMARY_CONTENT"), current !== "unknown")
+    assert.equal(html.includes("Sin permisos"), current === "unknown")
+  }
+  role = null
+  await assert.rejects(Page(), /redirect/)
 })

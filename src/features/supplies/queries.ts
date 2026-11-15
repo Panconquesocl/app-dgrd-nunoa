@@ -24,6 +24,7 @@ function useInvalidateSupplies() {
   const client = useQueryClient()
   return () =>
     Promise.all([
+      client.invalidateQueries({ queryKey: ["summary"] }),
       client.invalidateQueries({ queryKey: supplyKeys.all }),
       // El nombre se resuelve desde el catálogo, también en entregas históricas.
       client.invalidateQueries({ queryKey: deliveryKeys.all }),
@@ -43,6 +44,7 @@ export function useDeleteSupply() {
   return useMutation({
     mutationFn: api.deleteSupply,
     onSuccess: (_data, id) => {
+      client.invalidateQueries({ queryKey: ["summary"] })
       client.removeQueries({ queryKey: supplyKeys.detail(id) })
       return Promise.all([
         client.invalidateQueries({ queryKey: supplyKeys.lists() }),

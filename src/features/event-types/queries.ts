@@ -13,6 +13,7 @@ export function useSaveEventType(id?: string) {
     onSuccess: async () => {
       await Promise.all([
         client.invalidateQueries({ queryKey: eventTypeKeys.all }),
+        client.invalidateQueries({ queryKey: ["summary"] }),
         client.invalidateQueries({ queryKey: ["events"] }),
         client.invalidateQueries({ queryKey: ["deliveries"] }),
       ])

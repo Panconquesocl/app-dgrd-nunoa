@@ -11,7 +11,9 @@ export function useActivity(id: string) {
 function useInvalidate() {
   const client = useQueryClient()
   return () =>
-    Promise.all(["activities", "strategic-actions"].map((key) => client.invalidateQueries({ queryKey: [key] })))
+    Promise.all(
+      ["summary", "activities", "strategic-actions"].map((key) => client.invalidateQueries({ queryKey: [key] })),
+    )
 }
 export function useSaveActivity(id?: string) {
   const invalidate = useInvalidate()

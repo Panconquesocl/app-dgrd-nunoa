@@ -27,6 +27,7 @@ export function useRequestOptions() {
  */
 function invalidateRelated(client: ReturnType<typeof useQueryClient>) {
   return Promise.all([
+    client.invalidateQueries({ queryKey: ["summary"] }),
     client.invalidateQueries({ queryKey: ["events"] }),
     client.invalidateQueries({ queryKey: requestKeys.lists() }),
     client.invalidateQueries({ queryKey: requestKeys.details() }),
