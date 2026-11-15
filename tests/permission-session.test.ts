@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url"
 import { resolve } from "node:path"
 import { AppError } from "../src/lib/api-error"
 
-let user: { id: string; role: string } | null = null
+let user: { id: string; role: string; banned?: boolean; banExpires?: Date | null } | null = null
 mock.module("next/headers", { namedExports: { headers: async () => new Headers() } })
 mock.module(pathToFileURL(resolve("src/lib/auth.ts")).href, {
   namedExports: { auth: { api: { getSession: async () => (user ? { user } : null) } } },
@@ -24,4 +24,13 @@ test("requirePermission consulta sesión y vuelve a evaluar un cambio de rol", a
     (e: unknown) => e instanceof AppError && e.status === 403,
   )
   assert.equal((await requirePermission("deliveries", "delete")).id, "operator")
+})
+
+test("una cuenta desactivada pierde acceso aunque conserve una cookie", async () => {
+  const { requirePermission } = await import("../src/lib/session")
+  user = { id: "operator", role: "admin", banned: true, banExpires: null }
+  await assert.rejects(
+    requirePermission("users", "read"),
+    (error: unknown) => error instanceof AppError && error.status === 401,
+  )
 })

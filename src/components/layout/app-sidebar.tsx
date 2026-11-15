@@ -77,7 +77,13 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/plan/cronograma", label: "Cronograma", icon: CalendarRange },
     ],
   },
-  { label: "Administración", items: [{ href: "/admin/configuracion", label: "Configuración", icon: Settings }] },
+  {
+    label: "Administración",
+    items: [
+      { href: "/admin/usuarios", label: "Usuarios", icon: Users },
+      { href: "/admin/configuracion", label: "Configuración", icon: Settings },
+    ],
+  },
 ]
 
 export function AppSidebar() {

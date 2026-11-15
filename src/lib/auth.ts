@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth"
 import { prismaAdapter } from "better-auth/adapters/prisma"
 import { admin } from "better-auth/plugins"
-import { APIError } from "better-auth/api"
+import { APIError, createAuthMiddleware } from "better-auth/api"
 import prisma from "./prisma"
 
 const ALLOWED_DOMAIN = process.env.ALLOWED_EMAIL_DOMAIN ?? "nunoa.cl"
@@ -10,6 +10,21 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+
+  user: {
+    additionalFields: { lastName: { type: "string", required: false, input: false } },
+    changeEmail: { enabled: false },
+    deleteUser: { enabled: false },
+  },
+  // Las operaciones de cuentas pasan por /api/users para preservar las reglas
+  // transaccionales. No exponer rutas administrativas alternativas del plugin.
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path.startsWith("/admin/") || ctx.path === "/update-user") {
+        throw new APIError("FORBIDDEN", { message: "Administra las cuentas desde Usuarios." })
+      }
+    }),
+  },
 
   // Autenticación autohospedada: sólo correo + contraseña, sin proveedores
   // externos. Better Auth guarda el hash (scrypt) en `account.password` con
@@ -47,7 +62,7 @@ export const auth = betterAuth({
       create: {
         // Restringe el alta de cuentas al dominio institucional.
         before: async (user) => {
-          if (!user.email.endsWith(`@${ALLOWED_DOMAIN}`)) {
+          if (user.email.trim().toLowerCase().split("@")[1] !== ALLOWED_DOMAIN.trim().toLowerCase()) {
             throw new APIError("FORBIDDEN", {
               message: `El acceso está restringido a correos institucionales (@${ALLOWED_DOMAIN}).`,
             })
