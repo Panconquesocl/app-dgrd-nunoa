@@ -2,7 +2,6 @@ import prisma from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import { AppError } from "@/lib/api-error"
 import { deliveryFolioYear } from "@/features/deliveries/folio"
-import { nextRequestFolio } from "./folio"
 import type { CreateRequestInput, ListRequestsQuery, UpdateRequestInput } from "./schemas"
 
 const eventSelect = { select: { id: true, folio: true, sector: true } } as const
@@ -11,6 +10,7 @@ const listSelect = {
   id: true,
   folio: true,
   channel: true,
+  description: true,
   response: true,
   status: true,
   eventId: true,
@@ -29,6 +29,7 @@ export async function listRequests({ q, event = "all", status }: ListRequestsQue
       OR: [
         { folio: { contains: q, mode: "insensitive" } },
         { channel: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
         { response: { contains: q, mode: "insensitive" } },
       ],
     }),
@@ -85,25 +86,32 @@ function translateError(error: unknown): never {
   throw error
 }
 
+function assertAttended(status: string, response: string | null | undefined, hasDelivery: boolean) {
+  if (status === "attended" && !response?.trim() && !hasDelivery) {
+    throw new AppError(400, "Para marcar la solicitud como atendida, registra una respuesta o vincula una entrega.", {
+      fieldErrors: { status: ["Una solicitud atendida requiere respuesta o entrega."] },
+    })
+  }
+}
+
 export async function createRequest(input: CreateRequestInput, userId: string) {
   try {
     return await prisma.$transaction(async (tx) => {
+      assertAttended(input.status, input.response, false)
       const year = deliveryFolioYear()
       // Serializa las altas del año para que dos solicitudes no reserven el mismo correlativo.
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(684104, ${year}::integer)::text`
       await assertEvent(tx, input.eventId)
-      const folios = await tx.request.findMany({
-        where: { folio: { startsWith: `SOL-${year}-` } },
-        select: { folio: true },
+      const counter = await tx.requestFolioCounter.upsert({
+        where: { year },
+        create: { year, lastValue: BigInt(1) },
+        update: { lastValue: { increment: BigInt(1) } },
       })
       return tx.request.create({
         data: {
           ...input,
           createdBy: userId,
-          folio: nextRequestFolio(
-            folios.map((row) => row.folio),
-            year,
-          ),
+          folio: `SOL-${year}-${String(counter.lastValue).padStart(3, "0")}`,
         },
         select: listSelect,
       })
@@ -120,6 +128,12 @@ export async function updateRequest(id: string, input: UpdateRequestInput) {
       // evento no compite con un alta o cambio de entrega concurrente.
       const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "request" WHERE id = ${id} FOR UPDATE`
       if (!locked.length) throw new AppError(404, "La solicitud no existe.")
+      const current = await tx.request.findUniqueOrThrow({ where: { id }, select: listSelect })
+      assertAttended(
+        input.status ?? current.status,
+        input.response === undefined ? current.response : input.response,
+        Boolean(current.delivery),
+      )
       await assertEvent(tx, input.eventId)
       const updated = await tx.request.update({ where: { id }, data: input, select: listSelect })
       if (input.eventId !== undefined) {
@@ -133,25 +147,23 @@ export async function updateRequest(id: string, input: UpdateRequestInput) {
   }
 }
 
-/**
- * Borrar una solicitud elimina su entrega en cascada (B11). `expectedDeliveryId`
- * es la entrega que el usuario vio al confirmar ("" = ninguna); si cambió desde
- * entonces, se rechaza para no borrar una entrega que no se le mostró.
- */
+/** Una entrega vinculada bloquea siempre el borrado, aunque el cliente la confirme. */
 export async function deleteRequest(id: string, expectedDeliveryId?: string) {
   try {
     await prisma.$transaction(async (tx) => {
       const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "request" WHERE id = ${id} FOR UPDATE`
       if (!locked.length) throw new AppError(404, "La solicitud no existe.")
       const delivery = await tx.delivery.findUnique({ where: { requestId: id }, select: { id: true, folio: true } })
-      if (expectedDeliveryId !== undefined && (delivery?.id ?? "") !== expectedDeliveryId) {
+      if (delivery)
         throw new AppError(
           409,
-          delivery
-            ? `La solicitud ahora tiene la entrega ${delivery.folio} vinculada. Revisa antes de eliminar.`
-            : "La entrega vinculada cambió. Revisa antes de eliminar.",
+          `No se puede eliminar la solicitud porque tiene la entrega ${delivery.folio} vinculada.`,
           { details: { delivery } },
         )
+      if (expectedDeliveryId) {
+        throw new AppError(409, "La entrega vinculada cambió. Revisa antes de eliminar.", {
+          details: { delivery: null },
+        })
       }
       await tx.request.delete({ where: { id } })
     })

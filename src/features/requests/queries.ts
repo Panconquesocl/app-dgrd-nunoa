@@ -23,8 +23,7 @@ export function useRequestOptions() {
 
 /**
  * Una solicitud alimenta el selector de entregas, y su evento se propaga a la
- * entrega vinculada; al borrarla, la entrega cae en cascada y cambian los
- * historiales de insumos y juntas.
+ * entrega vinculada. Se refrescan también los historiales relacionados.
  */
 function invalidateRelated(client: ReturnType<typeof useQueryClient>) {
   return Promise.all([

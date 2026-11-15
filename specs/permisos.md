@@ -15,7 +15,7 @@ Implementación de B20–B21 en `feat/permisos-por-rol`.
 
 Las restricciones actuales de integridad y las confirmaciones de eliminación se
 mantienen para ambos roles. Administrar todo no permite ignorar estas reglas.
-El borrado en cascada de solicitudes sigue siendo una decisión aparte de B11.
+El borrado de solicitudes con entrega vinculada está bloqueado, incluso para administradores.
 
 ## Política y puntos de entrada
 

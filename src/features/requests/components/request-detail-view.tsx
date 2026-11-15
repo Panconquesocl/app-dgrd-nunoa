@@ -2,7 +2,19 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { AlertTriangle, ArrowLeft, FileText, Pencil, Trash2 } from "lucide-react"
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ChevronRight,
+  Clock,
+  FileText,
+  Info,
+  Pencil,
+  Siren,
+  Trash2,
+  Truck,
+  Unlink,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDate, formatDateTime } from "@/lib/format"
@@ -12,8 +24,17 @@ import { RequestFormDialog } from "./request-form-dialog"
 import { DeleteRequestDialog } from "./delete-request-dialog"
 import { RequestStatusBadge } from "./request-status-badge"
 import "@/features/deliveries/components/deliveries.css"
+import "./requests.css"
 
-export function RequestDetailView({ id }: { id: string }) {
+export function RequestDetailView({
+  id,
+  embedded = false,
+  onClose,
+}: {
+  id: string
+  embedded?: boolean
+  onClose?: () => void
+}) {
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const canUpdate = usePermission("requests", "update")
@@ -40,18 +61,17 @@ export function RequestDetailView({ id }: { id: string }) {
       </div>
     )
   return (
-    <div className="deliveries delivery-page">
-      <Link href="/solicitudes" className="delivery-back">
-        <ArrowLeft size={16} />
-        Solicitudes
-      </Link>
+    <div className={`requests deliveries ${embedded ? "requests-embedded" : "delivery-page"}`}>
+      {!embedded && (
+        <Link href="/solicitudes" className="delivery-back">
+          <ArrowLeft size={16} />
+          Solicitudes
+        </Link>
+      )}
       <div className="delivery-page-head">
         <div>
-          <span className="delivery-eyebrow">Emergencias · Solicitud</span>
-          <h1 className="break-words">{request.folio}</h1>
-          <p>
-            <RequestStatusBadge status={request.status} />
-          </p>
+          {!embedded && <span className="delivery-eyebrow">{request.folio}</span>}
+          <h1>Detalle de solicitud</h1>
         </div>
         {(canUpdate || canDelete) && (
           <div className="flex gap-2">
@@ -79,7 +99,7 @@ export function RequestDetailView({ id }: { id: string }) {
         <section className="delivery-panel">
           <h2>
             <FileText size={17} />
-            Datos de la solicitud
+            Información de la solicitud
           </h2>
           <dl className="delivery-kv">
             <div>
@@ -87,8 +107,10 @@ export function RequestDetailView({ id }: { id: string }) {
               <dd className="break-words">{request.channel}</dd>
             </div>
             <div>
-              <dt>Registrada por</dt>
-              <dd>{request.creator.name}</dd>
+              <dt>Estado</dt>
+              <dd>
+                <RequestStatusBadge status={request.status} />
+              </dd>
             </div>
             <div>
               <dt>Fecha de creación</dt>
@@ -97,6 +119,10 @@ export function RequestDetailView({ id }: { id: string }) {
             <div>
               <dt>Última actualización</dt>
               <dd>{formatDateTime(request.updatedAt)}</dd>
+            </div>
+            <div className="sm:col-span-2">
+              <dt>Lo solicitado</dt>
+              <dd className="break-words whitespace-pre-wrap">{request.description || "Sin descripción"}</dd>
             </div>
             <div className="sm:col-span-2">
               <dt>Respuesta</dt>
@@ -108,33 +134,71 @@ export function RequestDetailView({ id }: { id: string }) {
           <section className="delivery-aside">
             <h2>Evento asociado</h2>
             {request.event ? (
-              <div className="delivery-related">
-                <span className="delivery-badge delivery-badge-event">{request.event.folio}</span>
-                <span>{request.event.sector}</span>
+              <div className="requests-related">
+                <Siren size={20} />
+                <div>
+                  <strong>{request.event.folio}</strong>
+                  <span>{request.event.sector}</span>
+                </div>
               </div>
             ) : (
-              <p>Sin evento asociado.</p>
+              <p className="requests-info">
+                <Info size={16} />
+                Esta solicitud no tiene un evento asociado.
+              </p>
+            )}
+            {canUpdate && (
+              <button className="requests-associate" onClick={() => setEditing(true)}>
+                <Unlink size={14} />
+                {request.event ? "Cambiar o desasociar evento" : "Asociar evento existente"}
+              </button>
             )}
           </section>
           <section className="delivery-aside">
             <h2>Entrega asociada</h2>
             {request.delivery ? (
-              <div className="delivery-related">
-                <Link href={`/entregas/${request.delivery.id}`} className="font-semibold hover:underline">
-                  {request.delivery.folio}
-                </Link>
-                <span>
-                  {request.delivery.beneficiary} · {formatDate(request.delivery.date)}
-                </span>
-              </div>
+              <Link href={`/entregas/${request.delivery.id}`} className="requests-related">
+                <Truck size={20} />
+                <div>
+                  <strong>{request.delivery.folio}</strong>
+                  <span>
+                    {request.delivery.beneficiary} · {formatDate(request.delivery.date)}
+                  </span>
+                </div>
+                <ChevronRight size={16} />
+              </Link>
             ) : (
-              <p>Sin entrega asociada.</p>
+              <p className="requests-info">
+                <Info size={16} />
+                Esta solicitud aún no tiene una entrega registrada.
+              </p>
             )}
+          </section>
+          <section className="delivery-aside">
+            <h2>Registro</h2>
+            <div className="requests-author">
+              <span className="requests-avatar">
+                {request.creator.name
+                  .split(" ")
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .map((part) => part[0])
+                  .join("")}
+              </span>
+              <div>
+                <strong>{request.creator.name}</strong>
+                <p>Registró la solicitud</p>
+              </div>
+            </div>
+            <p className="requests-record-date">
+              <Clock size={14} />
+              {formatDateTime(request.createdAt)}
+            </p>
           </section>
           {request.delivery && canDelete && (
             <p className="text-muted-foreground flex items-start gap-2 text-xs">
               <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-              Eliminar esta solicitud también elimina su entrega vinculada.
+              No se puede eliminar esta solicitud mientras tenga una entrega vinculada.
             </p>
           )}
         </aside>
@@ -144,7 +208,7 @@ export function RequestDetailView({ id }: { id: string }) {
         <DeleteRequestDialog
           request={request}
           onClose={() => setDeleting(false)}
-          onDeleted={() => router.push("/solicitudes")}
+          onDeleted={() => (embedded ? onClose?.() : router.push("/solicitudes"))}
         />
       )}
     </div>

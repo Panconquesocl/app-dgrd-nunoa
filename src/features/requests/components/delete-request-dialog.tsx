@@ -74,21 +74,20 @@ export function DeleteRequestDialog({
             role="alert"
             className="border-destructive/40 bg-destructive/5 text-destructive rounded-lg border p-3 text-sm"
           >
-            También se eliminará la entrega <strong>{delivery.folio}</strong> vinculada a esta solicitud, junto con sus
-            insumos entregados.
+            No se puede eliminar esta solicitud porque tiene la entrega <strong>{delivery.folio}</strong> vinculada.
           </p>
         )}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={mutation.isPending}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
-            disabled={mutation.isPending}
+            disabled={mutation.isPending || Boolean(delivery)}
             onClick={(event) => {
               event.preventDefault()
               void remove()
             }}
           >
-            {mutation.isPending ? "Eliminando…" : delivery ? "Eliminar solicitud y entrega" : "Eliminar solicitud"}
+            {mutation.isPending ? "Eliminando…" : "Eliminar solicitud"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
