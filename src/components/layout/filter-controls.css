@@ -1,0 +1,166 @@
+.spike-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.spike-filter-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 13px;
+  color: var(--foreground);
+  font-weight: 500;
+  min-width: 0;
+}
+.spike-filter-select:focus-within {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.spike-filter-select select {
+  border: none;
+  background: none;
+  font-size: 13px;
+  color: inherit;
+  cursor: pointer;
+  outline: none;
+  font-weight: 600;
+  appearance: none;
+  padding-right: 2px;
+  max-width: 240px;
+}
+.spike-filter-select > svg {
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.spike-filter-select input[type="date"] {
+  border: none;
+  background: none;
+  min-width: 0;
+  width: 120px;
+  outline: none;
+  font: 13px var(--font-mono);
+  color: var(--foreground);
+}
+.spike-filter-select > span {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.spike-filter-trigger {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  background: var(--surface);
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.spike-filter-trigger:hover {
+  background: var(--background);
+}
+.spike-filter-trigger[data-state="open"],
+.spike-filter-trigger[data-active="true"] {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+.spike-filter-trigger > span {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 16px;
+  height: 16px;
+  border: 2px solid var(--surface);
+  border-radius: 99px;
+  background: var(--brand-strong);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  padding: 0 3px;
+}
+.spike-filter-menu {
+  z-index: 50;
+  width: 224px;
+  max-width: calc(100vw - 32px);
+  max-height: var(--radix-popover-content-available-height);
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 30px #10182820;
+  padding: 6px;
+  font-size: 13px;
+}
+.spike-filter-menu h2 {
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 4px 6px 8px;
+}
+.spike-filter-group {
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+.spike-filter-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  padding: 2px 8px 6px;
+}
+.spike-filter-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 8px;
+  gap: 8px;
+  border-radius: 5px;
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.spike-filter-option:hover,
+.spike-filter-option:focus-visible {
+  background: var(--muted);
+}
+.spike-filter-option svg {
+  color: var(--brand-ink);
+  flex-shrink: 0;
+}
+.spike-filter-group select {
+  width: calc(100% - 16px);
+  margin: 0 8px;
+  min-width: 0;
+}
+.spike-filter-footer {
+  border-top: 1px solid var(--border);
+  padding: 8px 6px 2px;
+}
+.spike-filter-footer button {
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.spike-filter-footer button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+@media (max-width: 640px) {
+  .spike-toolbar > .requests-search {
+    width: 100%;
+  }
+}

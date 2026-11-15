@@ -1,7 +1,10 @@
 "use client"
 import { useState, useRef } from "react"
 import Link from "next/link"
-import { CalendarDays, Eye, Filter, Pencil, Plus, Search, Trash2, Truck, X } from "lucide-react"
+import { Popover } from "radix-ui"
+import { SpikeFilterIcon } from "@/components/layout/spike-filter-icon"
+import "@/components/layout/filter-controls.css"
+import { CalendarDays, Check, Eye, Pencil, Plus, Search, Trash2, Truck, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AidTabs } from "@/components/layout/aid-tabs"
 import { Input } from "@/components/ui/input"
@@ -152,15 +155,128 @@ export function DeliveriesView() {
           })}
         </div>
         <div className="ml-auto">
-          <Button
-            variant="outline"
-            aria-expanded={advanced}
-            aria-controls="delivery-filters"
-            onClick={() => setAdvanced(!advanced)}
-          >
-            <Filter size={16} />
-            Filtros{advancedCount > 0 && <span className="delivery-count">{advancedCount}</span>}
-          </Button>
+          <Popover.Root open={advanced} onOpenChange={setAdvanced}>
+            <Popover.Trigger asChild>
+              <button
+                type="button"
+                className="spike-filter-trigger"
+                data-active={advancedCount > 0}
+                aria-label="Filtros avanzados"
+                title="Filtros avanzados"
+              >
+                <SpikeFilterIcon />
+                {advancedCount > 0 && <span>{advancedCount}</span>}
+              </button>
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content className="spike-filter-menu" align="end" sideOffset={8} collisionPadding={16}>
+                <h2>Filtros avanzados</h2>
+                <div className="spike-filter-group">
+                  <label className="spike-filter-label" htmlFor="delivery-filter-association">
+                    Junta vecinal
+                  </label>
+                  <select
+                    id="delivery-filter-association"
+                    className="delivery-select"
+                    aria-label="Filtrar por junta vecinal"
+                    value={neighborhoodAssociationId}
+                    onChange={(e) => setNeighborhoodAssociationId(e.target.value)}
+                  >
+                    <option value="">Todas las juntas</option>
+                    {options.data?.neighborhoodAssociations.map((association) => (
+                      <option key={association.id} value={association.id}>
+                        N°{association.number} · {association.name}
+                        {association.active ? "" : " (inactiva)"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="spike-filter-group">
+                  <h3 className="spike-filter-label">Evento asociado</h3>
+                  {(
+                    [
+                      ["all", "Todas"],
+                      ["with", "Con evento"],
+                      ["without", "Sin evento"],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <button
+                      type="button"
+                      key={value}
+                      className="spike-filter-option"
+                      aria-pressed={event === value}
+                      onClick={() => setEvent(value)}
+                    >
+                      <span>{label}</span>
+                      {event === value && <Check size={15} />}
+                    </button>
+                  ))}
+                </div>
+                <div className="spike-filter-group">
+                  <label className="spike-filter-label" htmlFor="delivery-filter-supply">
+                    Insumo incluido
+                  </label>
+                  <select
+                    id="delivery-filter-supply"
+                    className="delivery-select"
+                    value={supplyId}
+                    onChange={(e) => setSupplyId(e.target.value)}
+                  >
+                    <option value="">Cualquier insumo</option>
+                    {options.data?.supplies.map((supply) => (
+                      <option key={supply.id} value={supply.id}>
+                        {supply.type} · {supply.unit}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="spike-filter-group">
+                  <h3 className="spike-filter-label">Ordenar por fecha</h3>
+                  {(
+                    [
+                      ["desc", "Más recientes primero"],
+                      ["asc", "Más antiguas primero"],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <button
+                      type="button"
+                      key={value}
+                      className="spike-filter-option"
+                      aria-pressed={order === value}
+                      onClick={() => setOrder(value)}
+                    >
+                      <span>{label}</span>
+                      {order === value && <Check size={15} />}
+                    </button>
+                  ))}
+                </div>
+                {options.isPending && (
+                  <p className="px-2 py-2 text-xs" role="status">
+                    Cargando juntas e insumos…
+                  </p>
+                )}
+                {options.isError && (
+                  <button type="button" className="spike-filter-option" onClick={() => options.refetch()}>
+                    Reintentar carga de juntas e insumos
+                  </button>
+                )}
+                <div className="spike-filter-footer">
+                  <button
+                    type="button"
+                    disabled={!advancedCount}
+                    onClick={() => {
+                      setEvent("all")
+                      setSupplyId("")
+                      setNeighborhoodAssociationId("")
+                      setOrder("desc")
+                    }}
+                  >
+                    Limpiar filtros
+                  </button>
+                </div>
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
         </div>
         <div className="relative">
           <Search
@@ -181,84 +297,6 @@ export function DeliveriesView() {
         <p id="delivery-period-error" role="alert" className="text-destructive mb-3 text-sm">
           La fecha hasta no puede ser anterior a desde.
         </p>
-      )}
-      {advanced && (
-        <div id="delivery-filters" className="delivery-filter-panel">
-          <label>
-            Junta vecinal
-            <select
-              className="delivery-select"
-              aria-label="Filtrar por junta vecinal"
-              value={neighborhoodAssociationId}
-              onChange={(event) => setNeighborhoodAssociationId(event.target.value)}
-            >
-              <option value="">Todas las juntas</option>
-              {options.data?.neighborhoodAssociations.map((association) => (
-                <option key={association.id} value={association.id}>
-                  N°{association.number} · {association.name}
-                  {association.active ? "" : " (inactiva)"}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Evento
-            <select
-              className="delivery-select"
-              aria-label="Evento"
-              value={event}
-              onChange={(e) => setEvent(e.target.value as typeof event)}
-            >
-              <option value="all">Todas las entregas</option>
-              <option value="with">Con evento</option>
-              <option value="without">Sin evento</option>
-            </select>
-          </label>
-          <label>
-            Insumo incluido
-            <select
-              className="delivery-select"
-              aria-label="Insumo incluido"
-              value={supplyId}
-              onChange={(e) => setSupplyId(e.target.value)}
-            >
-              <option value="">Cualquier insumo</option>
-              {options.data?.supplies.map((supply) => (
-                <option key={supply.id} value={supply.id}>
-                  {supply.type} · {supply.unit}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Ordenar por fecha
-            <select
-              className="delivery-select"
-              aria-label="Ordenar por fecha"
-              value={order}
-              onChange={(e) => setOrder(e.target.value as typeof order)}
-            >
-              <option value="desc">Más recientes primero</option>
-              <option value="asc">Más antiguas primero</option>
-            </select>
-          </label>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setEvent("all")
-              setSupplyId("")
-              setNeighborhoodAssociationId("")
-              setOrder("desc")
-            }}
-          >
-            Limpiar filtros
-          </Button>
-          {options.isError && (
-            <Button variant="outline" onClick={() => options.refetch()}>
-              Reintentar carga de insumos
-            </Button>
-          )}
-        </div>
       )}
       <div className="delivery-stats" aria-busy={validPeriod && query.isFetching}>
         {[

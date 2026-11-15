@@ -17,7 +17,8 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "DGRD Ñuñoa",
-  description: "Dirección de Gestión y Desarrollo, Municipalidad de Ñuñoa",
+  icons: { icon: { url: "/logo-mark-yellow.svg", type: "image/svg+xml" } },
+  description: "Dirección de Gestión del Riesgo de Desastres, Municipalidad de Ñuñoa",
 }
 
 export default function RootLayout({

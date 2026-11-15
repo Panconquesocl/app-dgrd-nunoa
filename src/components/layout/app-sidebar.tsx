@@ -1,11 +1,46 @@
 "use client"
 
 import { usePermission } from "@/providers/permissions"
+import { useState, useSyncExternalStore } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Box, CalendarRange, FileText, Home, Package, Settings, Siren, Target, Users } from "lucide-react"
+import {
+  Box,
+  CalendarRange,
+  ChevronRight,
+  ChevronsLeft,
+  FileText,
+  Home,
+  Package,
+  Settings,
+  Siren,
+  Target,
+  Users,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
+import "./app-sidebar.css"
+
+const COLLAPSED_KEY = "dgrd_sidebar_collapsed"
+function subscribeSidebar(callback: () => void) {
+  const media = window.matchMedia("(max-width: 1023px)")
+  window.addEventListener("storage", callback)
+  window.addEventListener("sidebar-preference", callback)
+  media.addEventListener("change", callback)
+  return () => {
+    window.removeEventListener("storage", callback)
+    window.removeEventListener("sidebar-preference", callback)
+    media.removeEventListener("change", callback)
+  }
+}
+function getCollapsed() {
+  try {
+    const value = localStorage.getItem(COLLAPSED_KEY)
+    if (value !== null) return value === "1"
+  } catch {}
+  return window.matchMedia("(max-width: 1023px)").matches
+}
+const serverCollapsed = () => false
 
 type NavItem = {
   href: string
@@ -47,14 +82,25 @@ const NAV_GROUPS: NavGroup[] = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const collapsed = useSyncExternalStore(subscribeSidebar, getCollapsed, serverCollapsed)
+  const [fallbackCollapsed, setFallbackCollapsed] = useState<boolean | null>(null)
+  const isCollapsed = fallbackCollapsed ?? collapsed
+  function toggleSidebar() {
+    setFallbackCollapsed(!isCollapsed)
+    try {
+      localStorage.setItem(COLLAPSED_KEY, isCollapsed ? "0" : "1")
+      window.dispatchEvent(new Event("sidebar-preference"))
+    } catch {}
+  }
   const canConfigure = usePermission("event-types", "read")
   const canReadEmergencies = usePermission("requests", "read")
 
   return (
-    <aside className="bg-ink hidden w-[248px] shrink-0 flex-col text-white lg:flex">
+    <aside className="app-sidebar bg-ink text-white" data-collapsed={isCollapsed}>
       <Link
         href="/plan/acciones"
-        className="focus-visible:ring-brand/60 flex items-center gap-3 px-5 py-5 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset"
+        aria-label="Dirección de Gestión del Riesgo de Desastres · Municipalidad de Ñuñoa"
+        className="app-sidebar-brand focus-visible:ring-brand/60 flex items-center gap-3 px-5 py-5 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset"
       >
         <Image
           src="/logo-mark-yellow.svg"
@@ -65,19 +111,23 @@ export function AppSidebar() {
           aria-hidden="true"
           className="size-[34px] shrink-0"
         />
-        <span className="leading-[1.25]">
-          <span className="block text-[13px] font-semibold">Dirección de Gestión de Riesgo y Desastres</span>
+        <span className="app-sidebar-brand-text leading-[1.25]">
+          <span className="block text-[13px] font-semibold">Dirección de Gestión del Riesgo de Desastres</span>
           <span className="text-ink-muted block text-[11px]">Municipalidad de Ñuñoa</span>
         </span>
       </Link>
 
-      <nav className="flex flex-1 flex-col gap-6 px-3 py-4">
+      <nav
+        id="app-sidebar-navigation"
+        aria-label="Navegación principal"
+        className="app-sidebar-nav flex flex-1 flex-col gap-6 px-3 py-4"
+      >
         {NAV_GROUPS.filter(
           (group) =>
             (group.label !== "Emergencias" || canReadEmergencies) && (group.label !== "Administración" || canConfigure),
         ).map((group) => (
-          <div key={group.label}>
-            <p className="text-ink-muted px-2 pb-2 text-[10px] font-semibold tracking-[0.09em] uppercase">
+          <div key={group.label} className="app-sidebar-group">
+            <p className="app-sidebar-group-label text-ink-muted px-2 pb-2 text-[10px] font-semibold tracking-[0.09em] uppercase">
               {group.label}
             </p>
             <ul className="flex flex-col gap-0.5">
@@ -88,9 +138,11 @@ export function AppSidebar() {
                   <li key={href}>
                     <Link
                       href={href}
+                      title={isCollapsed ? label : undefined}
+                      aria-label={label}
                       aria-current={isActive ? "page" : undefined}
                       className={cn(
-                        "focus-visible:ring-brand/60 relative flex items-center gap-2.5 rounded-md px-2 py-2 text-[13.5px] font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
+                        "app-sidebar-link focus-visible:ring-brand/60 relative flex items-center gap-2.5 rounded-md px-2 py-2 text-[13.5px] font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
                         isActive ? "bg-ink-soft text-white" : "text-ink-muted hover:bg-ink-soft/60 hover:text-white",
                       )}
                     >
@@ -101,7 +153,7 @@ export function AppSidebar() {
                         />
                       )}
                       <Icon className={cn("size-4 shrink-0", isActive && "text-brand")} />
-                      {label}
+                      <span className="app-sidebar-label">{label}</span>
                     </Link>
                   </li>
                 )
@@ -110,6 +162,20 @@ export function AppSidebar() {
           </div>
         ))}
       </nav>
+      <div className="app-sidebar-footer">
+        <button
+          type="button"
+          className="app-sidebar-toggle"
+          onClick={toggleSidebar}
+          aria-controls="app-sidebar-navigation"
+          aria-expanded={!isCollapsed}
+          aria-label={isCollapsed ? "Expandir menú" : "Contraer menú"}
+          title={isCollapsed ? "Expandir" : "Contraer"}
+        >
+          {isCollapsed ? <ChevronRight size={18} /> : <ChevronsLeft size={18} />}
+          <span>Contraer menú</span>
+        </button>
+      </div>
     </aside>
   )
 }

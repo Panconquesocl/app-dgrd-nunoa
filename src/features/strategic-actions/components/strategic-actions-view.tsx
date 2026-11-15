@@ -5,13 +5,12 @@ import { usePermission } from "@/providers/permissions"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { CalendarRange, Filter, Plus, Search, Target, Trash2 } from "lucide-react"
+import { Filter, Plus, Search, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { formatDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -52,7 +51,6 @@ export function StrategicActionsView() {
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col px-5 py-6 sm:px-7">
       <PlanTabs active="actions" />
-      <Tabs />
 
       <div className="mt-7 flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -235,39 +233,6 @@ export function StrategicActionsView() {
       {canManage && (
         <DeleteActionDialog action={pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)} />
       )}
-    </div>
-  )
-}
-
-function Tabs() {
-  return (
-    <div role="tablist" aria-label="Vistas del Plan RRD" className="flex items-center gap-1">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={false}
-              disabled
-              className="text-muted-foreground flex cursor-not-allowed items-center gap-2 rounded-lg px-3.5 py-2 text-[13.5px] font-medium opacity-70"
-            >
-              <CalendarRange aria-hidden="true" className="size-4" />
-              Cronograma
-            </button>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>Próximamente</TooltipContent>
-      </Tooltip>
-
-      <span
-        role="tab"
-        aria-selected
-        className="bg-surface flex items-center gap-2 rounded-lg border px-3.5 py-2 text-[13.5px] font-semibold shadow-xs"
-      >
-        <Target aria-hidden="true" className="size-4" />
-        Acciones estratégicas
-      </span>
     </div>
   )
 }

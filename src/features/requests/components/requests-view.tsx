@@ -1,7 +1,8 @@
 "use client"
 import { useRef, useState, useSyncExternalStore } from "react"
 import { Popover } from "radix-ui"
-import { Check, Eye, FileText, ListFilter, Pencil, Plus, Rows3, Search, Table2, Trash2 } from "lucide-react"
+import { Check, Eye, FileText, Pencil, Plus, Rows3, Search, Table2, Trash2 } from "lucide-react"
+import { SpikeFilterIcon } from "@/components/layout/spike-filter-icon"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -151,24 +152,24 @@ export function RequestsView() {
               className="requests-filter-trigger"
               aria-label={`Filtros avanzados${advancedCount ? ` (${advancedCount} activos)` : ""}`}
             >
-              <ListFilter size={17} />
+              <SpikeFilterIcon />
               {advancedCount > 0 && <span>{advancedCount}</span>}
             </Button>
           </Popover.Trigger>
           <Popover.Portal>
             <Popover.Content className="requests-filter-menu" align="end" sideOffset={8} collisionPadding={16}>
               <h2>Filtros avanzados</h2>
-              <fieldset className="requests-filter-options">
-                <legend>Estado</legend>
+              <div className="requests-filter-options" role="group" aria-labelledby="request-filter-status">
+                <h3 id="request-filter-status">Estado</h3>
                 {(["", ...REQUEST_STATUSES] as const).map((value) => (
                   <button key={value} aria-pressed={status === value} onClick={() => setStatus(value)}>
                     <span>{value ? REQUEST_STATUS_LABELS[value] : "Todas"}</span>
                     {status === value && <Check size={15} />}
                   </button>
                 ))}
-              </fieldset>
-              <fieldset className="requests-filter-options">
-                <legend>Evento asociado</legend>
+              </div>
+              <div className="requests-filter-options" role="group" aria-labelledby="request-filter-event">
+                <h3 id="request-filter-event">Evento asociado</h3>
                 {(
                   [
                     ["all", "Todas"],
@@ -181,7 +182,7 @@ export function RequestsView() {
                     {event === value && <Check size={15} />}
                   </button>
                 ))}
-              </fieldset>
+              </div>
               <div className="requests-filter-dates">
                 <label>
                   Desde
@@ -192,8 +193,8 @@ export function RequestsView() {
                   <input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} />
                 </label>
               </div>
-              <fieldset className="requests-filter-options">
-                <legend>Ordenar por fecha</legend>
+              <div className="requests-filter-options" role="group" aria-labelledby="request-filter-order">
+                <h3 id="request-filter-order">Ordenar por fecha</h3>
                 {(
                   [
                     ["desc", "Más recientes primero"],
@@ -205,7 +206,7 @@ export function RequestsView() {
                     {order === value && <Check size={15} />}
                   </button>
                 ))}
-              </fieldset>
+              </div>
               <button className="requests-clear" disabled={!hasFilters} onClick={clear}>
                 Limpiar filtros
               </button>
