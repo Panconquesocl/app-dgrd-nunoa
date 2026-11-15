@@ -1,0 +1,13 @@
+import type { Metadata } from "next"
+import { redirect } from "next/navigation"
+import { getSession } from "@/lib/session"
+import { can } from "@/lib/permissions"
+import { AccessDenied } from "@/components/layout/access-denied"
+import { ActivityDetailView } from "@/features/activities/components/activity-detail-view"
+export const metadata: Metadata = { title: "Actividad · DGRD Ñuñoa" }
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const session = await getSession()
+  if (!session) redirect("/login")
+  if (!can(session.user.role, "activities", "read")) return <AccessDenied />
+  return <ActivityDetailView id={(await params).id} user={session.user} />
+}

@@ -102,31 +102,36 @@ export async function createStrategicAction(input: CreateStrategicActionInput, u
 }
 
 export async function updateStrategicAction(id: string, input: UpdateStrategicActionInput) {
-  const current = await prisma.strategicAction.findUnique({
-    where: { id },
-    select: { startDate: true, endDate: true },
-  })
-
-  if (!current) {
-    throw new AppError(404, "La acción estratégica no existe.")
-  }
-
-  // El PATCH es parcial, así que las fechas se comparan sobre la mezcla del
-  // registro guardado con el parche, no solo sobre lo que vino en el body.
-  const startDate = input.startDate ?? current.startDate
-  const endDate = input.endDate ?? current.endDate
-
-  if (endDate < startDate) {
-    throw new AppError(400, dateOrderError.message, {
-      fieldErrors: { [dateOrderError.path]: [dateOrderError.message] },
-    })
-  }
-
   try {
-    return await prisma.strategicAction.update({
-      where: { id },
-      data: input,
-      select: listSelect,
+    return await prisma.$transaction(async (tx) => {
+      const rows = await tx.$queryRaw<
+        { startDate: Date; endDate: Date }[]
+      >`SELECT "startDate", "endDate" FROM strategic_action WHERE id = ${id} FOR UPDATE`
+      const current = rows[0]
+      if (!current) throw new AppError(404, "La acción estratégica no existe.")
+      const startDate = input.startDate ?? current.startDate
+      const endDate = input.endDate ?? current.endDate
+      if (endDate < startDate)
+        throw new AppError(400, dateOrderError.message, {
+          fieldErrors: { [dateOrderError.path]: [dateOrderError.message] },
+        })
+      if (input.startDate !== undefined || input.endDate !== undefined) {
+        const outside = await tx.activity.count({
+          where: { actionId: id, OR: [{ date: { lt: startDate } }, { date: { gt: endDate } }] },
+        })
+        if (outside)
+          throw new AppError(
+            409,
+            `El periodo dejaría ${outside} actividades fuera de sus fechas. Ajusta primero esas actividades o amplía el periodo.`,
+            {
+              fieldErrors: {
+                startDate: ["El periodo debe incluir todas sus actividades."],
+                endDate: ["El periodo debe incluir todas sus actividades."],
+              },
+            },
+          )
+      }
+      return tx.strategicAction.update({ where: { id }, data: input, select: listSelect })
     })
   } catch (error) {
     if (isPrismaError(error, "P2002")) {

@@ -4,7 +4,7 @@ import { usePermission } from "@/providers/permissions"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Box, CalendarRange, FileText, Home, Package, Settings, Siren, Users } from "lucide-react"
+import { Box, CalendarRange, FileText, Home, Package, Settings, Siren, Target, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type NavItem = {
@@ -37,7 +37,10 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Plan RRD",
-    items: [{ href: "/plan/acciones", label: "Cronograma", icon: CalendarRange }],
+    items: [
+      { href: "/plan/acciones", label: "Acciones estratégicas", icon: Target },
+      { href: "/plan/cronograma", label: "Cronograma", icon: CalendarRange },
+    ],
   },
   { label: "Administración", items: [{ href: "/admin/configuracion", label: "Configuración", icon: Settings }] },
 ]

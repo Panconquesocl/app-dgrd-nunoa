@@ -19,7 +19,7 @@ import {
 import { AppTopbar } from "@/components/layout/app-topbar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { ActivityFormDialog } from "@/features/activities/components/activity-form-dialog"
 import { durationInDays, formatDate } from "@/lib/format"
 import type { StrategicActionActivity, StrategicActionDetail } from "../schemas"
 import { useStrategicAction } from "../queries"
@@ -35,6 +35,8 @@ export function StrategicActionDetailView({ id, user }: Props) {
   const canManage = usePermission("strategic-actions", "update")
   const router = useRouter()
   const { data: action, isPending, isError, error } = useStrategicAction(id)
+  const [activityForm, setActivityForm] = useState(false)
+  const canCreateActivity = usePermission("activities", "create")
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<DeletableAction | null>(null)
 
@@ -79,10 +81,14 @@ export function StrategicActionDetailView({ id, user }: Props) {
             />
 
             <div className="mt-6 grid items-start gap-5 lg:grid-cols-[1.15fr_1fr]">
-              <ActivitiesCard activities={action.activities} />
+              <ActivitiesCard
+                activities={action.activities}
+                onCreate={canCreateActivity ? () => setActivityForm(true) : undefined}
+              />
               <InfoCard action={action} />
             </div>
 
+            {activityForm && <ActivityFormDialog actionId={action.id} onClose={() => setActivityForm(false)} />}
             {canManage && (
               <>
                 <StrategicActionFormDialog open={isFormOpen} onOpenChange={setIsFormOpen} action={action} />
@@ -163,7 +169,7 @@ function pluralizeDays(days: number) {
   return days === 1 ? "1 día" : `${days} días`
 }
 
-function ActivitiesCard({ activities }: { activities: StrategicActionActivity[] }) {
+function ActivitiesCard({ activities, onCreate }: { activities: StrategicActionActivity[]; onCreate?: () => void }) {
   return (
     <section className="bg-surface rounded-xl border">
       <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
@@ -175,17 +181,12 @@ function ActivitiesCard({ activities }: { activities: StrategicActionActivity[] 
           </span>
         </h2>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span>
-              <Button variant="outline" size="sm" disabled>
-                <Plus className="size-4" />
-                Nueva actividad
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>Próximamente</TooltipContent>
-        </Tooltip>
+        {onCreate && (
+          <Button variant="outline" size="sm" onClick={onCreate}>
+            <Plus className="size-4" />
+            Nueva actividad
+          </Button>
+        )}
       </div>
 
       {activities.length === 0 ? (
@@ -195,36 +196,29 @@ function ActivitiesCard({ activities }: { activities: StrategicActionActivity[] 
       ) : (
         <ul className="divide-y">
           {activities.map((activity) => (
-            <li key={activity.id} className="flex items-center gap-3.5 px-5 py-3.5 text-left">
-              <span className="bg-secondary flex size-9 shrink-0 items-center justify-center rounded-lg">
-                <ActivityIcon aria-hidden="true" className="text-muted-foreground size-4" />
-              </span>
-
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13.5px] font-medium">{activity.objective}</p>
-                <p className="text-muted-foreground mt-1 flex items-center gap-2 text-[12px]">
-                  <span className="shrink-0 font-mono whitespace-nowrap">{formatDate(activity.date)}</span>
-                  <span aria-hidden="true">·</span>
-                  <span className="flex min-w-0 items-center gap-1">
-                    <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
-                    <span className="truncate">{activity.location}</span>
-                  </span>
-                </p>
-              </div>
-
-              <span
-                className={
-                  activity._count.evidence > 0
-                    ? "bg-brand-soft text-brand-ink shrink-0 rounded-full px-2.5 py-1 text-[11.5px] font-semibold"
-                    : "bg-secondary text-muted-foreground shrink-0 rounded-full px-2.5 py-1 text-[11.5px] font-medium"
-                }
+            <li key={activity.id}>
+              <Link
+                href={`/plan/actividades/${activity.id}`}
+                className="hover:bg-brand-soft flex items-center gap-3.5 px-5 py-3.5 text-left"
               >
-                {activity._count.evidence > 0
-                  ? `${activity._count.evidence} ${activity._count.evidence === 1 ? "evidencia" : "evidencias"}`
-                  : "Sin evidencia"}
-              </span>
+                <span className="bg-secondary flex size-9 shrink-0 items-center justify-center rounded-lg">
+                  <ActivityIcon aria-hidden="true" className="text-muted-foreground size-4" />
+                </span>
 
-              <ChevronRight aria-hidden="true" className="text-muted-foreground size-4 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13.5px] font-medium">{activity.objective}</p>
+                  <p className="text-muted-foreground mt-1 flex items-center gap-2 text-[12px]">
+                    <span className="shrink-0 font-mono whitespace-nowrap">{formatDate(activity.date)}</span>
+                    <span aria-hidden="true">·</span>
+                    <span className="flex min-w-0 items-center gap-1">
+                      <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
+                      <span className="truncate">{activity.location}</span>
+                    </span>
+                  </p>
+                </div>
+
+                <ChevronRight aria-hidden="true" className="text-muted-foreground size-4 shrink-0" />
+              </Link>
             </li>
           ))}
         </ul>
@@ -235,12 +229,12 @@ function ActivitiesCard({ activities }: { activities: StrategicActionActivity[] 
 
 function InfoCard({ action }: { action: StrategicActionDetail }) {
   const rows = [
-    { label: "N° de acción", value: String(action.number) },
-    { label: "Año", value: String(action.year) },
+    { label: "N° de acción", value: String(action.number), mono: true },
+    { label: "Año", value: String(action.year), mono: true },
     { label: "Fecha de inicio", value: formatDate(action.startDate), mono: true },
     { label: "Fecha de término", value: formatDate(action.endDate), mono: true },
-    { label: "Cómo desarrollarla", value: action.implementation },
-    { label: "Temas", value: action.topics },
+    { label: "Cómo desarrollarla", value: action.implementation, full: true },
+    { label: "Temas", value: action.topics, full: true },
   ]
 
   return (
@@ -250,12 +244,16 @@ function InfoCard({ action }: { action: StrategicActionDetail }) {
         Información de la acción
       </h2>
 
-      <dl className="flex flex-col gap-5 px-5 py-5">
+      <dl className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,220px),1fr))] gap-x-7 gap-y-[18px] px-5 py-5">
         {rows.map((row) => (
-          <div key={row.label}>
+          <div key={row.label} className={row.full ? "col-span-full min-w-0" : "min-w-0"}>
             <dt className="text-muted-foreground text-[11px] font-semibold tracking-[0.08em] uppercase">{row.label}</dt>
             <dd
-              className={row.mono ? "mt-1 font-mono text-[13px]" : "mt-1 text-[13.5px] leading-relaxed wrap-anywhere"}
+              className={
+                row.mono
+                  ? "mt-1 font-mono text-[13px]"
+                  : "mt-1 text-[13.5px] leading-relaxed wrap-anywhere whitespace-pre-wrap"
+              }
             >
               {row.value}
             </dd>
