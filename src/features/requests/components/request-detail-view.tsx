@@ -10,6 +10,7 @@ import {
   FileText,
   Info,
   Pencil,
+  Plus,
   Siren,
   Trash2,
   Truck,
@@ -25,6 +26,7 @@ import { DeleteRequestDialog } from "./delete-request-dialog"
 import { RequestStatusBadge } from "./request-status-badge"
 import "@/features/deliveries/components/deliveries.css"
 import "./requests.css"
+import { EventFormDialog } from "@/features/events/components/event-form-dialog"
 
 export function RequestDetailView({
   id,
@@ -35,6 +37,8 @@ export function RequestDetailView({
   embedded?: boolean
   onClose?: () => void
 }) {
+  const [creatingEvent, setCreatingEvent] = useState(false)
+  const canCreateEvent = usePermission("events", "create")
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const canUpdate = usePermission("requests", "update")
@@ -137,7 +141,9 @@ export function RequestDetailView({
               <div className="requests-related">
                 <Siren size={20} />
                 <div>
-                  <strong>{request.event.folio}</strong>
+                  <Link href={`/eventos/${request.event.id}`} className="font-mono font-semibold hover:underline">
+                    {request.event.folio}
+                  </Link>
                   <span>{request.event.sector}</span>
                 </div>
               </div>
@@ -154,6 +160,12 @@ export function RequestDetailView({
               </button>
             )}
           </section>
+          {!request.event && canCreateEvent && (
+            <Button className="w-full" onClick={() => setCreatingEvent(true)}>
+              <Plus size={16} />
+              Crear evento desde solicitud
+            </Button>
+          )}
           <section className="delivery-aside">
             <h2>Entrega asociada</h2>
             {request.delivery ? (
@@ -203,6 +215,13 @@ export function RequestDetailView({
           )}
         </aside>
       </div>
+      {creatingEvent && (
+        <EventFormDialog
+          fromRequest={request}
+          onClose={() => setCreatingEvent(false)}
+          onSaved={(event) => router.push(`/eventos/${event.id}`)}
+        />
+      )}
       {editing && <RequestFormDialog request={request} onClose={() => setEditing(false)} />}
       {deleting && (
         <DeleteRequestDialog

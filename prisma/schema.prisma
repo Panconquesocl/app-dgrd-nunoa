@@ -323,3 +323,10 @@ model RequestFolioCounter {
 
   @@map("request_folio_counter")
 }
+
+model EventFolioCounter {
+  year      Int    @id
+  lastValue BigInt
+
+  @@map("event_folio_counter")
+}

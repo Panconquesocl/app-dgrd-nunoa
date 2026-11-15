@@ -43,6 +43,7 @@ export function useCreateDelivery() {
       queryClient.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.options() })
       queryClient.invalidateQueries({ queryKey: requestKeys.all })
+      queryClient.invalidateQueries({ queryKey: ["events"] })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.lists() })
     },
   })
@@ -58,6 +59,7 @@ export function useUpdateDelivery(id: string) {
       queryClient.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.options() })
       queryClient.invalidateQueries({ queryKey: requestKeys.all })
+      queryClient.invalidateQueries({ queryKey: ["events"] })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.lists() })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.detail(id) })
     },
@@ -74,6 +76,7 @@ export function useDeleteDelivery() {
       queryClient.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.options() })
       queryClient.invalidateQueries({ queryKey: requestKeys.all })
+      queryClient.invalidateQueries({ queryKey: ["events"] })
       queryClient.removeQueries({ queryKey: deliveryKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.lists() })
     },
