@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { formatDate, formatDateTime } from "@/lib/format"
 import { usePermission } from "@/providers/permissions"
 import { RequestFormDialog } from "@/features/requests/components/request-form-dialog"
+import { DeliveryFormDialog } from "@/features/deliveries/components/delivery-form-dialog"
 import { RequestStatusBadge } from "@/features/requests/components/request-status-badge"
 import { useEvent } from "../queries"
 import { EventFormDialog } from "./event-form-dialog"
@@ -29,10 +30,12 @@ export function EventDetailView({
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [requestForm, setRequestForm] = useState(false)
+  const [deliveryForm, setDeliveryForm] = useState(false)
   const router = useRouter()
   const canUpdate = usePermission("events", "update")
   const canDelete = usePermission("events", "delete")
   const canCreateRequest = usePermission("requests", "create")
+  const canCreateDelivery = usePermission("deliveries", "create")
   if (query.isPending)
     return (
       <div className="space-y-4 p-6" aria-label="Cargando evento" aria-busy="true">
@@ -84,6 +87,29 @@ export function EventDetailView({
           )}
         </div>
       </div>
+      <div className="delivery-stats events-stats" aria-label="Estadísticas del evento">
+        <div>
+          <strong>{event.affectedCount ?? "—"}</strong>
+          <span>Personas afectadas</span>
+        </div>
+        <div className="delivery-stat">
+          <strong>{event.deliveries.length}</strong>
+          <span>Entregas registradas</span>
+        </div>
+        <div className="delivery-stat">
+          <strong>
+            {event.deliveries.reduce(
+              (total, delivery) => total + delivery.items.reduce((sum, item) => sum + item.quantity, 0),
+              0,
+            )}
+          </strong>
+          <span>Unidades de insumo entregadas</span>
+        </div>
+        <div className="delivery-stat">
+          <strong>{event.requests.length}</strong>
+          <span>Solicitudes asociadas</span>
+        </div>
+      </div>
       <div className="delivery-detail-grid">
         <div>
           <section className="delivery-panel events-detail-section">
@@ -126,6 +152,11 @@ export function EventDetailView({
                 <Truck size={17} />
                 Entregas asociadas <span className="delivery-count">{event.deliveries.length}</span>
               </h2>
+              {canCreateDelivery && (
+                <Button variant="outline" onClick={() => setDeliveryForm(true)}>
+                  <Plus size={15} /> Registrar entrega
+                </Button>
+              )}
             </div>
             {event.deliveries.length ? (
               event.deliveries.map((delivery) => (
@@ -143,7 +174,7 @@ export function EventDetailView({
               <div className="delivery-empty">
                 <Truck size={24} />
                 <h2>Sin entregas registradas</h2>
-                <p>Las entregas vinculadas a las solicitudes de este evento aparecerán aquí.</p>
+                <p>Registra las entregas de insumos realizadas durante este evento, con o sin solicitud.</p>
               </div>
             )}
           </section>
@@ -196,6 +227,7 @@ export function EventDetailView({
         />
       )}
       {requestForm && <RequestFormDialog initialEventId={event.id} onClose={() => setRequestForm(false)} />}
+      {deliveryForm && <DeliveryFormDialog open onOpenChange={setDeliveryForm} fromEvent={event} />}
     </div>
   )
 }

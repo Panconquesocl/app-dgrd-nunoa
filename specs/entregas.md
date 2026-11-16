@@ -26,13 +26,14 @@ Decisiones confirmadas el 2026-10-14:
   Las nuevas entregas solo admiten juntas activas; el historial conserva las inactivas.
 - Requerir al menos un insumo, cantidades enteras positivas y no repetir insumos.
 - Asociación opcional a una solicitud; máximo una entrega por solicitud.
-  `eventId` se hereda de la solicitud y no se edita directamente.
+  Con solicitud, `eventId` se hereda de ella. Sin solicitud, se admite un evento directo desde su detalle.
 
 La versión anterior de esta spec difería insumos, relaciones y filtros avanzados.
 El alcance se amplió para incorporar esas funciones del spike.
 
 ## Funcionalidad implementada
 
+- Alta contextual desde eventos: fecha del evento editable, ninguna solicitud preseleccionada y asociación al evento incluso sin solicitud. El selector incluye únicamente solicitudes de ese evento sin entrega asociada, sin preselección ni toggle. Guardar refresca el detalle; cancelar conserva la página o panel de origen.
 - Alta contextual desde el detalle de una solicitud sin entrega: solicitud fija, evento heredado y datos del beneficiario e insumos sin precargar. Al guardar se actualizan solicitudes, eventos y listados antes de cerrar el formulario; cancelar conserva la página o panel de origen. No se cambia automáticamente el estado de la solicitud.
 - Listado con búsqueda por folio, beneficiario, junta vecinal, dirección y folio del evento.
 - Rango de fechas inclusivo y periodos rápidos: este mes, 30 días y este año.
@@ -58,9 +59,9 @@ DELETE /api/deliveries/:id
 ```
 
 Entrada: `beneficiary`, `neighborhoodAssociationId`, `contact`, `address`, `date` (`AAAA-MM-DD`),
-`requestId` nullable y `items: [{ supplyId, quantity }]`.
+`requestId` y `eventId` opcionales y nullable, e `items: [{ supplyId, quantity }]`.
 Los PATCH son parciales. Si incluyen `items`, reemplazan el conjunto completo
-atómicamente. Si incluyen `requestId`, actualizan también el evento heredado.
+atómicamente. Con solicitud, el evento se deriva de ella y se rechaza un `eventId` explícito distinto. Sin solicitud, el evento explícito se valida y bloquea con `FOR SHARE` contra borrado concurrente. Un PATCH que omite relaciones las conserva; editar una entrega directa con `requestId: null` conserva su evento. Desvincular una solicitud quita su evento heredado salvo que se envíe un evento explícito. `eventId: null` permite quitar el vínculo de una entrega sin solicitud. No se cambia automáticamente el estado de las solicitudes.
 Las fechas de salida son strings ISO; se guardan como medianoche UTC y se muestran
 con `formatDate()`. Los identificadores del dominio son CUID.
 

@@ -46,7 +46,7 @@ export async function getEvent(id: string) {
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       },
       deliveries: {
-        select: { id: true, folio: true, date: true, beneficiary: true },
+        select: { id: true, folio: true, date: true, beneficiary: true, items: { select: { quantity: true } } },
         orderBy: [{ date: "desc" }, { id: "desc" }],
       },
     },

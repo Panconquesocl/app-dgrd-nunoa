@@ -117,9 +117,18 @@ async function validateRelations(
     if (!request) fail("requestId", "La solicitud ya no existe.")
     if (request.delivery && request.delivery.id !== id)
       fail("requestId", "Esa solicitud ya tiene una entrega registrada.", 409)
+    if (input.eventId !== undefined && input.eventId !== request.eventId)
+      fail("requestId", "La solicitud no pertenece al evento de la entrega. Actualiza el formulario.", 409)
+    await assertEvent(tx, request.eventId)
     return request.eventId
   }
-  return null
+  await assertEvent(tx, input.eventId)
+  return input.eventId ?? null
+}
+async function assertEvent(tx: Prisma.TransactionClient, eventId: string | null | undefined) {
+  if (!eventId) return
+  const rows = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "event" WHERE id = ${eventId} FOR SHARE`
+  if (!rows.length) fail("eventId", "El evento ya no existe. Actualiza el formulario.", 409)
 }
 function translateError(error: unknown): never {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -130,7 +139,7 @@ function translateError(error: unknown): never {
       throw new AppError(409, "El folio ya está ocupado. Vuelve a intentar guardar.")
     }
     if (error.code === "P2003")
-      throw new AppError(409, "La junta vecinal, solicitud o un insumo cambió. Actualiza el formulario.")
+      throw new AppError(409, "La junta vecinal, solicitud, evento o un insumo cambió. Actualiza el formulario.")
   }
   throw error
 }
@@ -140,17 +149,32 @@ export async function updateDelivery(id: string, input: UpdateDeliveryInput) {
       await tx.$queryRaw`SELECT id FROM "delivery" WHERE id = ${id} FOR UPDATE`
       const current = await tx.delivery.findUnique({
         where: { id },
-        select: { id: true, neighborhoodAssociationId: true },
+        select: { id: true, neighborhoodAssociationId: true, requestId: true, eventId: true },
       })
       if (!current) throw new AppError(404, "La entrega no existe.")
-      const eventId = await validateRelations(tx, input, id, current.neighborhoodAssociationId)
+      const changesRelation = input.requestId !== undefined || input.eventId !== undefined
+      const eventId = await validateRelations(
+        tx,
+        {
+          ...input,
+          ...(changesRelation && { requestId: input.requestId === undefined ? current.requestId : input.requestId }),
+          // Editar una entrega directa conserva su evento. Desvincular una
+          // solicitud sigue quitando su evento heredado salvo indicación explícita.
+          ...(changesRelation &&
+            !current.requestId &&
+            !input.requestId &&
+            input.eventId === undefined && { eventId: current.eventId }),
+        },
+        id,
+        current.neighborhoodAssociationId,
+      )
       const { items, ...fields } = input
       if (items) await tx.deliveryItem.deleteMany({ where: { deliveryId: id } })
       return tx.delivery.update({
         where: { id },
         data: {
           ...fields,
-          ...(input.requestId !== undefined && { eventId }),
+          ...(changesRelation && { eventId }),
           ...(items && { items: { create: items } }),
         },
         include,

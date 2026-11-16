@@ -2,6 +2,12 @@
 
 Implementada desde main, con referencia funcional y visual exclusiva al spike. Solo administradores acceden a `/eventos`, `/eventos/[id]` y a las rutas `/api/events`.
 
+## Entregas desde el detalle
+
+La página y el panel lateral incluyen «Registrar entrega» según permisos. El formulario conserva el evento de origen, precarga su fecha (editable) y no preselecciona ninguna solicitud. Se puede guardar sin solicitud. El selector solo incluye solicitudes de ese evento sin entrega asociada, sin toggle ni preselección. El servidor rechaza solicitudes que hayan cambiado de evento o tengan otra entrega.
+
+Como en el spike, el detalle muestra estadísticas de personas afectadas, entregas, unidades de insumo entregadas y solicitudes asociadas. Incluye las entregas directas y las vinculadas mediante solicitudes. Guardar refresca las relaciones y estadísticas antes de cerrar el formulario; cancelar mantiene abierto el detalle. El borrado de eventos incluye las entregas directas en la advertencia y conserva los registros sin vínculo al evento.
+
 ## Reglas y relaciones
 
 - Tipo, fecha calendario y sector obligatorios. Personas afectadas opcional, entero no negativo hasta el límite de PostgreSQL. Instituciones y acciones opcionales.
