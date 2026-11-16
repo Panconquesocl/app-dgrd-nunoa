@@ -13,6 +13,7 @@ import {
   listDeliveries,
 } from "./service"
 import { createDeliverySchema, updateDeliverySchema } from "./schemas"
+import { getRequest } from "@/features/requests/service"
 
 // Usa fixtures aislados y los retira aun si una aserción falla. Requiere una DB
 // de desarrollo con las migraciones aplicadas; nunca corre por defecto.
@@ -54,6 +55,9 @@ test(
       })
       const delivery = await createDelivery(input, userId)
       assert.equal(delivery.eventId, event.id)
+      const linkedRequest = await getRequest(request.id)
+      assert.equal(linkedRequest.delivery?.id, delivery.id)
+      assert.equal(linkedRequest.status, request.status)
       assert.equal(delivery.contact, null)
       assert.equal(delivery.items[0].quantity, 2)
       assert.equal((await getDelivery(delivery.id)).creator.name, marker)

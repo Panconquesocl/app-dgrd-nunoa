@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { ApiError } from "../api"
 import { useCreateDelivery, useUpdateDelivery, useDeliveryOptions } from "../queries"
 import { deliveryFormSchema, toDeliveryPayload, type Delivery, type DeliveryFormValues } from "../schemas"
+import type { RequestDetail } from "@/features/requests/schemas"
 
 function today() {
   const now = new Date()
@@ -22,15 +23,19 @@ type DeliveryFormDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   delivery?: Delivery
+  fromRequest?: Pick<RequestDetail, "id" | "folio" | "channel" | "event">
 }
 
 export function DeliveryFormDialog(props: DeliveryFormDialogProps) {
   // Cada apertura o cambio de registro inicia un formulario nuevo. Los refetch
   // del mismo registro mantienen esta instancia y sus cambios sin guardar.
-  return props.open ? <DeliveryFormContent key={props.delivery?.id ?? "new"} {...props} /> : null
+  return props.open ? (
+    <DeliveryFormContent key={props.delivery?.id ?? props.fromRequest?.id ?? "new"} {...props} />
+  ) : null
 }
 
-function DeliveryFormContent({ open, onOpenChange, delivery }: DeliveryFormDialogProps) {
+function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest }: DeliveryFormDialogProps) {
+  const contextRequest = delivery ? undefined : fromRequest
   const form = useForm<DeliveryFormValues>({
     resolver: zodResolver(deliveryFormSchema),
     defaultValues: {
@@ -39,7 +44,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery }: DeliveryFormDialo
       contact: delivery?.contact ?? "",
       address: delivery?.address ?? "",
       date: delivery?.date.slice(0, 10) ?? today(),
-      requestId: delivery?.requestId ?? "",
+      requestId: delivery?.requestId ?? contextRequest?.id ?? "",
       items: delivery
         ? delivery.items.map((item) => ({
             type: item.supply.type,
@@ -60,7 +65,10 @@ function DeliveryFormContent({ open, onOpenChange, delivery }: DeliveryFormDialo
   const requests =
     options.data?.requests.filter((request) => !request.delivery || request.delivery.id === delivery?.id) ?? []
   const requestId = useWatch({ control: form.control, name: "requestId" })
-  const selectedRequest = requests.find((request) => request.id === requestId)
+  const selectedRequest = requests.find((request) => request.id === requestId) ?? contextRequest
+  const unavailableRequest = Boolean(
+    contextRequest && options.data && !requests.some((request) => request.id === contextRequest.id),
+  )
   const values = useWatch({ control: form.control, name: "items" })
   const create = useCreateDelivery()
   const edit = useUpdateDelivery(delivery?.id ?? "")
@@ -68,6 +76,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery }: DeliveryFormDialo
   const id = useId()
   const errors = form.formState.errors
   const submit = form.handleSubmit(async (values) => {
+    if (unavailableRequest) return
     try {
       await mutation.mutateAsync(toDeliveryPayload(values))
       toast.success(delivery ? "Entrega actualizada." : "Entrega registrada.")
@@ -124,25 +133,46 @@ function DeliveryFormContent({ open, onOpenChange, delivery }: DeliveryFormDialo
             )}
             <Field data-invalid={Boolean(errors.requestId)}>
               <FieldLabel htmlFor={`${id}-request`}>
-                Solicitud asociada <span className="text-muted-foreground font-normal">Opcional</span>
+                Solicitud asociada{" "}
+                {!contextRequest && <span className="text-muted-foreground font-normal">Opcional</span>}
               </FieldLabel>
-              <select
-                id={`${id}-request`}
-                className="delivery-select"
-                {...form.register("requestId")}
-                aria-invalid={Boolean(errors.requestId)}
-                aria-describedby={`${id}-request-hint ${id}-request-error`}
-              >
-                <option value="">Sin solicitud asociada</option>
-                {requests.map((request) => (
-                  <option key={request.id} value={request.id}>
-                    {request.folio} — {request.channel} · {request.event?.folio ?? "sin evento"}
-                  </option>
-                ))}
-              </select>
+              {contextRequest ? (
+                <>
+                  <input type="hidden" {...form.register("requestId")} />
+                  <Input
+                    id={`${id}-request`}
+                    value={`${contextRequest.folio} — ${contextRequest.channel}`}
+                    readOnly
+                    aria-describedby={`${id}-request-hint ${id}-request-error`}
+                  />
+                </>
+              ) : (
+                <select
+                  id={`${id}-request`}
+                  className="delivery-select"
+                  {...form.register("requestId")}
+                  aria-invalid={Boolean(errors.requestId)}
+                  aria-describedby={`${id}-request-hint ${id}-request-error`}
+                >
+                  <option value="">Sin solicitud asociada</option>
+                  {requests.map((request) => (
+                    <option key={request.id} value={request.id}>
+                      {request.folio} — {request.channel} · {request.event?.folio ?? "sin evento"}
+                    </option>
+                  ))}
+                </select>
+              )}
               <p id={`${id}-request-hint`} className="text-muted-foreground text-xs">
-                Si responde a una solicitud, selecciónala. El evento se heredará de ella.
+                {contextRequest
+                  ? "La entrega quedará vinculada a esta solicitud y heredará su evento. Su estado no cambiará."
+                  : "Si responde a una solicitud, selecciónala. El evento se heredará de ella."}
               </p>
+              {unavailableRequest && (
+                <p role="alert" className="text-destructive text-sm">
+                  Esta solicitud ya tiene una entrega o dejó de estar disponible. Cierra el formulario y actualiza el
+                  detalle antes de continuar.
+                </p>
+              )}
               <FieldError id={`${id}-request-error`} errors={[errors.requestId]} />
             </Field>
             <Field data-invalid={Boolean(errors.neighborhoodAssociationId)}>
@@ -326,7 +356,14 @@ function DeliveryFormContent({ open, onOpenChange, delivery }: DeliveryFormDialo
             </Button>
             <Button
               type="submit"
-              disabled={pending || !options.data || supplies.length === 0 || associations.length === 0}
+              disabled={
+                pending ||
+                !options.data ||
+                options.isError ||
+                unavailableRequest ||
+                supplies.length === 0 ||
+                associations.length === 0
+              }
             >
               {pending ? "Guardando…" : delivery ? "Guardar cambios" : "Registrar entrega"}
             </Button>

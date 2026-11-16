@@ -33,6 +33,7 @@ El alcance se amplió para incorporar esas funciones del spike.
 
 ## Funcionalidad implementada
 
+- Alta contextual desde el detalle de una solicitud sin entrega: solicitud fija, evento heredado y datos del beneficiario e insumos sin precargar. Al guardar se actualizan solicitudes, eventos y listados antes de cerrar el formulario; cancelar conserva la página o panel de origen. No se cambia automáticamente el estado de la solicitud.
 - Listado con búsqueda por folio, beneficiario, junta vecinal, dirección y folio del evento.
 - Rango de fechas inclusivo y periodos rápidos: este mes, 30 días y este año.
 - Filtros con/sin evento, insumo incluido y orden por fecha.

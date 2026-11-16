@@ -38,14 +38,22 @@ export function useCreateDelivery() {
 
   return useMutation({
     mutationFn: (payload: DeliveryPayload) => api.createDelivery(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["summary"] })
-      queryClient.invalidateQueries({ queryKey: supplyKeys.all })
-      queryClient.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all })
-      queryClient.invalidateQueries({ queryKey: deliveryKeys.options() })
-      queryClient.invalidateQueries({ queryKey: requestKeys.all })
-      queryClient.invalidateQueries({ queryKey: ["events"] })
-      queryClient.invalidateQueries({ queryKey: deliveryKeys.lists() })
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["summary"] }),
+        queryClient.invalidateQueries({ queryKey: supplyKeys.all }),
+        queryClient.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all }),
+        queryClient.invalidateQueries({ queryKey: deliveryKeys.options() }),
+        queryClient.invalidateQueries({ queryKey: requestKeys.all }),
+        queryClient.invalidateQueries({ queryKey: ["events"] }),
+        queryClient.invalidateQueries({ queryKey: deliveryKeys.lists() }),
+      ])
+    },
+    onError: (error) => {
+      if (error instanceof api.ApiError && error.status === 409) {
+        queryClient.invalidateQueries({ queryKey: requestKeys.all })
+        queryClient.invalidateQueries({ queryKey: deliveryKeys.options() })
+      }
     },
   })
 }

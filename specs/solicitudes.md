@@ -9,6 +9,8 @@ Implementada desde `main`, tomando únicamente `spike/test-mockup` como referenc
 - Al crear o editar una solicitud, el estado Atendida requiere respuesta no vacía o entrega vinculada. La validación usa el estado final de la edición parcial. Una entrega no cambia automáticamente el estado de la solicitud.
 - Folios anuales `SOL-AAAA-NNN`, con año de America/Santiago y contador persistente. Borrar solicitudes no libera números. La reserva y el alta se confirman en la misma transacción; un alta fallida no consume folio.
 - Se conserva una entrega como máximo por solicitud y la propagación transaccional del evento hacia esa entrega.
+- Desde el detalle (página o panel lateral), «Registrar entrega» abre el formulario habitual con la solicitud fija y el evento heredado. Solo aparece si no existe entrega y el usuario tiene permiso para crearla. Cancelar conserva el detalle abierto; guardar refresca el vínculo sin cambiar automáticamente el estado. Los datos del beneficiario y los insumos se completan manualmente.
+- Si la solicitud deja de estar disponible o ya tiene una entrega, el formulario contextual bloquea el registro. El servicio también rechaza duplicados concurrentes; ante un conflicto se actualizan las solicitudes y las opciones del formulario.
 
 ## Migración
 
