@@ -48,7 +48,7 @@ test(
             date: new Date(date),
             beneficiary: id,
             address: "Prueba",
-            neighborhoodAssociationId: association.id,
+            neighborhoodAssociationId: suffix === "last" ? null : association.id,
             createdBy: id,
             items: { create: [...items] },
           },
@@ -126,6 +126,7 @@ test(
       const now = new Date("2094-06-15T15:00:00Z")
       const admin = await getSummary(year, "admin", now)
       assert.equal(admin.deliveries.count, 2)
+      assert.equal(admin.deliveries.recent.find((row) => row.folio === `${id}-last`)?.neighborhoodAssociation, null)
       assert.deepEqual(admin.deliveries.totalsByUnit, [
         { unit: "litro", quantity: 10 },
         { unit: "unidad", quantity: 7 },

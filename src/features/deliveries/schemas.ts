@@ -1,4 +1,13 @@
 import { z } from "zod"
+import { isValidRut, normalizeRut } from "@/lib/rut"
+
+export const beneficiaryRutSchema = z
+  .string("Indica el RUT del beneficiario.")
+  .trim()
+  .min(1, "Indica el RUT del beneficiario.")
+  .max(24, "El RUT es demasiado largo.")
+  .transform(normalizeRut)
+  .refine(isValidRut, "Indica un RUT válido con su dígito verificador.")
 
 const requiredText = (label: string) =>
   z
@@ -26,7 +35,8 @@ const itemsSchema = z
 
 export const deliveryFieldsSchema = z.object({
   beneficiary: requiredText("El beneficiario"),
-  neighborhoodAssociationId: z.cuid("Selecciona una junta vecinal válida."),
+  beneficiaryRut: beneficiaryRutSchema,
+  neighborhoodAssociationId: z.cuid("Selecciona una junta vecinal válida.").nullable().optional(),
   contact: z
     .string()
     .trim()
@@ -71,8 +81,9 @@ export type Delivery = {
   id: string
   folio: string
   beneficiary: string
-  neighborhoodAssociationId: string
-  neighborhoodAssociation: { id: string; number: number; name: string; active: boolean }
+  beneficiaryRut: string | null
+  neighborhoodAssociationId: string | null
+  neighborhoodAssociation: { id: string; number: number; name: string; active: boolean } | null
   contact: string | null
   address: string
   date: string
@@ -104,7 +115,8 @@ export type DeliveryPayload = Omit<CreateDeliveryInput, "date"> & { date: string
 export type DeliveryPatch = Partial<DeliveryPayload>
 export const deliveryFormSchema = z.object({
   beneficiary: requiredText("El beneficiario"),
-  neighborhoodAssociationId: z.cuid("Selecciona una junta vecinal válida."),
+  beneficiaryRut: beneficiaryRutSchema,
+  neighborhoodAssociationId: z.union([z.literal(""), z.cuid("Selecciona una junta vecinal válida.")]),
   contact: z.string().trim().max(500, "El contacto no puede superar los 500 caracteres."),
   address: requiredText("La dirección"),
   date: day,
@@ -131,6 +143,7 @@ export function toDeliveryPayload(values: DeliveryFormValues): DeliveryPayload {
   return {
     ...values,
     contact: values.contact || null,
+    neighborhoodAssociationId: values.neighborhoodAssociationId || null,
     requestId: values.requestId || null,
     items: values.items.map((item) => ({ supplyId: item.supplyId, quantity: Number(item.quantity) })),
   }

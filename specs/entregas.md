@@ -21,8 +21,9 @@ Decisiones confirmadas el 2026-10-14:
   año se serializan con un bloqueo transaccional de PostgreSQL. Como no existe
   una tabla de secuencias persistente, borrar el último folio permite reutilizar
   ese correlativo en el siguiente alta.
+- RUT del beneficiario obligatorio al crear o editar, validado con módulo 11 y normalizado sin puntos, con guion y dígito verificador en mayúscula. Se admiten varias entregas para el mismo RUT. Los históricos sin RUT se conservan, pero deben completarlo al editar.
 - Contacto opcional: vacío se normaliza a `null`.
-- Junta vecinal obligatoria desde el catálogo, con filtro por identificador.
+- Junta vecinal opcional desde el catálogo, con filtro por identificador.
   Las nuevas entregas solo admiten juntas activas; el historial conserva las inactivas.
 - Requerir al menos un insumo, cantidades enteras positivas y no repetir insumos.
 - Asociación opcional a una solicitud; máximo una entrega por solicitud.
@@ -39,7 +40,7 @@ El alcance se amplió para incorporar esas funciones del spike.
 - Rango de fechas inclusivo y periodos rápidos: este mes, 30 días y este año.
 - Filtros con/sin evento, insumo incluido y orden por fecha.
 - Indicadores calculados sobre los resultados filtrados: entregas, unidades y juntas vecinales.
-- Formulario de alta y edición: fecha, junta vecinal del catálogo, beneficiario, contacto,
+- Formulario de alta y edición: fecha, junta vecinal opcional del catálogo, beneficiario, RUT obligatorio, contacto,
   dirección y solicitud opcional. Folio generado fuera del formulario.
 - Filas dinámicas de insumos: tipo, unidad y cantidad. Si un tipo tiene una sola
   unidad, se selecciona automáticamente; las variantes ocupadas se deshabilitan.
@@ -58,7 +59,7 @@ PATCH  /api/deliveries/:id
 DELETE /api/deliveries/:id
 ```
 
-Entrada: `beneficiary`, `neighborhoodAssociationId`, `contact`, `address`, `date` (`AAAA-MM-DD`),
+Entrada: `beneficiary`, `beneficiaryRut`, `neighborhoodAssociationId` opcional/nullable, `contact`, `address`, `date` (`AAAA-MM-DD`),
 `requestId` y `eventId` opcionales y nullable, e `items: [{ supplyId, quantity }]`.
 Los PATCH son parciales. Si incluyen `items`, reemplazan el conjunto completo
 atómicamente. Con solicitud, el evento se deriva de ella y se rechaza un `eventId` explícito distinto. Sin solicitud, el evento explícito se valida y bloquea con `FOR SHARE` contra borrado concurrente. Un PATCH que omite relaciones las conserva; editar una entrega directa con `requestId: null` conserva su evento. Desvincular una solicitud quita su evento heredado salvo que se envíe un evento explícito. `eventId: null` permite quitar el vínculo de una entrega sin solicitud. No se cambia automáticamente el estado de las solicitudes.
@@ -103,3 +104,11 @@ herencia del evento, sustitución de ítems y altas concurrentes.
   El historial por insumo ya está implementado.
 - Al cambiar el evento de una solicitud, sincronizar `Delivery.eventId` en la misma
   transacción, como hace el spike. Es responsabilidad del futuro módulo de solicitudes.
+
+## Identificación del beneficiario
+
+`20261116020000_delivery_beneficiary_rut` agrega `beneficiaryRut` nullable para conservar los históricos y permite `neighborhoodAssociationId: null`. No inventa RUT ni modifica vínculos existentes. El índice no único `(beneficiaryRut, date)` permite consultar entregas anteriores sin impedir nuevas entregas. Aplicar con `pnpm exec prisma migrate deploy` y regenerar el cliente con `pnpm exec prisma generate`.
+
+Formulario, tabla y detalle muestran el RUT; los históricos indican «Sin RUT registrado». Sin junta se muestra «Sin junta vecinal», también en el resumen, y no se contabiliza una junta adicional en estadísticas. Una junta seleccionada mantiene las validaciones de existencia/actividad y la protección de borrado. El servidor exige un RUT válido en altas y al editar una entrega histórica sin RUT.
+
+La alerta se implementará en la siguiente feature: se mostrará al intentar registrar una entrega si existe al menos una anterior del mismo RUT en los últimos seis meses. Será informativa y no bloqueará el registro. No se incorporan alertas en solicitudes en este alcance.

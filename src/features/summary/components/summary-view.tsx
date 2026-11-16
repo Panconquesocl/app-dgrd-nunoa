@@ -247,8 +247,10 @@ export function SummaryView({ initialYear, viewerKey }: { initialYear: number; v
                     title={delivery.beneficiary}
                     meta={
                       <>
-                        <span className="font-mono">{delivery.folio}</span> · {formatDate(delivery.date)} · J.V. N°
-                        {delivery.neighborhoodAssociation.number}
+                        <span className="font-mono">{delivery.folio}</span> · {formatDate(delivery.date)} ·{" "}
+                        {delivery.neighborhoodAssociation
+                          ? `J.V. N°${delivery.neighborhoodAssociation.number}`
+                          : "Sin junta vecinal"}
                       </>
                     }
                     badge={

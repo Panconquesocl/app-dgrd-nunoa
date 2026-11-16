@@ -26,7 +26,7 @@ export type SummaryData = {
       folio: string
       beneficiary: string
       date: string
-      neighborhoodAssociation: { number: number; name: string }
+      neighborhoodAssociation: { number: number; name: string } | null
       _count: { items: number }
     }[]
   }

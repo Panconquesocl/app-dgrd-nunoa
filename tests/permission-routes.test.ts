@@ -82,6 +82,7 @@ test("handlers reales: autorización antes de leer datos o llamar a los servicio
           const payloads: Record<string, object> = {
             deliveries: {
               beneficiary: "Persona",
+              beneficiaryRut: "12345678-5",
               neighborhoodAssociationId: "cm12345678901234567890123",
               address: "Dirección",
               date: "2026-10-30",

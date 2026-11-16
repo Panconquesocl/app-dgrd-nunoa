@@ -48,6 +48,7 @@ test(
       })
       const input = createDeliverySchema.parse({
         beneficiary: marker,
+        beneficiaryRut: "12345678-5",
         neighborhoodAssociationId: association.id,
         address: "Calle de prueba",
         date: "2026-10-14",
@@ -93,6 +94,34 @@ test(
       assert.equal((await getDelivery(direct.id)).eventId, null)
       assert.equal((await getDelivery(direct.id)).items[0].quantity, 2)
       await deleteDelivery(direct.id)
+      const withoutAssociation = await createDelivery(
+        { ...input, beneficiaryRut: "12.345.678-5", requestId: null, neighborhoodAssociationId: null },
+        userId,
+      )
+      assert.equal(withoutAssociation.beneficiaryRut, "12345678-5")
+      assert.equal(withoutAssociation.neighborhoodAssociation, null)
+      assert.equal((await listDeliveries({ q: marker })).stats.neighborhoods, 0)
+      assert.equal(
+        (await updateDelivery(withoutAssociation.id, { neighborhoodAssociationId: association.id }))
+          .neighborhoodAssociationId,
+        association.id,
+      )
+      assert.equal(
+        (await updateDelivery(withoutAssociation.id, { neighborhoodAssociationId: null })).neighborhoodAssociation,
+        null,
+      )
+      assert.equal((await updateDelivery(withoutAssociation.id, { contact: "123" })).beneficiaryRut, "12345678-5")
+      await prisma.delivery.update({ where: { id: withoutAssociation.id }, data: { beneficiaryRut: null } })
+      assert.equal((await getDelivery(withoutAssociation.id)).beneficiaryRut, null)
+      await assert.rejects(
+        updateDelivery(withoutAssociation.id, { contact: "456" }),
+        (error: unknown) => error instanceof AppError && Boolean(error.fieldErrors?.beneficiaryRut),
+      )
+      assert.equal(
+        (await updateDelivery(withoutAssociation.id, { beneficiaryRut: "6.000.000-k" })).beneficiaryRut,
+        "6000000-K",
+      )
+      await deleteDelivery(withoutAssociation.id)
       const delivery = await createDelivery({ ...input, eventId: event.id }, userId)
       assert.equal(delivery.eventId, event.id)
       const linkedRequest = await getRequest(request.id)

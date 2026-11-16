@@ -50,6 +50,7 @@ test(
       const delivery = await createDelivery(
         createDeliverySchema.parse({
           beneficiary: "Prueba",
+          beneficiaryRut: "12345678-5",
           neighborhoodAssociationId: association.id,
           date: "2026-11-15",
           address: "Prueba",
@@ -63,9 +64,9 @@ test(
       assert.equal((await prisma.delivery.findUniqueOrThrow({ where: { id: delivery.id } })).eventId, contextual.id)
       assert.equal((await getEvent(contextual.id)).requests.length, 1)
       assert.equal((await getEvent(contextual.id)).deliveries.length, 1)
-      const countBefore = (await listEvents()).data.length
+      const countBefore = (await listEvents()).data.filter((event) => event.sector === userId).length
       await assert.rejects(createEvent({ ...base, requestId: request.id }, userId), conflict)
-      assert.equal((await listEvents()).data.length, countBefore)
+      assert.equal((await listEvents()).data.filter((event) => event.sector === userId).length, countBefore)
       await updateEvent(contextual.id, { ...base, affectedCount: 0, actions: "Acción actualizada" })
       assert.equal((await getEvent(contextual.id)).affectedCount, 0)
       const seen = await getEventDeletionImpact(contextual.id)

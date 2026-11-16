@@ -1,6 +1,14 @@
 # Backlog del proyecto DGRD Ñuñoa
 
-Actualizado: 30 de octubre de 2026.
+## Alcance y orden acordados en la revisión actual
+
+1. Identificación en entregas: RUT del beneficiario obligatorio, validado y normalizado; junta vecinal opcional. Conservar históricos sin inferir identidades por nombre.
+2. Alertas: al intentar registrar una entrega, avisar si existe al menos una entrega anterior del mismo RUT en los últimos seis meses. Solo informativa, sin impedir el registro. Reemplaza la propuesta anterior de alertar al crear solicitudes por responsable.
+3. Conversar sobre búsqueda antes de implementarla.
+
+Archivos y evidencia continúan pendientes. Visualización y georreferenciación quedan fuera del alcance. Después de estos pasos se volverá a acordar con qué seguir. El resto de este documento conserva propuestas y estados históricos; este acuerdo prevalece cuando haya diferencias.
+
+Actualización anterior del backlog: 30 de octubre de 2026.
 
 Este documento consolida la revisión de `dev` frente a
 el spike (archivado en el tag `archive/spike-test-mockup`) y los requerimientos posteriores de la contraparte.
