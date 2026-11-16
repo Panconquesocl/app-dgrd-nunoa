@@ -14,6 +14,7 @@ import {
 } from "./service"
 import { createDeliverySchema, updateDeliverySchema } from "./schemas"
 import { getRequest } from "@/features/requests/service"
+import { deleteEvent, getEvent, getEventDeletionImpact } from "@/features/events/service"
 
 // Usa fixtures aislados y los retira aun si una aserción falla. Requiere una DB
 // de desarrollo con las migraciones aplicadas; nunca corre por defecto.
@@ -53,7 +54,46 @@ test(
         requestId: request.id,
         items: [{ supplyId: supply.id, quantity: 2 }],
       })
-      const delivery = await createDelivery(input, userId)
+      const direct = await createDelivery({ ...input, requestId: null, eventId: event.id }, userId)
+      assert.equal(direct.eventId, event.id)
+      assert.equal(direct.requestId, null)
+      assert.equal((await getEvent(event.id)).deliveries[0].items[0].quantity, 2)
+      assert.equal((await updateDelivery(direct.id, { beneficiary: `${marker}-edit` })).eventId, event.id)
+      // El formulario general envía requestId null al editar una entrega directa.
+      assert.equal((await updateDelivery(direct.id, { requestId: null })).eventId, event.id)
+      const otherEvent = await prisma.event.create({
+        data: {
+          folio: `${marker}-other`,
+          date: new Date("2026-10-15"),
+          sector: marker,
+          institutions: "",
+          actions: "",
+          typeId: type.id,
+          createdBy: userId,
+        },
+      })
+      await assert.rejects(
+        createDelivery({ ...input, eventId: otherEvent.id }, userId),
+        (error: unknown) => error instanceof AppError && error.status === 409 && Boolean(error.fieldErrors?.requestId),
+      )
+      await assert.rejects(
+        createDelivery({ ...input, requestId: null, eventId: "cm00000000000000000000000" }, userId),
+        (error: unknown) => error instanceof AppError && error.status === 409 && Boolean(error.fieldErrors?.eventId),
+      )
+      const previousImpact = await getEventDeletionImpact(otherEvent.id)
+      assert.equal((await updateDelivery(direct.id, { eventId: otherEvent.id })).eventId, otherEvent.id)
+      await assert.rejects(
+        deleteEvent(otherEvent.id, previousImpact),
+        (error: unknown) => error instanceof AppError && error.status === 409,
+      )
+      const directImpact = await getEventDeletionImpact(otherEvent.id)
+      assert.deepEqual(directImpact.deliveryIds, [direct.id])
+      assert.deepEqual(directImpact.requestIds, [])
+      await deleteEvent(otherEvent.id, directImpact)
+      assert.equal((await getDelivery(direct.id)).eventId, null)
+      assert.equal((await getDelivery(direct.id)).items[0].quantity, 2)
+      await deleteDelivery(direct.id)
+      const delivery = await createDelivery({ ...input, eventId: event.id }, userId)
       assert.equal(delivery.eventId, event.id)
       const linkedRequest = await getRequest(request.id)
       assert.equal(linkedRequest.delivery?.id, delivery.id)
@@ -61,6 +101,10 @@ test(
       assert.equal(delivery.contact, null)
       assert.equal(delivery.items[0].quantity, 2)
       assert.equal((await getDelivery(delivery.id)).creator.name, marker)
+      await assert.rejects(
+        updateDelivery(delivery.id, { eventId: null }),
+        (error: unknown) => error instanceof AppError && error.status === 409,
+      )
       await assert.rejects(
         createDelivery(input, userId),
         (error: unknown) => error instanceof AppError && error.status === 409 && Boolean(error.fieldErrors?.requestId),

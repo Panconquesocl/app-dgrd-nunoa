@@ -50,6 +50,13 @@ test("valida rango de fechas y filtros", () => {
   assert.equal(listDeliveriesQuerySchema.safeParse({ from: "2026-10-14", to: "2026-10-14" }).success, true)
   assert.equal(listDeliveriesQuerySchema.safeParse({ event: "invalid" }).success, false)
 })
+test("admite un evento directo sin solicitud y PATCH distingue omisión de desvinculación", () => {
+  const eventId = "cm12345678901234567890123"
+  assert.equal(createDeliverySchema.parse({ ...input, requestId: null, eventId }).eventId, eventId)
+  assert.equal(createDeliverySchema.safeParse({ ...input, eventId: "invalid" }).success, false)
+  assert.deepEqual(updateDeliverySchema.parse({ eventId: null }), { eventId: null })
+  assert.equal(Object.hasOwn(updateDeliverySchema.parse({ beneficiary: "Otra" }), "eventId"), false)
+})
 test("el formulario convierte strings al contrato del servidor", () => {
   const values = deliveryFormSchema.parse({
     ...input,

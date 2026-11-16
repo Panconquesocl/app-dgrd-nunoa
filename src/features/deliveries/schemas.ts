@@ -37,6 +37,7 @@ export const deliveryFieldsSchema = z.object({
   address: requiredText("La dirección"),
   date: day.transform((value) => new Date(`${value}T00:00:00.000Z`)),
   requestId: z.cuid("Selecciona una solicitud válida.").nullable().optional(),
+  eventId: z.cuid("Selecciona un evento válido.").nullable().optional(),
   items: itemsSchema,
 })
 export const createDeliverySchema = deliveryFieldsSchema

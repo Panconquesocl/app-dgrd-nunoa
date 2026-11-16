@@ -108,7 +108,22 @@
 .events-detail-section + .events-detail-section {
   margin-top: 18px;
 }
+.delivery-stats.events-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: none;
+  row-gap: 20px;
+}
+.events-stats > div:nth-child(3) {
+  border-left: none;
+}
 @media (min-width: 640px) {
+  .delivery-stats.events-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .events-stats > div:nth-child(3) {
+    border-left: 1px solid var(--border);
+  }
   .events-form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
