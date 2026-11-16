@@ -1,7 +1,6 @@
 # Entregas (tabla `delivery`)
 
-Rama: `feat/entregas`. Implementación del módulo de entregas de
-el spike (tag `archive/spike-test-mockup`), adaptado al patrón de features de esta rama:
+Implementado en main tomando `spike/test-mockup` como referencia, con el patrón de features:
 `schemas` → `service` → rutas REST → `api`/`queries` → `components`.
 
 ## Alcance y decisiones
@@ -11,9 +10,7 @@ Decisiones confirmadas el 2026-10-14:
 - Reproducir la distribución y el estilo visual del spike con los tokens existentes.
 - Abrir el detalle en un drawer desde la tabla y ofrecer una página `/entregas/[id]`.
 - Usar solicitudes e insumos existentes en la base mediante selectores. El catálogo
-  de insumos también se implementó en esta rama (ver `insumos.md`). Los CRUD de
-  solicitudes y eventos siguen fuera de alcance; sus tarjetas muestran los datos
-  sin enlaces a páginas de detalle todavía inexistentes.
+  de insumos está implementado (ver `insumos.md`). Solicitudes y eventos cuentan con CRUD y accesos contextuales según permisos.
 - Conservar el folio anual `ENT-AAAA-NNN` (ej. `ENT-2026-001`), generado por el
   servidor. El año corresponde a la fecha de registro en `America/Santiago`, no
   a la fecha de entrega introducida. El correlativo usa el mayor sufijo numérico
@@ -76,17 +73,16 @@ El borrado de una entrega elimina sus ítems, sin eliminar solicitud, evento o c
 - `contact String?` y migración `delivery_contact_optional`.
 - Prisma CLI usa `DIRECT_URL`, con fallback a `DATABASE_URL`.
 - El catálogo de juntas y la sustitución de `jv` por una FK obligatoria están en
-  `20261015000000_neighborhood_associations`; ver `juntas-vecinales.md`.
-- `Delivery.request` conserva `onDelete: Cascade`; borrar una solicitud borra su entrega.
+  `20261015000000_neighborhood_associations`; la junta pasó a opcional con `20261116020000_delivery_beneficiary_rut`. Ver `juntas-vecinales.md`.
+- `Delivery.request` usa `onDelete: Restrict`: no se puede borrar una solicitud con entrega asociada.
 - `Delivery.event` conserva `onDelete: SetNull`.
 
 ## Validación
 
 ```bash
 pnpm test:deliveries
-# Incluye la integración contra la DB de desarrollo configurada en .env.
-# Crea fixtures aislados y los elimina al terminar.
-RUN_DELIVERY_INTEGRATION=1 pnpm test:deliveries
+# Las integraciones requieren una base exclusiva, sin fallback a .env.
+TEST_DATABASE_URL=... pnpm test:integration
 pnpm lint
 pnpm exec tsc --noEmit
 pnpm build
@@ -96,14 +92,14 @@ Las pruebas cubren normalización, fechas imposibles, cantidades, duplicados,
 PATCH parcial, filtros, conversión de formulario, folios, CRUD real,
 herencia del evento, sustitución de ítems y altas concurrentes.
 
-## Integraciones para otras ramas
+## Integraciones implementadas
 
-- CRUD de solicitudes y eventos. El CRUD de insumos ya está implementado.
+- CRUD de solicitudes, eventos e insumos.
 - Crear entregas desde las páginas de solicitud y evento, con contexto precargado.
 - Mostrar entregas en los detalles de solicitudes y eventos y en el resumen.
   El historial por insumo ya está implementado.
 - Al cambiar el evento de una solicitud, sincronizar `Delivery.eventId` en la misma
-  transacción, como hace el spike. Es responsabilidad del futuro módulo de solicitudes.
+  transacción, como hace el spike.
 
 ## Identificación del beneficiario
 
@@ -130,3 +126,7 @@ El popover de filtros mantiene el estilo existente e incorpora beneficiario (nom
 Las opciones de evento incluyen únicamente id, folio y sector de eventos con entregas, también cuando la entrega no tiene solicitud; usuarios normales usan los permisos de lectura de entregas sin acceder al módulo administrativo de eventos. Las opciones no dependen de la búsqueda actual, de modo que un resultado vacío no impide cambiar de evento.
 
 Los campos de texto consultan con el debounce existente; el botón de filtros cuenta los filtros avanzados activos. «Limpiar todo», disponible en la toolbar y el popover, restablece búsqueda, periodo, campos independientes, selecciones y orden. El menú conserva desplazamiento limitado al espacio disponible en móvil. No hay nueva migración. La búsqueda global se implementará en otra rama tras revisar esta feature.
+
+## Revisión integral
+
+El formulario conserva encabezado y botones fijos, con desplazamiento solo en los campos. El pie usa fondo sólido. En pantallas estrechas el período se apila para mantener fechas legibles. Ver [revisión integral](./revision-integral.md).

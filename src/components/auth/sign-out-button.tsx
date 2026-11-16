@@ -4,6 +4,9 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { LogOut } from "lucide-react"
 import { signOut } from "@/lib/auth-client"
+import { useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
+import { clearSessionCache } from "@/lib/session-cache"
 
 /**
  * Cierra la sesión: Better Auth revoca la sesión en la base de datos (el token
@@ -11,17 +14,21 @@ import { signOut } from "@/lib/auth-client"
  */
 export function SignOutButton() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [isPending, setIsPending] = useState(false)
 
   const handleSignOut = async () => {
     setIsPending(true)
     try {
-      await signOut()
-    } finally {
-      // Aunque la petición falle, se limpia el estado del cliente y se envía al
-      // login: sin cookie válida no hay acceso a las vistas protegidas.
+      const result = await signOut()
+      if (result.error) throw new Error("No se pudo cerrar la sesión.")
+      await clearSessionCache(queryClient)
       router.replace("/login")
       router.refresh()
+    } catch {
+      toast.error("No se pudo cerrar la sesión. Inténtalo nuevamente.")
+    } finally {
+      setIsPending(false)
     }
   }
 
@@ -30,10 +37,12 @@ export function SignOutButton() {
       type="button"
       onClick={handleSignOut}
       disabled={isPending}
-      className="text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-ring inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:opacity-60"
+      aria-label={isPending ? "Cerrando sesión" : "Cerrar sesión"}
+      title={isPending ? "Cerrando sesión" : "Cerrar sesión"}
+      className="app-sidebar-toggle disabled:cursor-wait disabled:opacity-60"
     >
-      <LogOut className="size-3.5" />
-      {isPending ? "Cerrando…" : "Cerrar sesión"}
+      <LogOut className="size-[18px] shrink-0" aria-hidden="true" />
+      <span>{isPending ? "Cerrando…" : "Cerrar sesión"}</span>
     </button>
   )
 }

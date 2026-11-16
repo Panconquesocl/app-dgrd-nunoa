@@ -20,6 +20,7 @@ import {
   Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { SignOutButton } from "@/components/auth/sign-out-button"
 import "./app-sidebar.css"
 
 const COLLAPSED_KEY = "dgrd_sidebar_collapsed"
@@ -171,6 +172,7 @@ export function AppSidebar() {
         ))}
       </nav>
       <div className="app-sidebar-footer">
+        <SignOutButton />
         <button
           type="button"
           className="app-sidebar-toggle"

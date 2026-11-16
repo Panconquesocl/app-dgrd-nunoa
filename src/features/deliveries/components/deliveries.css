@@ -355,3 +355,30 @@
     display: none;
   }
 }
+@media (max-width: 380px) {
+  .delivery-period {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) 16px;
+    width: 100%;
+  }
+  .delivery-period input {
+    grid-column: 2;
+    width: 100%;
+    max-width: none;
+  }
+  .delivery-period input:first-of-type {
+    grid-row: 1;
+  }
+  .delivery-period input:last-of-type {
+    grid-row: 2;
+  }
+  .delivery-period > span {
+    grid-column: 1;
+    grid-row: 2;
+    transform: rotate(90deg);
+  }
+  .delivery-period > button {
+    grid-column: 3;
+    grid-row: 1 / 3;
+  }
+}

@@ -18,6 +18,7 @@ import { useStrategicActions } from "../queries"
 import type { StrategicActionListItem } from "../schemas"
 import { DeleteActionDialog, type DeletableAction } from "./delete-action-dialog"
 import { StrategicActionFormDialog } from "./strategic-action-form-dialog"
+import "@/features/deliveries/components/deliveries.css"
 
 const ALL_YEARS = "all"
 
@@ -49,7 +50,7 @@ export function StrategicActionsView() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1200px] flex-col px-5 py-6 sm:px-7">
+    <div className="delivery-page flex flex-col">
       <PlanTabs active="actions" />
 
       <div className="mt-7 flex flex-wrap items-start justify-between gap-4">
@@ -69,7 +70,7 @@ export function StrategicActionsView() {
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        <div className="relative min-w-[240px] flex-1 sm:max-w-[340px] sm:flex-none">
+        <div className="relative min-w-0 flex-1 sm:max-w-[340px] sm:min-w-[240px] sm:flex-none">
           <Search
             aria-hidden="true"
             className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"

@@ -6,6 +6,12 @@
   flex-wrap: wrap;
   margin-bottom: 16px;
 }
+@media (max-width: 380px) {
+  .users-toolbar .requests-segment button {
+    padding-inline: 5px;
+    gap: 3px;
+  }
+}
 .users-table {
   min-width: 950px;
 }

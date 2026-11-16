@@ -51,6 +51,9 @@
   padding: 10px 0;
 }
 .app-sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   border-top: 1px solid #ffffff14;
   padding: 10px;
   flex-shrink: 0;
