@@ -1,3 +1,4 @@
+import { confirmAttachments, processDeletions } from "@/features/attachments/service"
 import { auditedTransaction } from "@/features/audit/transaction"
 import prisma from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
@@ -135,9 +136,11 @@ export async function deleteEvent(id: string, expected: DeletionInput, actorId: 
           "Las asociaciones del evento cambiaron. Revisa la advertencia antes de confirmar nuevamente.",
           { details: current },
         )
+      await confirmAttachments(tx, { resource: "events", recordId: id }, expected.attachmentIds)
       // SetNull conserva solicitudes, entregas e ítems. La fila bloqueada impide nuevos vínculos durante el borrado.
       await tx.event.delete({ where: { id } })
     })
+    await processDeletions({ resource: "events", recordId: id }).catch(() => undefined)
   } catch (error) {
     translate(error)
   }

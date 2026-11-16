@@ -1,4 +1,5 @@
 "use client"
+import { useAttachments, DeletionFiles, deletionReady } from "@/features/attachments/client"
 import { AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -23,6 +24,7 @@ export function DeleteEventDialog({
   onClose: () => void
   onDeleted?: () => void
 }) {
+  const files = useAttachments({ resource: "events", recordId: event.id })
   const impact = useEventImpact(event.id)
   const mutation = useDeleteEvent(event.id)
   return (
@@ -66,22 +68,25 @@ export function DeleteEventDialog({
             </span>
           </p>
         )}
+        <DeletionFiles query={files} />
         <AlertDialogFooter>
           <AlertDialogCancel disabled={mutation.isPending}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
-            disabled={mutation.isPending || !impact.data || impact.isFetching || impact.isError}
+            disabled={
+              mutation.isPending || !impact.data || impact.isFetching || impact.isError || !deletionReady(files)
+            }
             onClick={async (e) => {
               e.preventDefault()
               if (!impact.data) return
               try {
-                await mutation.mutateAsync(impact.data)
+                await mutation.mutateAsync({ ...impact.data, attachmentIds: files.data?.map((f) => f.id) ?? [] })
                 toast.success("Evento eliminado. Las solicitudes y entregas se conservaron.")
                 onClose()
                 onDeleted?.()
               } catch (error) {
                 toast.error(error instanceof Error ? error.message : "No se pudo eliminar el evento.")
-                await impact.refetch()
+                await Promise.all([impact.refetch(), files.refetch()])
               }
             }}
           >

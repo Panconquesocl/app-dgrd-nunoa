@@ -1,4 +1,5 @@
 "use client"
+import { AttachmentPanel } from "@/features/attachments/client"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -158,6 +159,9 @@ export function DeliveryDetailView({
               </div>
             </dl>
           </section>
+          <div className="delivery-panel p-5">
+            <AttachmentPanel owner={{ resource: "deliveries", recordId: id }} />
+          </div>
           <section className="delivery-panel">
             <h2>
               <Box size={17} />

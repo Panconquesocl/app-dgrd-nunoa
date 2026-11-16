@@ -168,8 +168,9 @@ model Event {
   typeId String
   type   EventType @relation(fields: [typeId], references: [id], onDelete: Restrict)
 
-  requests   Request[]
-  deliveries Delivery[]
+  requests    Request[]
+  deliveries  Delivery[]
+  attachments Evidence[]
 
   createdBy String
   creator   User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
@@ -225,7 +226,8 @@ model Delivery {
   eventId String?
   event   Event?  @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
-  items DeliveryItem[]
+  items       DeliveryItem[]
+  attachments Evidence[]
 
   createdBy String
   creator   User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
@@ -300,25 +302,65 @@ model Activity {
   @@map("activity")
 }
 
-// Archivo adjunto a una actividad. El binario vive en S3; aquí se guarda la
-// metadata (filtrable por nombre/tipo/tamaño) y la referencia al objeto (key).
-model Evidence {
-  id        String   @id @default(cuid())
-  name      String
-  type      String
-  size      Int
-  key       String
-  createdAt DateTime @default(now())
+enum AttachmentKind {
+  photo
+  file
+  alfa
+  evidence
+}
 
-  // Al eliminar la actividad, se borran sus evidencias en cascada.
-  activityId String
-  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+enum AttachmentStatus {
+  pending
+  ready
+}
+
+// Metadatos de adjuntos privados. bucket null identifica evidencia previa aún
+// no migrada a R2; nunca se infiere ni se borra su objeto original.
+model Evidence {
+  id              String           @id @default(cuid())
+  name            String
+  type            String
+  size            Int
+  key             String
+  createdAt       DateTime         @default(now())
+  kind            AttachmentKind   @default(evidence)
+  status          AttachmentStatus @default(ready)
+  bucket          String?
+  ownerLabel      String?
+  uploadExpiresAt DateTime?
+
+  // Exactamente un padre; las cascadas encolan el borrado del objeto en SQL.
+  activityId String?
+  activity   Activity? @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  deliveryId String?
+  delivery   Delivery? @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  eventId    String?
+  event      Event?    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   createdBy String
   creator   User   @relation(fields: [createdBy], references: [id], onDelete: Restrict)
 
+  @@unique([bucket, key])
   @@index([activityId])
+  @@index([deliveryId])
+  @@index([eventId])
+  @@index([status, uploadExpiresAt])
   @@map("evidence")
+}
+
+model R2ObjectDeletion {
+  id            String   @id @default(dbgenerated("gen_random_uuid()::text"))
+  bucket        String
+  key           String
+  resource      String
+  recordId      String
+  attempts      Int      @default(0)
+  nextAttemptAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@unique([bucket, key])
+  @@index([nextAttemptAt])
+  @@map("r2_object_deletion")
 }
 
 // El correlativo sobrevive al borrado de solicitudes.

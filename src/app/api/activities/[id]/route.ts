@@ -1,3 +1,4 @@
+import { confirmationSchema } from "@/features/attachments/schemas"
 import { NextResponse } from "next/server"
 import { requirePermission } from "@/lib/session"
 import { toErrorResponse } from "@/lib/api-error"
@@ -22,10 +23,14 @@ export async function PATCH(request: Request, { params }: Context) {
     return toErrorResponse(error)
   }
 }
-export async function DELETE(_request: Request, { params }: Context) {
+export async function DELETE(request: Request, { params }: Context) {
   try {
     const auditActor = await requirePermission("activities", "delete")
-    await deleteActivity((await params).id, auditActor.id)
+    await deleteActivity(
+      (await params).id,
+      auditActor.id,
+      confirmationSchema.parse(await request.json().catch(() => ({}))).attachmentIds,
+    )
     return new NextResponse(null, { status: 204 })
   } catch (error) {
     return toErrorResponse(error)

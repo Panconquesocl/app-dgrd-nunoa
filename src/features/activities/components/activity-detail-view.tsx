@@ -1,4 +1,5 @@
 "use client"
+import { AttachmentPanel, useAttachments, DeletionFiles, deletionReady } from "@/features/attachments/client"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -25,6 +26,8 @@ import { ActivityFormDialog } from "./activity-form-dialog"
 import "@/features/deliveries/components/deliveries.css"
 import "@/features/requests/components/requests.css"
 export function ActivityDetailView({ id, user }: { id: string; user?: { name: string; email: string } | null }) {
+  const [tab, setTab] = useState("information")
+  const files = useAttachments({ resource: "activities", recordId: id })
   const query = useActivity(id)
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -115,7 +118,8 @@ export function ActivityDetailView({ id, user }: { id: string; user?: { name: st
                   id="activity-information-tab"
                   type="button"
                   role="tab"
-                  aria-selected="true"
+                  aria-selected={tab === "information"}
+                  onClick={() => setTab("information")}
                   aria-controls="activity-information"
                 >
                   <Activity size={14} />
@@ -124,47 +128,53 @@ export function ActivityDetailView({ id, user }: { id: string; user?: { name: st
                 <button
                   type="button"
                   role="tab"
-                  aria-selected="false"
-                  disabled
-                  title="Evidencia no disponible por ahora"
-                  className="cursor-not-allowed opacity-50"
+                  aria-selected={tab === "evidence"}
+                  id="activity-evidence-tab"
+                  aria-controls="activity-evidence"
+                  onClick={() => setTab("evidence")}
                 >
                   <Paperclip size={14} />
                   Evidencia
                 </button>
               </div>
             </div>
-            <dl
-              id="activity-information"
-              role="tabpanel"
-              aria-labelledby="activity-information-tab"
-              className="delivery-kv"
-            >
-              <div>
-                <dt>Fecha</dt>
-                <dd>{formatDate(activity.date)}</dd>
+            {tab === "information" ? (
+              <dl
+                id="activity-information"
+                role="tabpanel"
+                aria-labelledby="activity-information-tab"
+                className="delivery-kv"
+              >
+                <div>
+                  <dt>Fecha</dt>
+                  <dd>{formatDate(activity.date)}</dd>
+                </div>
+                <div>
+                  <dt>Dirección</dt>
+                  <dd>{activity.location}</dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt>Acción estratégica</dt>
+                  <dd>
+                    <Link className="hover:underline" href={`/plan/acciones/${activity.actionId}`}>
+                      N°{activity.action.number} · {activity.action.title}
+                    </Link>
+                  </dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt>Objetivo</dt>
+                  <dd className="whitespace-pre-wrap">{activity.objective}</dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt>Participantes</dt>
+                  <dd className="whitespace-pre-wrap">{activity.participants}</dd>
+                </div>
+              </dl>
+            ) : (
+              <div id="activity-evidence" role="tabpanel" aria-labelledby="activity-evidence-tab" className="p-5">
+                <AttachmentPanel owner={{ resource: "activities", recordId: id }} kind="evidence" />
               </div>
-              <div>
-                <dt>Dirección</dt>
-                <dd>{activity.location}</dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt>Acción estratégica</dt>
-                <dd>
-                  <Link className="hover:underline" href={`/plan/acciones/${activity.actionId}`}>
-                    N°{activity.action.number} · {activity.action.title}
-                  </Link>
-                </dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt>Objetivo</dt>
-                <dd className="whitespace-pre-wrap">{activity.objective}</dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt>Participantes</dt>
-                <dd className="whitespace-pre-wrap">{activity.participants}</dd>
-              </div>
-            </dl>
+            )}
           </section>
           <aside className="delivery-aside">
             <h2>Registro</h2>
@@ -205,18 +215,20 @@ export function ActivityDetailView({ id, user }: { id: string; user?: { name: st
               </AlertDialogDescription>
             </AlertDialogHeader>
             <p className="text-sm break-words">{activity.objective}</p>
+            <DeletionFiles query={files} />
             <AlertDialogFooter>
               <AlertDialogCancel disabled={mutation.isPending}>Cancelar</AlertDialogCancel>
               <AlertDialogAction
                 variant="destructive"
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || !deletionReady(files)}
                 onClick={async (e) => {
                   e.preventDefault()
                   try {
-                    await mutation.mutateAsync()
+                    await mutation.mutateAsync(files.data?.map((f) => f.id) ?? [])
                     toast.success("Actividad eliminada.")
                     router.push(`/plan/acciones/${activity.actionId}`)
                   } catch (error) {
+                    await files.refetch()
                     toast.error(error instanceof Error ? error.message : "No se pudo eliminar la actividad.")
                   }
                 }}

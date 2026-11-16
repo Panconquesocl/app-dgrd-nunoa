@@ -83,8 +83,9 @@ export function useDeleteDelivery() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string) => api.deleteDelivery(id),
-    onSuccess: (_data, id) => {
+    mutationFn: ({ id, attachmentIds }: { id: string; attachmentIds: string[] }) =>
+      api.deleteDelivery(id, attachmentIds),
+    onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["summary"] })
       queryClient.invalidateQueries({ queryKey: supplyKeys.all })
       queryClient.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all })

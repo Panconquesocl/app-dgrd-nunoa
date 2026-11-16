@@ -30,4 +30,5 @@ export const saveActivity = (input: ActivityInput, id?: string) =>
     method: id ? "PATCH" : "POST",
     body: JSON.stringify(input),
   })
-export const deleteActivity = (id: string) => request<void>(`/${encodeURIComponent(id)}`, { method: "DELETE" })
+export const deleteActivity = (id: string, attachmentIds: string[]) =>
+  request<void>(`/${encodeURIComponent(id)}`, { method: "DELETE", body: JSON.stringify({ attachmentIds }) })

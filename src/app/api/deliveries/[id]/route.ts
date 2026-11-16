@@ -1,3 +1,4 @@
+import { confirmationSchema } from "@/features/attachments/schemas"
 import { NextResponse, type NextRequest } from "next/server"
 import { toErrorResponse } from "@/lib/api-error"
 import { requirePermission } from "@/lib/session"
@@ -29,11 +30,15 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: RouteContext) {
+export async function DELETE(request: NextRequest, { params }: RouteContext) {
   try {
     const auditActor = await requirePermission("deliveries", "delete")
     const { id } = await params
-    await deleteDelivery(id, auditActor.id)
+    await deleteDelivery(
+      id,
+      auditActor.id,
+      confirmationSchema.parse(await request.json().catch(() => ({}))).attachmentIds,
+    )
 
     return new NextResponse(null, { status: 204 })
   } catch (error) {

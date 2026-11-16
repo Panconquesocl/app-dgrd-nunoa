@@ -11,7 +11,7 @@ Implementación de B20–B21 en `feat/permisos-por-rol`.
 | Solicitudes y eventos                    | Sin acceso al módulo; datos mínimos relacionados desde entregas, sin selector de solicitud | Acceso completo               |
 | Búsqueda global                          | Consultar entregas, juntas, insumos, acciones y actividades                                | Incluye solicitudes y eventos |
 | Resumen actual                           | Consultar entregas, insumos, acciones y actividades del año                                | Acceso completo               |
-| Actividades y evidencia                  | Actividades: CRUD de cualquier autor; evidencia pendiente                                  | Gestión completa              |
+| Actividades y evidencia                  | Actividades y evidencia: gestión de cualquier autor                                        | Gestión completa              |
 | Usuarios y tipos de evento               | Sin administración                                                                         | Gestión completa              |
 
 La auditoría (`audit:read`) es exclusiva de administradores. La página `/admin/auditoria` y sus rutas GET aplican guard propio; no se exponen operaciones de edición o borrado del historial. Los servicios de escritura reciben la identidad de sesión para registrar quién realizó cada cambio, incluyendo los de registros ajenos. Ver [Auditoría](./auditoria.md).
@@ -101,7 +101,7 @@ PostgreSQL de cada módulo, que requieren sus flags de activación existentes.
 
 ## Estado actual tras la revisión integral
 
-- Los guards ya protegen Solicitudes, Eventos, Actividades y administración. Evidencia sigue pospuesta, sin API de archivos implementada.
+- Los guards ya protegen Solicitudes, Eventos, Actividades y administración. La etapa R2 agrega API privada de archivos con permisos del padre; ver [Archivos R2](./archivos-r2.md).
 - La auditoría B34 ya está integrada y restringida a administradores. Ver [Auditoría](./auditoria.md).
 - El resumen anual excluye solicitudes y eventos para usuarios normales, incluidas cifras y años disponibles. Ver [Resumen](./resumen.md).
 - La administración de cuentas y la sidebar plegable ya están integradas. La revisión integral incluyó accesos por rol y anchos móviles; el bloque de validación anterior es evidencia histórica de B20–B21. Ver [Revisión integral](./revision-integral.md).

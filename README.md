@@ -109,8 +109,8 @@ Autohospedada con Better Auth, **sólo correo + contraseña** (sin proveedores e
 Los usuarios normales gestionan entregas e insumos de cualquier autor y consultan
 juntas vecinales y acciones estratégicas. Solo los administradores gestionan estos
 dos catálogos y acceden a Solicitudes y Eventos. Los permisos se validan en el
-servidor y se reflejan en la interfaz. La política también contempla actividades y
-evidencia para sus futuros módulos.
+servidor y se reflejan en la interfaz. La política también permite gestionar actividades y su evidencia. Los adjuntos
+heredan los permisos del registro al que pertenecen.
 
 Consulta la [matriz de permisos y verificación](./specs/permisos.md).
 
@@ -120,3 +120,8 @@ Consulta la [matriz de permisos y verificación](./specs/permisos.md).
 - Componentes shadcn en `src/components/ui/`, lógica compartida en `src/lib/`.
 
 Más detalles para contribuir en [CLAUDE.md](./CLAUDE.md).
+
+## Archivos privados
+
+Adjuntos de entregas, eventos y actividades mediante Cloudflare R2. Configuración,
+límites, migración y trabajo de limpieza obligatorio: [specs/archivos-r2.md](./specs/archivos-r2.md).

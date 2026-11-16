@@ -1,10 +1,10 @@
 # Estado y backlog del proyecto DGRD Ñuñoa
 
-Actualizado el 16 de noviembre de 2026. Estado contrastado con `main` después del PR #43. La referencia funcional y visual es `spike/test-mockup`; no se usan otras ramas históricas para definir el producto. La revisión integral y los ajustes de navegación ya están integrados.
+Actualizado el 16 de noviembre de 2026. Estado de `main` después del PR #44 y cambios de archivos en revisión local. La referencia funcional y visual es `spike/test-mockup`; no se usan otras ramas históricas para definir el producto. La revisión integral y los ajustes de navegación ya están integrados.
 
 ## Alcance vigente
 
-- Manejo de archivos: evidencia de actividades, fotografías, informes y otros adjuntos siguen pendientes. Se aprobó mostrar controles desactivados en Entregas y Eventos, sin habilitar carga ni almacenamiento todavía.
+- Manejo de archivos aprobado y en revisión local: bucket privado Cloudflare R2, 25 MB por archivo, hasta 20 por grupo, ALFA único PDF, permisos, previsualización y borrado asociado con advertencia. [Spec](./archivos-r2.md).
 - Visualización y georreferenciación quedan fuera del alcance, incluyendo gráficos/mapas adicionales del backlog original.
 - No se implementarán importación ni mapeo de datos históricos.
 - Identificación, alerta por RUT, búsqueda por campos, búsqueda global y auditoría ya están integradas.
@@ -18,7 +18,7 @@ Actualizado el 16 de noviembre de 2026. Estado contrastado con `main` después d
 | B02      | Eventos                  | CRUD, folios anuales persistentes, filtros, relaciones y advertencia de borrado sin eliminar solicitudes/entregas. [Spec](./eventos.md).                              |
 | B03, B11 | Solicitudes e integridad | Descripción opcional; no se borran con entrega; Atendida requiere respuesta o entrega; folio persistente y sin cambio automático de estado. [Spec](./solicitudes.md). |
 | B04      | Flujos contextuales      | Evento → solicitud, solicitud → evento y entregas desde ambos detalles. Se admite entrega directa al evento sin solicitud. Propagación transaccional de vínculos.     |
-| B05, B07 | Actividades y cronograma | CRUD dentro del período de la acción, cronograma y agenda anual, sin archivos. [Spec](./actividades-cronograma.md).                                                   |
+| B05, B07 | Actividades y cronograma | CRUD dentro del período de la acción, cronograma y agenda anual. Evidencia R2 en revisión local. [Spec](./actividades-cronograma.md).                                 |
 | B08      | Usuarios                 | Administración de cuentas, roles, estado, contraseña, sesiones y protección de administradores. [Spec](./usuarios.md).                                                |
 | B09, B10 | Resumen y navegación     | Resumen anual según rol, inicio en /resumen, sidebar plegable y accesos por módulo. [Spec](./resumen.md).                                                             |
 | B19      | Identificación           | RUT de beneficiario obligatorio y normalizado; junta opcional; históricos sin inferencias por nombre. [Spec](./entregas.md).                                          |
@@ -34,15 +34,15 @@ El catálogo de insumos y sus historiales están implementados sin stock ni inve
 
 ## Pendientes y exclusiones
 
-| IDs      | Estado                             | Alcance                                                                                                                     |
-| -------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| B06      | Pendiente por decisión             | Evidencia de actividades. El toggle sigue desactivado. Falta acordar almacenamiento, carga, consulta y borrado.             |
-| B26, B27 | Pendiente por decisión             | Fotografías de entregas y almacenamiento, distintas de la evidencia de actividades.                                         |
-| B28, B29 | Revisión base; archivos pendientes | Uso móvil sin archivos dentro de la revisión integral. Captura/carga de fotos no forma parte de esta etapa.                 |
-| B12      | Fuera del alcance por decisión     | No se implementarán importación ni mapeo de planillas históricas. La migración del catálogo existente ya está implementada. |
-| B13–B16  | Integrado en PR #41                | Revisión de flujos, permisos, escritorio/móvil, scripts reproducibles y documentación. [Informe](./revision-integral.md).   |
-| B30, B31 | Fuera del alcance                  | Visualizaciones adicionales y gráficos. Se mantiene el resumen anual ya implementado.                                       |
-| B32, B33 | Fuera del alcance                  | Georreferenciación, mapas y ubicaciones geográficas adicionales.                                                            |
+| IDs      | Estado                         | Alcance                                                                                                                     |
+| -------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| B06      | En revisión local              | Evidencia de actividades activa con almacenamiento privado R2. [Spec](./archivos-r2.md).                                    |
+| B26, B27 | En revisión local              | Fotografías y archivos de entregas/eventos en R2, con permisos y borrado fiable.                                            |
+| B28, B29 | En revisión local              | Carga desde selector de archivos del dispositivo y formularios con scroll en móvil.                                         |
+| B12      | Fuera del alcance por decisión | No se implementarán importación ni mapeo de planillas históricas. La migración del catálogo existente ya está implementada. |
+| B13–B16  | Integrado en PR #41            | Revisión de flujos, permisos, escritorio/móvil, scripts reproducibles y documentación. [Informe](./revision-integral.md).   |
+| B30, B31 | Fuera del alcance              | Visualizaciones adicionales y gráficos. Se mantiene el resumen anual ya implementado.                                       |
+| B32, B33 | Fuera del alcance              | Georreferenciación, mapas y ubicaciones geográficas adicionales.                                                            |
 
 Exportaciones, recordatorios e inventario fueron ideas por validar; no son requisitos aprobados ni funciones pendientes del spike. La importación de datos históricos está descartada.
 
@@ -55,9 +55,9 @@ Se conserva la confirmación actual al eliminar usuarios, sin exigir escribir el
 ## Nuevos cambios aprobados: dos entregas separadas
 
 1. **Entregas**, integrado mediante PR #43: Observaciones opcionales persistidas y auditadas, controles de fotografías y archivos múltiples opcionales desactivados. Ver [Entregas](./entregas.md).
-2. **Eventos**, en revisión en `feat/eventos-direccion-adjuntos`: cambiar Sector por Dirección conservando los valores existentes; agregar Informe ALFA (PDF), fotografías y archivos opcionales, todos desactivados hasta implementar el manejo de archivos.
+2. **Eventos**, integrado mediante PR #44: cambiar Sector por Dirección conservando los valores existentes; agregar Informe ALFA (PDF), fotografías y archivos opcionales, todos desactivados hasta implementar el manejo de archivos.
 
-Cada bloque se revisa antes de su commit/PR y el usuario realiza el merge. Ninguno incluye carga ni almacenamiento de archivos.
+Esos dos bloques no incluían almacenamiento. La etapa actual activa todos los adjuntos con R2 privado en `feat/archivos-cloudflare-r2`; revisión local antes de commit/PR y merge a cargo del usuario.
 
 ## Verificación reproducible
 

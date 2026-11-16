@@ -1,4 +1,5 @@
 "use client"
+import { useAttachments, DeletionFiles, deletionReady } from "@/features/attachments/client"
 import { toast } from "sonner"
 import {
   AlertDialog,
@@ -21,15 +22,17 @@ export function DeleteDeliveryDialog({
   onClose: () => void
   onDeleted?: () => void
 }) {
+  const files = useAttachments({ resource: "deliveries", recordId: delivery?.id ?? "" }, !!delivery)
   const mutation = useDeleteDelivery()
   async function remove() {
     if (!delivery) return
     try {
-      await mutation.mutateAsync(delivery.id)
+      await mutation.mutateAsync({ id: delivery.id, attachmentIds: files.data?.map((f) => f.id) ?? [] })
       toast.success(`Entrega ${delivery.folio} eliminada.`)
       onClose()
       onDeleted?.()
     } catch (error) {
+      await files.refetch()
       toast.error(error instanceof Error ? error.message : "No se pudo eliminar la entrega.")
     }
   }
@@ -48,11 +51,12 @@ export function DeleteDeliveryDialog({
             deshacer. La eliminación no afecta a la solicitud, al evento ni a los insumos del catálogo.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <DeletionFiles query={files} />
         <AlertDialogFooter>
           <AlertDialogCancel disabled={mutation.isPending}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
-            disabled={mutation.isPending}
+            disabled={mutation.isPending || !deletionReady(files)}
             onClick={(event) => {
               event.preventDefault()
               void remove()

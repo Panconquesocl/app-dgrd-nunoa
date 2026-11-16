@@ -1,3 +1,4 @@
+import { confirmAttachments, processDeletions } from "@/features/attachments/service"
 import { auditedTransaction } from "@/features/audit/transaction"
 import prisma from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
@@ -72,18 +73,15 @@ export async function updateActivity(id: string, input: ActivityInput, actorId: 
     translate(error)
   }
 }
-export async function deleteActivity(id: string, actorId: string) {
+export async function deleteActivity(id: string, actorId: string, attachmentIds: string[] = []) {
   try {
     await auditedTransaction(actorId, async (tx) => {
       const rows = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM activity WHERE id = ${id} FOR UPDATE`
       if (!rows.length) throw new AppError(404, "La actividad no existe.")
-      if (await tx.evidence.count({ where: { activityId: id } }))
-        throw new AppError(
-          409,
-          "La actividad contiene evidencia histórica. Debe revisarse antes de eliminarla para conservar sus archivos.",
-        )
+      await confirmAttachments(tx, { resource: "activities", recordId: id }, attachmentIds)
       await tx.activity.delete({ where: { id } })
     })
+    await processDeletions({ resource: "activities", recordId: id }).catch(() => undefined)
   } catch (error) {
     translate(error)
   }

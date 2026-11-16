@@ -62,6 +62,6 @@ export function createDelivery(payload: DeliveryPayload) {
 export function updateDelivery(id: string, payload: DeliveryPatch) {
   return request<Delivery>(`${BASE_URL}/${id}`, { method: "PATCH", body: JSON.stringify(payload) })
 }
-export function deleteDelivery(id: string) {
-  return request<void>(`${BASE_URL}/${id}`, { method: "DELETE" })
+export function deleteDelivery(id: string, attachmentIds: string[] = []) {
+  return request<void>(`${BASE_URL}/${id}`, { method: "DELETE", body: JSON.stringify({ attachmentIds }) })
 }

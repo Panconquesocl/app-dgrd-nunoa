@@ -34,6 +34,7 @@ export const eventFormSchema = z.object({
     ),
 })
 export const deletionSchema = z.object({
+  attachmentIds: z.array(z.string()).max(100).optional(),
   requestIds: z.array(z.string()).max(100000),
   deliveryIds: z.array(z.string()).max(100000),
 })
@@ -59,4 +60,4 @@ export type EventDetail = EventItem & {
   requests: { id: string; folio: string; channel: string; status: "pending" | "attended" | "cancelled" }[]
   deliveries: { id: string; folio: string; date: string; beneficiary: string; items: { quantity: number }[] }[]
 }
-export type DeletionImpact = { requestIds: string[]; deliveryIds: string[] }
+export type DeletionImpact = { requestIds: string[]; deliveryIds: string[]; attachmentIds?: string[] }

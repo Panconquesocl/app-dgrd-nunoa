@@ -93,3 +93,7 @@ Three gotchas worth knowing:
 - `src/app/(app)/layout.tsx` is the real gate: it calls `getSession()` and redirects when the session is missing or revoked. Every authenticated view goes inside the `(app)` route group so it inherits that check plus the shell (sidebar, topbar, toasts).
 - The reverse redirect (an authenticated user landing on `/login`) lives in `src/app/login/page.tsx`, not in the proxy: doing it from the cookie alone would loop forever when the cookie is present but the session was revoked server-side.
 - Session cookie caching is disabled so a sign-out or a ban takes effect on the very next request.
+
+### Private attachments
+
+`src/features/attachments/` implements private Cloudflare R2 attachments for deliveries, events and activities. Attachment permissions follow the parent resource. `Evidence` stores metadata for exactly one parent; R2 object keys and credentials stay on the server. Uploads are limited to 25 MiB per file and 20 files per group (one PDF for ALFA). Parent deletion must validate the reviewed attachment ids while holding the parent lock. SQL cascade triggers enqueue object deletion transactionally; never bypass or discard that queue. Deployment requires the authenticated cleanup job every five minutes. See `specs/archivos-r2.md` for configuration, routes, limits, failure recovery and verification.
