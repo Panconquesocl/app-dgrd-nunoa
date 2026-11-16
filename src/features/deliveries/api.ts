@@ -5,6 +5,7 @@ import type {
   DeliveryPayload,
   DeliveryPatch,
   ListDeliveriesQuery,
+  DeliveryRecurrence,
 } from "./schemas"
 const BASE_URL = "/api/deliveries"
 export class ApiError extends Error {
@@ -48,6 +49,12 @@ export function getDelivery(id: string) {
 }
 export function getDeliveryOptions() {
   return request<DeliveryOptions>(`${BASE_URL}/options`)
+}
+export function getDeliveryRecurrence(rut: string, signal?: AbortSignal) {
+  return request<DeliveryRecurrence>(`${BASE_URL}/recurrence?${new URLSearchParams({ rut })}`, {
+    signal,
+    cache: "no-store",
+  })
 }
 export function createDelivery(payload: DeliveryPayload) {
   return request<Delivery>(BASE_URL, { method: "POST", body: JSON.stringify(payload) })

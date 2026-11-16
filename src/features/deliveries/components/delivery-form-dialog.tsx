@@ -4,14 +4,19 @@ import Link from "next/link"
 import { useId } from "react"
 import { useForm, useFieldArray, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Plus, Trash2, Truck } from "lucide-react"
+import { AlertTriangle, Plus, Trash2, Truck, X } from "lucide-react"
+import { Popover } from "radix-ui"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Field, FieldLabel, FieldError } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { ApiError } from "../api"
-import { useCreateDelivery, useUpdateDelivery, useDeliveryOptions } from "../queries"
+import { ApiError, getDeliveryRecurrence } from "../api"
+import { useCreateDelivery, useUpdateDelivery, useDeliveryOptions, useDeliveryRecurrence } from "../queries"
+import { useDebouncedValue } from "@/hooks/use-debounced-value"
+import { normalizeRut, isValidRut } from "@/lib/rut"
+import { formatDate } from "@/lib/format"
+import { deliveryRecurrenceMessage } from "../recurrence"
 import { deliveryFormSchema, toDeliveryPayload, type Delivery, type DeliveryFormValues } from "../schemas"
 import type { RequestDetail } from "@/features/requests/schemas"
 import type { EventItem } from "@/features/events/schemas"
@@ -69,6 +74,10 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
   const requests =
     options.data?.requests.filter((request) => !request.delivery || request.delivery.id === delivery?.id) ?? []
   const requestId = useWatch({ control: form.control, name: "requestId" })
+  const rut = normalizeRut(useWatch({ control: form.control, name: "beneficiaryRut" }) ?? "")
+  const debouncedRut = useDebouncedValue(rut)
+  const checkRecurrence = !delivery && isValidRut(rut) && rut === debouncedRut
+  const recurrence = useDeliveryRecurrence(debouncedRut, checkRecurrence)
   const visibleRequests = contextEvent ? requests.filter((request) => request.event?.id === contextEvent.id) : requests
   const unavailableEventRequest = Boolean(
     contextEvent &&
@@ -90,6 +99,15 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
     if (unavailableRequest || unavailableEventRequest) return
     try {
       const payload = toDeliveryPayload(values)
+      if (!delivery) {
+        // El aviso no condiciona el alta, incluso si la consulta falla.
+        try {
+          const previous = await getDeliveryRecurrence(payload.beneficiaryRut, AbortSignal.timeout(5000))
+          if (previous.count > 0) toast.warning(deliveryRecurrenceMessage(previous.count), { duration: 10000 })
+        } catch {
+          toast.warning("No se pudo consultar las entregas anteriores. Se continuará con el registro.")
+        }
+      }
       await mutation.mutateAsync({
         ...payload,
         ...(contextEvent && { eventId: contextEvent.id }),
@@ -106,7 +124,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
       toast.error(error instanceof Error ? error.message : "No se pudo guardar la entrega.")
     }
   })
-  const pending = mutation.isPending
+  const pending = mutation.isPending || form.formState.isSubmitting
   return (
     <Dialog
       open={open}
@@ -272,14 +290,81 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
                       <span className="text-destructive">*</span>
                     )}
                   </FieldLabel>
-                  <Input
-                    id={`${id}-${name}`}
-                    type={type}
-                    placeholder={placeholder}
-                    {...form.register(name)}
-                    aria-invalid={Boolean(errors[name])}
-                    aria-describedby={`${id}-${name}-error`}
-                  />
+                  <div className="relative">
+                    <Input
+                      id={`${id}-${name}`}
+                      type={type}
+                      placeholder={placeholder}
+                      className={name === "beneficiaryRut" ? "pr-10" : undefined}
+                      {...form.register(name)}
+                      aria-invalid={Boolean(errors[name])}
+                      aria-describedby={`${id}-${name}-error`}
+                    />
+                    {name === "beneficiaryRut" && checkRecurrence && (
+                      <>
+                        {recurrence.isFetching && (
+                          <span className="sr-only" role="status">
+                            Consultando entregas anteriores…
+                          </span>
+                        )}
+                        {(recurrence.isError || (recurrence.data?.count ?? 0) > 0) && (
+                          <Popover.Root key={rut} defaultOpen>
+                            <Popover.Trigger asChild>
+                              <button
+                                type="button"
+                                className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-amber-700 hover:bg-amber-50 focus-visible:outline-2 focus-visible:outline-offset-2"
+                                aria-label="Ver advertencia de entregas anteriores"
+                              >
+                                <AlertTriangle size={17} aria-hidden="true" />
+                              </button>
+                            </Popover.Trigger>
+                            <Popover.Portal>
+                              <Popover.Content
+                                side="bottom"
+                                align="start"
+                                sideOffset={8}
+                                collisionPadding={16}
+                                className="z-[60] w-80 max-w-[calc(100vw-2rem)] rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 shadow-md"
+                                onOpenAutoFocus={(event) => event.preventDefault()}
+                              >
+                                <div className="mb-2 flex items-center justify-between gap-3">
+                                  <strong>Entregas anteriores</strong>
+                                  <Popover.Close asChild>
+                                    <button
+                                      type="button"
+                                      aria-label="Cerrar advertencia"
+                                      className="rounded p-1 hover:bg-amber-100"
+                                    >
+                                      <X size={14} aria-hidden="true" />
+                                    </button>
+                                  </Popover.Close>
+                                </div>
+                                <div role="status">
+                                  {recurrence.isError ? (
+                                    <p>
+                                      No se pudieron consultar las entregas anteriores. Puedes registrar la entrega
+                                      igualmente.
+                                    </p>
+                                  ) : (
+                                    recurrence.data && (
+                                      <>
+                                        <p>{deliveryRecurrenceMessage(recurrence.data.count)}</p>
+                                        {recurrence.data.lastDate && (
+                                          <p className="mt-1 text-xs">
+                                            Última entrega: {formatDate(recurrence.data.lastDate)}.
+                                          </p>
+                                        )}
+                                      </>
+                                    )
+                                  )}
+                                </div>
+                              </Popover.Content>
+                            </Popover.Portal>
+                          </Popover.Root>
+                        )}
+                      </>
+                    )}
+                  </div>
                   <FieldError id={`${id}-${name}-error`} errors={[errors[name]]} />
                 </Field>
               ))}

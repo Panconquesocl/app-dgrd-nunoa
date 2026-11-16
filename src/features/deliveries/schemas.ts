@@ -9,6 +9,9 @@ export const beneficiaryRutSchema = z
   .transform(normalizeRut)
   .refine(isValidRut, "Indica un RUT válido con su dígito verificador.")
 
+export const deliveryRecurrenceQuerySchema = z.object({ rut: beneficiaryRutSchema })
+export type DeliveryRecurrence = { count: number; from: string; through: string; lastDate: string | null }
+
 const requiredText = (label: string) =>
   z
     .string()

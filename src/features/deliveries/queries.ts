@@ -44,6 +44,7 @@ export function useCreateDelivery() {
         queryClient.invalidateQueries({ queryKey: supplyKeys.all }),
         queryClient.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all }),
         queryClient.invalidateQueries({ queryKey: deliveryKeys.options() }),
+        queryClient.invalidateQueries({ queryKey: deliveryKeys.recurrences() }),
         queryClient.invalidateQueries({ queryKey: requestKeys.all }),
         queryClient.invalidateQueries({ queryKey: ["events"] }),
         queryClient.invalidateQueries({ queryKey: deliveryKeys.lists() }),
@@ -53,6 +54,7 @@ export function useCreateDelivery() {
       if (error instanceof api.ApiError && error.status === 409) {
         queryClient.invalidateQueries({ queryKey: requestKeys.all })
         queryClient.invalidateQueries({ queryKey: deliveryKeys.options() })
+        queryClient.invalidateQueries({ queryKey: deliveryKeys.recurrences() })
       }
     },
   })
@@ -68,6 +70,7 @@ export function useUpdateDelivery(id: string) {
       queryClient.invalidateQueries({ queryKey: supplyKeys.all })
       queryClient.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.options() })
+      queryClient.invalidateQueries({ queryKey: deliveryKeys.recurrences() })
       queryClient.invalidateQueries({ queryKey: requestKeys.all })
       queryClient.invalidateQueries({ queryKey: ["events"] })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.lists() })
@@ -86,6 +89,7 @@ export function useDeleteDelivery() {
       queryClient.invalidateQueries({ queryKey: supplyKeys.all })
       queryClient.invalidateQueries({ queryKey: neighborhoodAssociationKeys.all })
       queryClient.invalidateQueries({ queryKey: deliveryKeys.options() })
+      queryClient.invalidateQueries({ queryKey: deliveryKeys.recurrences() })
       queryClient.invalidateQueries({ queryKey: requestKeys.all })
       queryClient.invalidateQueries({ queryKey: ["events"] })
       queryClient.removeQueries({ queryKey: deliveryKeys.detail(id) })
@@ -96,4 +100,12 @@ export function useDeleteDelivery() {
 
 export function useDeliveryOptions() {
   return useQuery({ queryKey: deliveryKeys.options(), queryFn: api.getDeliveryOptions })
+}
+export function useDeliveryRecurrence(rut: string, enabled: boolean) {
+  return useQuery({
+    queryKey: deliveryKeys.recurrence(rut),
+    queryFn: ({ signal }) => api.getDeliveryRecurrence(rut, signal),
+    enabled,
+    retry: false,
+  })
 }

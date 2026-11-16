@@ -111,4 +111,12 @@ herencia del evento, sustitución de ítems y altas concurrentes.
 
 Formulario, tabla y detalle muestran el RUT; los históricos indican «Sin RUT registrado». Sin junta se muestra «Sin junta vecinal», también en el resumen, y no se contabiliza una junta adicional en estadísticas. Una junta seleccionada mantiene las validaciones de existencia/actividad y la protección de borrado. El servidor exige un RUT válido en altas y al editar una entrega histórica sin RUT.
 
-La alerta se implementará en la siguiente feature: se mostrará al intentar registrar una entrega si existe al menos una anterior del mismo RUT en los últimos seis meses. Será informativa y no bloqueará el registro. No se incorporan alertas en solicitudes en este alcance.
+## Alerta informativa por RUT
+
+Al registrar una entrega se consulta si existe al menos una entrega anterior del mismo RUT normalizado, sin distinguir nombre, junta, evento o insumos. La ventana considera las fechas de entrega desde hace seis meses calendario hasta hoy en America/Santiago, incluyendo ambos días; se excluyen fechas futuras. Si el mes de inicio no tiene ese día, se usa su último día. La fecha de la nueva entrega no mueve esta ventana.
+
+El formulario consulta al completar un RUT válido y muestra un popover con el número de entregas y la última fecha, anclado a un icono dentro del campo RUT. Se abre sin quitar el foco del campo, se puede cerrar y volver a abrir, y no desplaza los demás inputs. No muestra datos de otro RUT mientras se escribe. Al enviar se consulta nuevamente y se muestra el aviso antes de continuar con el alta, sin pedir confirmación adicional ni bloquear por recurrencia. Si la consulta falla o supera cinco segundos, se informa y se intenta registrar igualmente. La consulta inicial es informativa; no constituye una reserva frente a nuevas entregas simultáneas. No se implementan alertas al editar ni en solicitudes.
+
+GET `/api/deliveries/recurrence?rut=...` exige permiso `deliveries:create`, valida/normaliza RUT y responde `{ count, from, through, lastDate }` sin caché HTTP. Los históricos sin RUT no se atribuyen por nombre. Crear, editar o eliminar entregas invalida las consultas de recurrencia. Se utiliza el índice existente `(beneficiaryRut, date)`, sin nueva migración.
+
+Verificación: límites inclusivos y meses bisiestos, día de Chile frente a UTC, formatos de RUT, exclusión de otras identidades/históricos/futuros y registro permitido con recurrencia; permisos y validación de la ruta.
