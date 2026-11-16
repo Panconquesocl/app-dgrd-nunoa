@@ -58,6 +58,7 @@ test(
       const direct = await createDelivery({ ...input, requestId: null, eventId: event.id }, userId)
       assert.equal(direct.eventId, event.id)
       assert.equal(direct.requestId, null)
+      assert.ok((await getDeliveryOptions()).events.some((option) => option.id === event.id))
       assert.equal((await getEvent(event.id)).deliveries[0].items[0].quantity, 2)
       assert.equal((await updateDelivery(direct.id, { beneficiary: `${marker}-edit` })).eventId, event.id)
       // El formulario general envía requestId null al editar una entrega directa.
@@ -113,6 +114,8 @@ test(
       assert.equal((await updateDelivery(withoutAssociation.id, { contact: "123" })).beneficiaryRut, "12345678-5")
       await prisma.delivery.update({ where: { id: withoutAssociation.id }, data: { beneficiaryRut: null } })
       assert.equal((await getDelivery(withoutAssociation.id)).beneficiaryRut, null)
+      assert.equal((await listDeliveries({ q: marker })).data.length, 1)
+      assert.equal((await listDeliveries({ q: marker, beneficiaryRut: "12345678-5" })).data.length, 0)
       await assert.rejects(
         updateDelivery(withoutAssociation.id, { contact: "456" }),
         (error: unknown) => error instanceof AppError && Boolean(error.fieldErrors?.beneficiaryRut),
@@ -140,6 +143,41 @@ test(
       )
       const options = await getDeliveryOptions()
       assert.equal(options.requests.find((row) => row.id === request.id)?.delivery?.id, delivery.id)
+      const eventOption = options.events.find((row) => row.id === event.id)
+      assert.ok(eventOption)
+      assert.deepEqual(Object.keys(eventOption).sort(), ["folio", "id", "sector"])
+      for (const term of ["12.345.678-5", "123456785", "345.678", "678-5", "6785"]) {
+        assert.deepEqual(
+          (await listDeliveries({ q: term, beneficiary: marker.toUpperCase() })).data.map((row) => row.id),
+          [delivery.id],
+        )
+        assert.deepEqual(
+          (await listDeliveries({ q: marker, beneficiaryRut: term, eventId: event.id })).data.map((row) => row.id),
+          [delivery.id],
+        )
+      }
+      const combined = await listDeliveries({
+        q: marker,
+        beneficiary: marker.toUpperCase(),
+        beneficiaryRut: "678-5",
+        eventId: event.id,
+        neighborhoodAssociationId: association.id,
+        supplyId: supply.id,
+        from: "2026-10-14",
+        to: "2026-10-14",
+      })
+      assert.deepEqual(combined.stats, { deliveries: 1, units: 2, neighborhoods: 1 })
+      assert.equal((await listDeliveries({ q: marker, beneficiary: "No coincide" })).data.length, 0)
+      assert.equal((await listDeliveries({ q: marker, beneficiaryRut: "000000000" })).data.length, 0)
+      assert.equal((await listDeliveries({ q: marker, beneficiaryRut: "texto" })).data.length, 0)
+      assert.deepEqual((await listDeliveries({ q: marker, eventId: event.id, event: "without" })).stats, {
+        deliveries: 0,
+        units: 0,
+        neighborhoods: 0,
+      })
+      await updateDelivery(delivery.id, { beneficiaryRut: "6000000-K" })
+      assert.equal((await listDeliveries({ beneficiary: marker, beneficiaryRut: "0-k" })).data[0]?.id, delivery.id)
+      await updateDelivery(delivery.id, { beneficiaryRut: "12345678-5" })
       const query = { q: marker, from: "2026-10-14", to: "2026-10-14", event: "with" as const, supplyId: supply.id }
       const listed = await listDeliveries(query)
       assert.equal(listed.stats.deliveries, 1)
