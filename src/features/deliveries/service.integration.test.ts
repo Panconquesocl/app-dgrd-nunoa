@@ -60,9 +60,9 @@ test(
       assert.equal(direct.requestId, null)
       assert.ok((await getDeliveryOptions()).events.some((option) => option.id === event.id))
       assert.equal((await getEvent(event.id)).deliveries[0].items[0].quantity, 2)
-      assert.equal((await updateDelivery(direct.id, { beneficiary: `${marker}-edit` })).eventId, event.id)
+      assert.equal((await updateDelivery(direct.id, { beneficiary: `${marker}-edit` }, userId)).eventId, event.id)
       // El formulario general envía requestId null al editar una entrega directa.
-      assert.equal((await updateDelivery(direct.id, { requestId: null })).eventId, event.id)
+      assert.equal((await updateDelivery(direct.id, { requestId: null }, userId)).eventId, event.id)
       const otherEvent = await prisma.event.create({
         data: {
           folio: `${marker}-other`,
@@ -83,18 +83,18 @@ test(
         (error: unknown) => error instanceof AppError && error.status === 409 && Boolean(error.fieldErrors?.eventId),
       )
       const previousImpact = await getEventDeletionImpact(otherEvent.id)
-      assert.equal((await updateDelivery(direct.id, { eventId: otherEvent.id })).eventId, otherEvent.id)
+      assert.equal((await updateDelivery(direct.id, { eventId: otherEvent.id }, userId)).eventId, otherEvent.id)
       await assert.rejects(
-        deleteEvent(otherEvent.id, previousImpact),
+        deleteEvent(otherEvent.id, previousImpact, userId),
         (error: unknown) => error instanceof AppError && error.status === 409,
       )
       const directImpact = await getEventDeletionImpact(otherEvent.id)
       assert.deepEqual(directImpact.deliveryIds, [direct.id])
       assert.deepEqual(directImpact.requestIds, [])
-      await deleteEvent(otherEvent.id, directImpact)
+      await deleteEvent(otherEvent.id, directImpact, userId)
       assert.equal((await getDelivery(direct.id)).eventId, null)
       assert.equal((await getDelivery(direct.id)).items[0].quantity, 2)
-      await deleteDelivery(direct.id)
+      await deleteDelivery(direct.id, userId)
       const withoutAssociation = await createDelivery(
         { ...input, beneficiaryRut: "12.345.678-5", requestId: null, neighborhoodAssociationId: null },
         userId,
@@ -103,28 +103,32 @@ test(
       assert.equal(withoutAssociation.neighborhoodAssociation, null)
       assert.equal((await listDeliveries({ q: marker })).stats.neighborhoods, 0)
       assert.equal(
-        (await updateDelivery(withoutAssociation.id, { neighborhoodAssociationId: association.id }))
+        (await updateDelivery(withoutAssociation.id, { neighborhoodAssociationId: association.id }, userId))
           .neighborhoodAssociationId,
         association.id,
       )
       assert.equal(
-        (await updateDelivery(withoutAssociation.id, { neighborhoodAssociationId: null })).neighborhoodAssociation,
+        (await updateDelivery(withoutAssociation.id, { neighborhoodAssociationId: null }, userId))
+          .neighborhoodAssociation,
         null,
       )
-      assert.equal((await updateDelivery(withoutAssociation.id, { contact: "123" })).beneficiaryRut, "12345678-5")
+      assert.equal(
+        (await updateDelivery(withoutAssociation.id, { contact: "123" }, userId)).beneficiaryRut,
+        "12345678-5",
+      )
       await prisma.delivery.update({ where: { id: withoutAssociation.id }, data: { beneficiaryRut: null } })
       assert.equal((await getDelivery(withoutAssociation.id)).beneficiaryRut, null)
       assert.equal((await listDeliveries({ q: marker })).data.length, 1)
       assert.equal((await listDeliveries({ q: marker, beneficiaryRut: "12345678-5" })).data.length, 0)
       await assert.rejects(
-        updateDelivery(withoutAssociation.id, { contact: "456" }),
+        updateDelivery(withoutAssociation.id, { contact: "456" }, userId),
         (error: unknown) => error instanceof AppError && Boolean(error.fieldErrors?.beneficiaryRut),
       )
       assert.equal(
-        (await updateDelivery(withoutAssociation.id, { beneficiaryRut: "6.000.000-k" })).beneficiaryRut,
+        (await updateDelivery(withoutAssociation.id, { beneficiaryRut: "6.000.000-k" }, userId)).beneficiaryRut,
         "6000000-K",
       )
-      await deleteDelivery(withoutAssociation.id)
+      await deleteDelivery(withoutAssociation.id, userId)
       const delivery = await createDelivery({ ...input, eventId: event.id }, userId)
       assert.equal(delivery.eventId, event.id)
       const linkedRequest = await getRequest(request.id)
@@ -134,7 +138,7 @@ test(
       assert.equal(delivery.items[0].quantity, 2)
       assert.equal((await getDelivery(delivery.id)).creator.name, marker)
       await assert.rejects(
-        updateDelivery(delivery.id, { eventId: null }),
+        updateDelivery(delivery.id, { eventId: null }, userId),
         (error: unknown) => error instanceof AppError && error.status === 409,
       )
       await assert.rejects(
@@ -175,9 +179,9 @@ test(
         units: 0,
         neighborhoods: 0,
       })
-      await updateDelivery(delivery.id, { beneficiaryRut: "6000000-K" })
+      await updateDelivery(delivery.id, { beneficiaryRut: "6000000-K" }, userId)
       assert.equal((await listDeliveries({ beneficiary: marker, beneficiaryRut: "0-k" })).data[0]?.id, delivery.id)
-      await updateDelivery(delivery.id, { beneficiaryRut: "12345678-5" })
+      await updateDelivery(delivery.id, { beneficiaryRut: "12345678-5" }, userId)
       const query = { q: marker, from: "2026-10-14", to: "2026-10-14", event: "with" as const, supplyId: supply.id }
       const listed = await listDeliveries(query)
       assert.equal(listed.stats.deliveries, 1)
@@ -188,6 +192,7 @@ test(
       const edited = await updateDelivery(
         delivery.id,
         updateDeliverySchema.parse({ contact: "123", items: [{ supplyId: secondSupply.id, quantity: 5 }] }),
+        userId,
       )
       assert.equal(edited.items.length, 1)
       assert.equal(edited.items[0].supplyId, secondSupply.id)
@@ -196,11 +201,12 @@ test(
         updateDelivery(
           delivery.id,
           updateDeliverySchema.parse({ items: [{ supplyId: "clxxxxxxxxxxxxxxxxxxxxxxx", quantity: 1 }] }),
+          userId,
         ),
         AppError,
       )
       assert.equal((await getDelivery(delivery.id)).items[0].quantity, 5)
-      const detached = await updateDelivery(delivery.id, { requestId: null, contact: null })
+      const detached = await updateDelivery(delivery.id, { requestId: null, contact: null }, userId)
       assert.equal(detached.eventId, null)
       assert.equal(detached.requestId, null)
       const independent = { ...input, requestId: null }
@@ -208,7 +214,7 @@ test(
       assert.notEqual(concurrent[0].folio, concurrent[1].folio)
       const races = await Promise.allSettled([createDelivery(input, userId), createDelivery(input, userId)])
       assert.equal(races.filter((result) => result.status === "fulfilled").length, 1)
-      await deleteDelivery(delivery.id)
+      await deleteDelivery(delivery.id, userId)
       await assert.rejects(
         getDelivery(delivery.id),
         (error: unknown) => error instanceof AppError && error.status === 404,
@@ -224,6 +230,7 @@ test(
       await prisma.eventType.deleteMany({ where: { createdBy: userId } })
       await prisma.neighborhoodAssociation.deleteMany({ where: { createdBy: userId } })
       await prisma.user.deleteMany({ where: { id: userId } })
+      await prisma.auditLog.deleteMany({ where: { actorId: userId } })
       await prisma.$disconnect()
     }
   },

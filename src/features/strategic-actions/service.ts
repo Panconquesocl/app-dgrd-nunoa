@@ -1,3 +1,4 @@
+import { auditedTransaction } from "@/features/audit/transaction"
 import prisma from "@/lib/prisma"
 import { AppError } from "@/lib/api-error"
 import { Prisma } from "@/generated/prisma/client"
@@ -87,10 +88,12 @@ export async function getStrategicAction(id: string) {
 
 export async function createStrategicAction(input: CreateStrategicActionInput, userId: string) {
   try {
-    return await prisma.strategicAction.create({
-      data: { ...input, createdBy: userId },
-      select: listSelect,
-    })
+    return await auditedTransaction(userId, (tx) =>
+      tx.strategicAction.create({
+        data: { ...input, createdBy: userId },
+        select: listSelect,
+      }),
+    )
   } catch (error) {
     // Se captura el choque contra el índice único en vez de pre-consultar: un
     // pre-check tiene condición de carrera contra @@unique([year, number]).
@@ -101,9 +104,9 @@ export async function createStrategicAction(input: CreateStrategicActionInput, u
   }
 }
 
-export async function updateStrategicAction(id: string, input: UpdateStrategicActionInput) {
+export async function updateStrategicAction(id: string, input: UpdateStrategicActionInput, actorId: string) {
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await auditedTransaction(actorId, async (tx) => {
       const rows = await tx.$queryRaw<
         { startDate: Date; endDate: Date }[]
       >`SELECT "startDate", "endDate" FROM strategic_action WHERE id = ${id} FOR UPDATE`
@@ -158,7 +161,7 @@ function blockedByActivitiesError(activityCount: number) {
   )
 }
 
-export async function deleteStrategicAction(id: string) {
+export async function deleteStrategicAction(id: string, actorId: string) {
   // El conteo previo no es la defensa: `Activity.action` usa onDelete: Restrict
   // y la base rechaza el borrado igual. Está para dar el número exacto de
   // actividades en el 409, que es lo que el front necesita para explicarlo.
@@ -169,7 +172,7 @@ export async function deleteStrategicAction(id: string) {
   }
 
   try {
-    await prisma.strategicAction.delete({ where: { id } })
+    await auditedTransaction(actorId, (tx) => tx.strategicAction.delete({ where: { id } }))
   } catch (error) {
     // Si entre el conteo y el borrado se creó una actividad, la restricción de
     // clave foránea salta acá (P2003). Se traduce al mismo 409 en vez de dejar

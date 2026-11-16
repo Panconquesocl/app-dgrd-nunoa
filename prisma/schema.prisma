@@ -334,3 +334,25 @@ model EventFolioCounter {
 
   @@map("event_folio_counter")
 }
+
+// Historial sin FK: conserva actor y entidad después de su eliminación.
+model AuditLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()::text"))
+  createdAt   DateTime @default(dbgenerated("clock_timestamp()")) @db.Timestamptz(3)
+  operationId String
+  actorId     String
+  actorName   String
+  actorEmail  String
+  resource    String
+  action      String
+  entityId    String
+  entityLabel String
+  before      Json?
+  after       Json?
+
+  @@index([createdAt, id])
+  @@index([resource, createdAt])
+  @@index([actorId, createdAt])
+  @@index([operationId])
+  @@map("audit_log")
+}

@@ -33,15 +33,15 @@ test(
         prisma.supply.create({ data: { type: `  ${marker.toUpperCase()}  `, unit: " UNIDAD ", createdBy: userId } }),
         (error: unknown) => error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002",
       )
-      await assert.rejects(updateSupply(variant.id, { unit: "unidad" }), hasStatus(409))
+      await assert.rejects(updateSupply(variant.id, { unit: "unidad" }, userId), hasStatus(409))
       const races = await Promise.allSettled([
         createSupply({ type: `${marker} concurrente`, unit: "kg" }, userId),
         createSupply({ type: `${marker} CONCURRENTE`, unit: "kg" }, userId),
       ])
       assert.equal(races.filter((result) => result.status === "fulfilled").length, 1)
       assert.equal(races.filter((result) => result.status === "rejected" && hasStatus(409)(result.reason)).length, 1)
-      assert.equal((await updateSupply(supply.id, { unit: "kg" })).unit, "kg")
-      await updateSupply(supply.id, { unit: "unidad" })
+      assert.equal((await updateSupply(supply.id, { unit: "kg" }, userId)).unit, "kg")
+      await updateSupply(supply.id, { unit: "unidad" }, userId)
       const input = createDeliverySchema.parse({
         beneficiary: marker,
         beneficiaryRut: "12345678-5",
@@ -61,26 +61,26 @@ test(
       assert.equal(history.items[0].delivery.id, second.id)
       assert.equal((await getSupply(supply.id, "asc")).items[0].delivery.id, first.id)
       await assert.rejects(
-        updateSupply(supply.id, { unit: "caja" }),
+        updateSupply(supply.id, { unit: "caja" }, userId),
         (error) => hasStatus(409)(error) && Boolean((error as AppError).fieldErrors?.unit),
       )
       await assert.rejects(
-        deleteSupply(supply.id),
+        deleteSupply(supply.id, userId),
         (error) => hasStatus(409)(error) && (error as AppError).details?.deliveryCount === 2,
       )
-      await updateSupply(supply.id, { type: `${marker} renombrado` })
+      await updateSupply(supply.id, { type: `${marker} renombrado` }, userId)
       assert.equal((await getDelivery(first.id)).items[0].supply.type, `${marker} renombrado`)
       assert.equal(
         (await getDeliveryOptions()).supplies.find((row) => row.id === supply.id)?.type,
         `${marker} renombrado`,
       )
-      await deleteDelivery(first.id)
-      await deleteDelivery(second.id)
+      await deleteDelivery(first.id, userId)
+      await deleteDelivery(second.id, userId)
       assert.equal((await getSupply(supply.id)).totalDistributed, 0)
-      await deleteSupply(supply.id)
+      await deleteSupply(supply.id, userId)
       await assert.rejects(getSupply(supply.id), hasStatus(404))
-      await assert.rejects(updateSupply(supply.id, { type: marker }), hasStatus(404))
-      await assert.rejects(deleteSupply(supply.id), hasStatus(404))
+      await assert.rejects(updateSupply(supply.id, { type: marker }, userId), hasStatus(404))
+      await assert.rejects(deleteSupply(supply.id, userId), hasStatus(404))
 
       // Una entrega en curso toma FOR SHARE; edición y borrado deben esperar a
       // que termine y luego ver la nueva referencia, nunca alterar su unidad.
@@ -109,7 +109,10 @@ test(
         })
       })
       await ready
-      const changes = Promise.allSettled([updateSupply(variant.id, { unit: "litro" }), deleteSupply(variant.id)])
+      const changes = Promise.allSettled([
+        updateSupply(variant.id, { unit: "litro" }, userId),
+        deleteSupply(variant.id, userId),
+      ])
       proceed()
       await reference
       const results = await changes
@@ -126,6 +129,7 @@ test(
           ])
         }
       } finally {
+        await prisma.auditLog.deleteMany({ where: { actorId: userId } })
         await prisma.$disconnect()
       }
     }

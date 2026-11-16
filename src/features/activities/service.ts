@@ -1,3 +1,4 @@
+import { auditedTransaction } from "@/features/audit/transaction"
 import prisma from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import { AppError } from "@/lib/api-error"
@@ -51,7 +52,7 @@ export async function getSchedule() {
 }
 export async function createActivity(input: ActivityInput, userId: string) {
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await auditedTransaction(userId, async (tx) => {
       const date = new Date(`${input.date}T00:00:00.000Z`)
       await assertPeriod(tx, input.actionId, date)
       return tx.activity.create({ data: { ...input, date, createdBy: userId }, select })
@@ -60,9 +61,9 @@ export async function createActivity(input: ActivityInput, userId: string) {
     translate(error)
   }
 }
-export async function updateActivity(id: string, input: ActivityInput) {
+export async function updateActivity(id: string, input: ActivityInput, actorId: string) {
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await auditedTransaction(actorId, async (tx) => {
       const date = new Date(`${input.date}T00:00:00.000Z`)
       await assertPeriod(tx, input.actionId, date)
       return tx.activity.update({ where: { id }, data: { ...input, date }, select })
@@ -71,9 +72,9 @@ export async function updateActivity(id: string, input: ActivityInput) {
     translate(error)
   }
 }
-export async function deleteActivity(id: string) {
+export async function deleteActivity(id: string, actorId: string) {
   try {
-    await prisma.$transaction(async (tx) => {
+    await auditedTransaction(actorId, async (tx) => {
       const rows = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM activity WHERE id = ${id} FOR UPDATE`
       if (!rows.length) throw new AppError(404, "La actividad no existe.")
       if (await tx.evidence.count({ where: { activityId: id } }))

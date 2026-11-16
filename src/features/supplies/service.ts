@@ -1,3 +1,4 @@
+import { auditedTransaction } from "@/features/audit/transaction"
 import prisma from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import { AppError } from "@/lib/api-error"
@@ -77,7 +78,7 @@ function translateError(error: unknown): never {
 }
 export async function createSupply(input: SupplyPayload, userId: string) {
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await auditedTransaction(userId, async (tx) => {
       await assertUnique(tx, input.type, input.unit)
       return tx.supply.create({ data: { ...input, createdBy: userId }, select: listSelect })
     })
@@ -85,9 +86,9 @@ export async function createSupply(input: SupplyPayload, userId: string) {
     translateError(error)
   }
 }
-export async function updateSupply(id: string, input: SupplyPatch) {
+export async function updateSupply(id: string, input: SupplyPatch, actorId: string) {
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await auditedTransaction(actorId, async (tx) => {
       // FOR UPDATE también bloquea la referencia del insumo desde nuevas entregas.
       await tx.$queryRaw`SELECT id FROM supply WHERE id = ${id} FOR UPDATE`
       const current = await tx.supply.findUnique({ where: { id }, select: { type: true, unit: true } })
@@ -107,9 +108,9 @@ export async function updateSupply(id: string, input: SupplyPatch) {
     translateError(error)
   }
 }
-export async function deleteSupply(id: string) {
+export async function deleteSupply(id: string, actorId: string) {
   try {
-    await prisma.$transaction(async (tx) => {
+    await auditedTransaction(actorId, async (tx) => {
       await tx.$queryRaw`SELECT id FROM supply WHERE id = ${id} FOR UPDATE`
       const current = await tx.supply.findUnique({ where: { id }, select: { id: true } })
       if (!current) throw new AppError(404, "El insumo no existe.")

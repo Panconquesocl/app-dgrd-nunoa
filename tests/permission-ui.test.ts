@@ -99,6 +99,10 @@ mock.module(file("src/features/events/components/event-detail-view.tsx"), {
   namedExports: { EventDetailView: () => createElement("div", null, "RESTRICTED_CONTENT") },
 })
 
+mock.module(file("src/features/audit/components/audit-view.tsx"), {
+  namedExports: { AuditView: () => createElement("div", null, "RESTRICTED_CONTENT") },
+})
+
 mock.module(file("src/features/users/components/users-view.tsx"), {
   namedExports: { UsersView: () => createElement("div", null, "RESTRICTED_CONTENT") },
 })
@@ -126,6 +130,7 @@ test("navegación, estados vacíos y diálogos respetan ambos roles", async () =
     assert.equal(nav.includes('href="/solicitudes"'), current === "admin")
     assert.equal(nav.includes('href="/eventos"'), current === "admin")
     assert.equal(nav.includes('href="/admin/usuarios"'), current === "admin")
+    assert.equal(nav.includes('href="/admin/auditoria"'), current === "admin")
     assert.ok(nav.includes('href="/juntas-vecinales"'))
     assert.equal(render(AssociationsView).includes("Nueva junta"), current === "admin")
     const strategic = render(StrategicActionsView)
@@ -140,6 +145,7 @@ test("acceso directo a solicitudes/eventos no monta contenido restringido", asyn
     "../src/app/(app)/eventos/page",
     "../src/app/(app)/eventos/[id]/page",
     "../src/app/(app)/admin/usuarios/page",
+    "../src/app/(app)/admin/auditoria/page",
   ]) {
     const { default: Page } = await import(modulePath)
     for (const current of ["user", "admin"]) {

@@ -51,16 +51,20 @@ test(
         createRequest(createRequestSchema.parse({ channel: marker, status: "attended" }), userId),
         hasStatus(400),
       )
-      await assert.rejects(updateRequest(b.id, { status: "attended" }), hasStatus(400))
-      await updateRequest(b.id, { status: "attended", response: "Respuesta registrada", description: "Necesita ayuda" })
-      await assert.rejects(updateRequest(b.id, { response: null }), hasStatus(400))
-      await updateRequest(b.id, { description: "Descripción editada" })
+      await assert.rejects(updateRequest(b.id, { status: "attended" }, userId), hasStatus(400))
+      await updateRequest(
+        b.id,
+        { status: "attended", response: "Respuesta registrada", description: "Necesita ayuda" },
+        userId,
+      )
+      await assert.rejects(updateRequest(b.id, { response: null }, userId), hasStatus(400))
+      await updateRequest(b.id, { description: "Descripción editada" }, userId)
       assert.equal((await getRequest(b.id)).response, "Respuesta registrada")
       assert.equal(
         (await listRequests({ q: "Descripción editada" })).data.some((row) => row.id === b.id),
         true,
       )
-      await updateRequest(b.id, { status: "pending", response: null })
+      await updateRequest(b.id, { status: "pending", response: null }, userId)
 
       const delivery = await createDelivery(
         createDeliverySchema.parse({
@@ -78,17 +82,17 @@ test(
       assert.equal((await getRequest(a.id)).status, "pending")
 
       // B04: cambiar o quitar el evento de la solicitud se propaga a su entrega.
-      await updateRequest(a.id, { eventId: second.id })
+      await updateRequest(a.id, { eventId: second.id }, userId)
       assert.equal((await prisma.delivery.findUniqueOrThrow({ where: { id: delivery.id } })).eventId, second.id)
-      await updateRequest(a.id, { status: "attended" })
+      await updateRequest(a.id, { status: "attended" }, userId)
       assert.equal((await prisma.delivery.findUniqueOrThrow({ where: { id: delivery.id } })).eventId, second.id)
-      await updateRequest(a.id, { eventId: null })
+      await updateRequest(a.id, { eventId: null }, userId)
       assert.equal((await prisma.delivery.findUniqueOrThrow({ where: { id: delivery.id } })).eventId, null)
       assert.equal((await getRequest(a.id)).delivery?.id, delivery.id)
 
       // Ni confirmar la entrega ni omitir el parámetro permite borrar la solicitud.
       for (const expected of [undefined, "", delivery.id]) {
-        await assert.rejects(deleteRequest(a.id, expected), hasStatus(409))
+        await assert.rejects(deleteRequest(a.id, expected, userId), hasStatus(409))
       }
       await assert.rejects(prisma.request.delete({ where: { id: a.id } }))
       assert.equal((await getRequest(a.id)).delivery?.id, delivery.id)
@@ -96,10 +100,10 @@ test(
 
       // Borrar el máximo y volver a crear no reutiliza su folio.
       const newest = await createRequest(createRequestSchema.parse({ channel: marker }), userId)
-      await deleteRequest(newest.id)
+      await deleteRequest(newest.id, undefined, userId)
       const after = await createRequest(createRequestSchema.parse({ channel: marker }), userId)
       assert.equal(BigInt(after.folio.split("-")[2]), BigInt(newest.folio.split("-")[2]) + BigInt(1))
-      await deleteRequest(b.id)
+      await deleteRequest(b.id, undefined, userId)
       await assert.rejects(getRequest(b.id), hasStatus(404))
     } finally {
       await prisma.deliveryItem.deleteMany({ where: { delivery: { createdBy: userId } } })
@@ -110,6 +114,7 @@ test(
       await prisma.supply.deleteMany({ where: { createdBy: userId } })
       await prisma.neighborhoodAssociation.deleteMany({ where: { createdBy: userId } })
       await prisma.user.delete({ where: { id: userId } })
+      await prisma.auditLog.deleteMany({ where: { actorId: userId } })
       await prisma.$disconnect()
     }
   },

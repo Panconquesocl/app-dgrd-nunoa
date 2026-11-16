@@ -1,3 +1,4 @@
+import { auditedTransaction } from "@/features/audit/transaction"
 import prisma from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import { AppError } from "@/lib/api-error"
@@ -23,21 +24,23 @@ export async function listEventTypes() {
 }
 export async function createEventType(input: EventTypeInput, userId: string) {
   try {
-    return await prisma.eventType.create({ data: { ...input, createdBy: userId }, select })
+    return await auditedTransaction(userId, (tx) =>
+      tx.eventType.create({ data: { ...input, createdBy: userId }, select }),
+    )
   } catch (error) {
     translate(error)
   }
 }
-export async function updateEventType(id: string, input: EventTypeInput) {
+export async function updateEventType(id: string, input: EventTypeInput, actorId: string) {
   try {
-    return await prisma.eventType.update({ where: { id }, data: input, select })
+    return await auditedTransaction(actorId, (tx) => tx.eventType.update({ where: { id }, data: input, select }))
   } catch (error) {
     translate(error)
   }
 }
-export async function deleteEventType(id: string) {
+export async function deleteEventType(id: string, actorId: string) {
   try {
-    await prisma.$transaction(async (tx) => {
+    await auditedTransaction(actorId, async (tx) => {
       const rows = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM event_type WHERE id = ${id} FOR UPDATE`
       if (!rows.length) throw new AppError(404, "El tipo de evento no existe.")
       const count = await tx.event.count({ where: { typeId: id } })

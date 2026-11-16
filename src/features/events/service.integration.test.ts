@@ -39,7 +39,7 @@ test(
       assert.notEqual(first.folio, second.folio)
       assert.match(first.folio, /^EV-\d{4}-\d{3,}$/)
       const newest = [first, second].sort((a, b) => Number(a.folio.split("-")[2]) - Number(b.folio.split("-")[2]))[1]
-      await deleteEvent(newest.id, await getEventDeletionImpact(newest.id))
+      await deleteEvent(newest.id, await getEventDeletionImpact(newest.id), userId)
       const after = await createEvent(base, userId)
       assert.equal(Number(after.folio.split("-")[2]), Number(newest.folio.split("-")[2]) + 1)
       const request = await createRequest(createRequestSchema.parse({ channel: "Teléfono" }), userId)
@@ -67,17 +67,17 @@ test(
       const countBefore = (await listEvents()).data.filter((event) => event.sector === userId).length
       await assert.rejects(createEvent({ ...base, requestId: request.id }, userId), conflict)
       assert.equal((await listEvents()).data.filter((event) => event.sector === userId).length, countBefore)
-      await updateEvent(contextual.id, { ...base, affectedCount: 0, actions: "Acción actualizada" })
+      await updateEvent(contextual.id, { ...base, affectedCount: 0, actions: "Acción actualizada" }, userId)
       assert.equal((await getEvent(contextual.id)).affectedCount, 0)
       const seen = await getEventDeletionImpact(contextual.id)
       await createRequest(createRequestSchema.parse({ channel: "Correo", eventId: contextual.id }), userId)
-      await assert.rejects(deleteEvent(contextual.id, seen), conflict)
-      await deleteEvent(contextual.id, await getEventDeletionImpact(contextual.id))
+      await assert.rejects(deleteEvent(contextual.id, seen, userId), conflict)
+      await deleteEvent(contextual.id, await getEventDeletionImpact(contextual.id), userId)
       assert.equal((await prisma.request.findUniqueOrThrow({ where: { id: request.id } })).eventId, null)
       assert.equal((await prisma.delivery.findUniqueOrThrow({ where: { id: delivery.id } })).eventId, null)
       assert.equal(await prisma.deliveryItem.count({ where: { deliveryId: delivery.id } }), 1)
       const empty = await createEvent(base, userId)
-      await updateRequest(request.id, { eventId: empty.id })
+      await updateRequest(request.id, { eventId: empty.id }, userId)
       assert.equal((await prisma.delivery.findUniqueOrThrow({ where: { id: delivery.id } })).eventId, empty.id)
       await assert.rejects(createEvent({ ...base, typeId: "cm00000000000000000000000" }, userId), conflict)
     } finally {
@@ -89,6 +89,7 @@ test(
       await prisma.supply.deleteMany({ where: { createdBy: userId } })
       await prisma.neighborhoodAssociation.deleteMany({ where: { createdBy: userId } })
       await prisma.user.delete({ where: { id: userId } })
+      await prisma.auditLog.deleteMany({ where: { actorId: userId } })
       await prisma.$disconnect()
     }
   },

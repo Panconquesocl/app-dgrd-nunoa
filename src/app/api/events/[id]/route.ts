@@ -14,16 +14,18 @@ export async function GET(_request: Request, { params }: Context) {
 }
 export async function PATCH(request: Request, { params }: Context) {
   try {
-    await requirePermission("events", "update")
-    return NextResponse.json(await updateEvent((await params).id, eventSchema.parse(await request.json())))
+    const auditActor = await requirePermission("events", "update")
+    return NextResponse.json(
+      await updateEvent((await params).id, eventSchema.parse(await request.json()), auditActor.id),
+    )
   } catch (error) {
     return toErrorResponse(error)
   }
 }
 export async function DELETE(request: Request, { params }: Context) {
   try {
-    await requirePermission("events", "delete")
-    await deleteEvent((await params).id, deletionSchema.parse(await request.json()))
+    const auditActor = await requirePermission("events", "delete")
+    await deleteEvent((await params).id, deletionSchema.parse(await request.json()), auditActor.id)
     return new NextResponse(null, { status: 204 })
   } catch (error) {
     return toErrorResponse(error)

@@ -186,6 +186,7 @@ test(
       )
       await prisma.eventType.deleteMany({ where: { createdBy: { in: ids } } })
       await prisma.user.deleteMany({ where: { id: { in: ids } } })
+      await prisma.auditLog.deleteMany({ where: { actorId: { in: ids } } })
       await prisma.$disconnect()
     }
   },

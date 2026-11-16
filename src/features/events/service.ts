@@ -1,3 +1,4 @@
+import { auditedTransaction } from "@/features/audit/transaction"
 import prisma from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import { AppError } from "@/lib/api-error"
@@ -56,7 +57,7 @@ export async function getEvent(id: string) {
 }
 export async function createEvent(input: CreateEventInput, userId: string) {
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await auditedTransaction(userId, async (tx) => {
       const { requestId, ...fields } = input
       // Mismo orden que editar solicitudes: primero solicitud, después evento/tipo.
       if (requestId) {
@@ -92,9 +93,9 @@ export async function createEvent(input: CreateEventInput, userId: string) {
     translate(error)
   }
 }
-export async function updateEvent(id: string, input: EventInput) {
+export async function updateEvent(id: string, input: EventInput, actorId: string) {
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await auditedTransaction(actorId, async (tx) => {
       await assertType(tx, input.typeId)
       return tx.event.update({
         where: { id },
@@ -118,9 +119,9 @@ export async function getEventDeletionImpact(id: string) {
   if (!event) throw new AppError(404, "El evento no existe.")
   return impact(event)
 }
-export async function deleteEvent(id: string, expected: DeletionInput) {
+export async function deleteEvent(id: string, expected: DeletionInput, actorId: string) {
   try {
-    await prisma.$transaction(async (tx) => {
+    await auditedTransaction(actorId, async (tx) => {
       const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "event" WHERE id = ${id} FOR UPDATE`
       if (!locked.length) throw new AppError(404, "El evento no existe.")
       const event = await tx.event.findUniqueOrThrow({ where: { id }, select: impactSelect })

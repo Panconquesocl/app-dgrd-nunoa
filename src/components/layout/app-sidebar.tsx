@@ -12,6 +12,7 @@ import {
   ChevronsLeft,
   FileText,
   Home,
+  History,
   Package,
   Settings,
   Siren,
@@ -82,6 +83,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/admin/usuarios", label: "Usuarios", icon: Users },
       { href: "/admin/configuracion", label: "Configuración", icon: Settings },
+      { href: "/admin/auditoria", label: "Auditoría", icon: History },
     ],
   },
 ]

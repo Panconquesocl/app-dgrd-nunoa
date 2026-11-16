@@ -58,26 +58,30 @@ test(
       await createActivity({ ...input, date: "2026-03-31" }, userId)
       for (const date of ["2026-02-28", "2026-04-01"])
         await assert.rejects(createActivity({ ...input, date }, userId), status(400))
-      await assert.rejects(updateActivity(first.id, { ...input, actionId: second.id }), status(400))
-      await assert.rejects(updateStrategicAction(action.id, { startDate: new Date("2026-03-02") }), status(409))
-      await assert.rejects(updateStrategicAction(action.id, { endDate: new Date("2026-03-30") }), status(409))
-      await updateActivity(first.id, {
-        ...input,
-        actionId: second.id,
-        date: "2026-04-01",
-        objective: "Actualizada por otro usuario",
-      })
+      await assert.rejects(updateActivity(first.id, { ...input, actionId: second.id }, userId), status(400))
+      await assert.rejects(updateStrategicAction(action.id, { startDate: new Date("2026-03-02") }, userId), status(409))
+      await assert.rejects(updateStrategicAction(action.id, { endDate: new Date("2026-03-30") }, userId), status(409))
+      await updateActivity(
+        first.id,
+        {
+          ...input,
+          actionId: second.id,
+          date: "2026-04-01",
+          objective: "Actualizada por otro usuario",
+        },
+        userId,
+      )
       assert.equal((await getActivity(first.id)).creator.name, "Prueba")
       assert.equal((await getActivity(first.id)).actionId, second.id)
       assert.equal(
         (await getSchedule()).activities.some((row) => row.id === first.id),
         true,
       )
-      await assert.rejects(deleteStrategicAction(second.id), status(409))
+      await assert.rejects(deleteStrategicAction(second.id, userId), status(409))
       // Competencia entre acortar periodo y crear en el día que se excluye: solo una puede ganar.
       const results = await Promise.allSettled([
         createActivity({ ...input, actionId: second.id, date: "2026-04-30" }, userId),
-        updateStrategicAction(second.id, { endDate: new Date("2026-04-29") }),
+        updateStrategicAction(second.id, { endDate: new Date("2026-04-29") }, userId),
       ])
       assert.equal(results.filter((result) => result.status === "fulfilled").length, 1)
       const saved = await prisma.strategicAction.findUniqueOrThrow({
@@ -87,13 +91,14 @@ test(
       assert.ok(
         saved.activities.every((activity) => activity.date >= saved.startDate && activity.date <= saved.endDate),
       )
-      await deleteActivity(first.id)
+      await deleteActivity(first.id, userId)
       assert.ok(await prisma.strategicAction.findUnique({ where: { id: second.id } }))
       await assert.rejects(getActivity(first.id), status(404))
     } finally {
       await prisma.activity.deleteMany({ where: { createdBy: { in: [userId, otherId] } } })
       await prisma.strategicAction.deleteMany({ where: { createdBy: userId } })
       await prisma.user.deleteMany({ where: { id: { in: [userId, otherId] } } })
+      await prisma.auditLog.deleteMany({ where: { actorId: { in: [userId, otherId] } } })
       await prisma.$disconnect()
     }
   },

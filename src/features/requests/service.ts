@@ -1,3 +1,4 @@
+import { auditedTransaction } from "@/features/audit/transaction"
 import prisma from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import { AppError } from "@/lib/api-error"
@@ -96,7 +97,7 @@ function assertAttended(status: string, response: string | null | undefined, has
 
 export async function createRequest(input: CreateRequestInput, userId: string) {
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await auditedTransaction(userId, async (tx) => {
       assertAttended(input.status, input.response, false)
       const year = deliveryFolioYear()
       // Serializa las altas del año para que dos solicitudes no reserven el mismo correlativo.
@@ -121,9 +122,9 @@ export async function createRequest(input: CreateRequestInput, userId: string) {
   }
 }
 
-export async function updateRequest(id: string, input: UpdateRequestInput) {
+export async function updateRequest(id: string, input: UpdateRequestInput, actorId: string) {
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await auditedTransaction(actorId, async (tx) => {
       // Mismo bloqueo que toma una entrega al vincularse: la sincronización del
       // evento no compite con un alta o cambio de entrega concurrente.
       const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "request" WHERE id = ${id} FOR UPDATE`
@@ -148,9 +149,9 @@ export async function updateRequest(id: string, input: UpdateRequestInput) {
 }
 
 /** Una entrega vinculada bloquea siempre el borrado, aunque el cliente la confirme. */
-export async function deleteRequest(id: string, expectedDeliveryId?: string) {
+export async function deleteRequest(id: string, expectedDeliveryId: string | undefined, actorId: string) {
   try {
-    await prisma.$transaction(async (tx) => {
+    await auditedTransaction(actorId, async (tx) => {
       const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "request" WHERE id = ${id} FOR UPDATE`
       if (!locked.length) throw new AppError(404, "La solicitud no existe.")
       const delivery = await tx.delivery.findUnique({ where: { requestId: id }, select: { id: true, folio: true } })

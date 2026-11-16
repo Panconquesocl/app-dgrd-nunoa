@@ -29,7 +29,7 @@ test(
       assert.ok(conflict(rejected.reason))
       const type = (await listEventTypes()).data.find((row) => row.name.toLowerCase() === id)!
       const second = await createEventType({ name: `${id}-otro` }, id)
-      await assert.rejects(updateEventType(second.id, { name: id.toUpperCase() }), conflict)
+      await assert.rejects(updateEventType(second.id, { name: id.toUpperCase() }, id), conflict)
       const event = await prisma.event.create({
         data: {
           folio: id,
@@ -42,20 +42,21 @@ test(
         },
       })
       assert.equal((await listEventTypes()).data.find((row) => row.id === type.id)?._count.events, 1)
-      await updateEventType(type.id, { name: `${id}-renombrado` })
+      await updateEventType(type.id, { name: `${id}-renombrado` }, id)
       assert.equal(
         (await prisma.event.findUniqueOrThrow({ where: { id: event.id }, include: { type: true } })).type.name,
         `${id}-renombrado`,
       )
-      await assert.rejects(deleteEventType(type.id), conflict)
+      await assert.rejects(deleteEventType(type.id, id), conflict)
       await assert.rejects(prisma.eventType.delete({ where: { id: type.id } }))
       assert.ok(await prisma.event.findUnique({ where: { id: event.id } }))
-      await deleteEventType(second.id)
+      await deleteEventType(second.id, id)
       assert.equal(await prisma.eventType.findUnique({ where: { id: second.id } }), null)
     } finally {
       await prisma.event.deleteMany({ where: { createdBy: id } })
       await prisma.eventType.deleteMany({ where: { createdBy: id } })
       await prisma.user.delete({ where: { id } })
+      await prisma.auditLog.deleteMany({ where: { actorId: id } })
       await prisma.$disconnect()
     }
   },
