@@ -10,7 +10,7 @@ import { formatDate } from "@/lib/format"
 import { activityClusters, MONTH_NAMES, MONTHS, yearPosition } from "../timeline"
 import { useSchedule } from "../queries"
 import { ActivityFormDialog } from "./activity-form-dialog"
-import { PlanTabs } from "./plan-tabs"
+import { SectionEyebrow } from "@/components/layout/section-eyebrow"
 import "@/features/deliveries/components/deliveries.css"
 import "@/features/requests/components/requests.css"
 import "./schedule.css"
@@ -41,9 +41,16 @@ export function ScheduleView() {
   const todayPosition = year === currentYear ? yearPosition(today, year) : null
   return (
     <div className="requests deliveries delivery-page">
-      <div className="schedule-top">
-        <PlanTabs active="schedule" />{" "}
-        <div className="schedule-years">
+      <div className="delivery-page-head">
+        <div className="min-w-0 flex-1 basis-[420px]">
+          <SectionEyebrow>Plan RRD</SectionEyebrow>
+          <h1>Cronograma</h1>
+          <p>
+            Línea de tiempo anual: cada acción estratégica como barra entre su inicio y término, con sus actividades
+            marcadas en la fecha en que se realizaron.
+          </p>
+        </div>
+        <div className="schedule-years" aria-label="Año del cronograma">
           {years.map((value) => (
             <Button
               key={value}
@@ -55,15 +62,6 @@ export function ScheduleView() {
               {value}
             </Button>
           ))}
-        </div>
-      </div>
-      <div className="delivery-page-head">
-        <div>
-          <h1>Cronograma</h1>
-          <p>
-            Línea de tiempo anual: cada acción estratégica como barra entre su inicio y término, con sus actividades
-            marcadas en la fecha en que se realizaron.
-          </p>
         </div>
       </div>
       {query.isPending ? (

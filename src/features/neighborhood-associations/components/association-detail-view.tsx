@@ -7,6 +7,7 @@ import { ArrowLeft, Box, CalendarDays, Pencil, Trash2, Truck } from "lucide-reac
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { AppTopbar, type TopbarUser } from "@/components/layout/app-topbar"
 import { formatDate } from "@/lib/format"
 import { useNeighborhoodAssociation } from "../queries"
 import { associationHistoryQuerySchema, type AssociationHistoryQuery } from "../schemas"
@@ -16,6 +17,23 @@ import "@/features/deliveries/components/deliveries.css"
 
 const emptyFilters = { from: "", to: "", supplyId: "" }
 const number = (value: number) => value.toLocaleString("es-CL")
+
+export function AssociationDetailPage({ id, user }: { id: string; user?: TopbarUser }) {
+  const query = useNeighborhoodAssociation(id, { order: "desc" })
+  return (
+    <>
+      <AppTopbar
+        user={user}
+        crumbs={[
+          { label: "Ayudas primera respuesta" },
+          { label: "Juntas vecinales", href: "/juntas-vecinales" },
+          { label: query.data?.name ?? "Junta vecinal", current: true },
+        ]}
+      />
+      <AssociationDetailView id={id} />
+    </>
+  )
+}
 
 export function AssociationDetailView({ id }: { id: string }) {
   const canManage = usePermission("neighborhood-associations", "update")

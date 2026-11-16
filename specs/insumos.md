@@ -34,7 +34,7 @@ y el estilo visual de entregas. No añade existencias, movimientos ni inventario
 - `/insumos/[id]`: historial ordenable por fecha, número de entregas y total
   distribuido en la unidad del insumo, con enlaces a cada entrega.
 - Estado vacío, carga, error con reintento y confirmaciones de borrado.
-- Acceso desde la barra lateral y pestañas de Ayudas primera respuesta.
+- Acceso desde la barra lateral; eyebrow «Ayudas primera respuesta» sobre el título, sin pestañas entre módulos.
 - Desde el detalle de una entrega, el nombre del insumo lleva a su historial.
 - Las mutaciones invalidan las cachés relacionadas: insumos actualiza las
   opciones y datos de entregas y los desgloses de juntas vecinales; entregas actualiza

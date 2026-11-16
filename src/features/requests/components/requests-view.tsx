@@ -337,7 +337,7 @@ export function RequestsView() {
                       </>
                     )}
                     <td onClick={(e) => e.stopPropagation()}>
-                      <div className="requests-row-actions">
+                      <div className="delivery-row-actions">
                         <Button
                           variant="ghost"
                           size="icon"

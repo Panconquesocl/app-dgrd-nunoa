@@ -35,7 +35,7 @@ export function GlobalSearch({ viewerKey }: { viewerKey: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="mr-1 gap-2 lg:w-52 lg:justify-start" aria-label="Abrir búsqueda global">
+        <Button variant="outline" className="gap-2 lg:w-52 lg:justify-start" aria-label="Abrir búsqueda global">
           <Search size={16} aria-hidden="true" />
           <span className="hidden lg:inline">Buscar en el sistema…</span>
         </Button>

@@ -2,8 +2,9 @@
 import { usePermission } from "@/providers/permissions"
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Eye, Pencil, Plus, Search, Trash2, Users } from "lucide-react"
-import { AidTabs } from "@/components/layout/aid-tabs"
+import { SectionEyebrow } from "@/components/layout/section-eyebrow"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -15,6 +16,7 @@ import { DeleteAssociationDialog } from "./delete-association-dialog"
 import "@/features/deliveries/components/deliveries.css"
 
 export function AssociationsView() {
+  const router = useRouter()
   const canManage = usePermission("neighborhood-associations", "update")
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState<NonNullable<ListNeighborhoodAssociationsQuery["status"]>>("all")
@@ -24,9 +26,9 @@ export function AssociationsView() {
   const filtered = Boolean(search) || status !== "all"
   return (
     <div className="deliveries delivery-page">
-      <AidTabs active="neighborhood-associations" />
       <div className="delivery-page-head">
         <div>
+          <SectionEyebrow>Ayudas primera respuesta</SectionEyebrow>
           <h1>Juntas vecinales</h1>
           <p>Catálogo de juntas vecinales y sus entregas asociadas.</p>
         </div>
@@ -119,10 +121,18 @@ export function AssociationsView() {
               </thead>
               <tbody>
                 {query.data.data.map((association) => (
-                  <tr key={association.id}>
+                  <tr
+                    key={association.id}
+                    className="cursor-pointer"
+                    onClick={() => router.push(`/juntas-vecinales/${association.id}`)}
+                  >
                     <td className="font-mono">{association.number}</td>
                     <td className="font-semibold">
-                      <Link href={`/juntas-vecinales/${association.id}`} className="hover:underline">
+                      <Link
+                        href={`/juntas-vecinales/${association.id}`}
+                        className="hover:underline"
+                        onClick={(event) => event.stopPropagation()}
+                      >
                         {association.name}
                       </Link>
                     </td>
@@ -134,8 +144,8 @@ export function AssociationsView() {
                     <td className="text-right">
                       <span className="delivery-count">{association._count.deliveries}</span>
                     </td>
-                    <td>
-                      <div className="flex justify-end gap-1">
+                    <td onClick={(event) => event.stopPropagation()}>
+                      <div className="delivery-row-actions">
                         <Button asChild variant="ghost" size="icon">
                           <Link
                             href={`/juntas-vecinales/${association.id}`}

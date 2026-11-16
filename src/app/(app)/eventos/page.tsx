@@ -14,7 +14,7 @@ export default async function EventosPage() {
   if (!can(session.user.role, "events", "read")) return <AccessDenied />
   return (
     <>
-      <AppTopbar crumbs={[{ label: "Emergencias" }, { label: "Eventos", current: true }]} user={session.user} />
+      <AppTopbar crumbs={[]} user={session.user} />
       <EventsView />
     </>
   )

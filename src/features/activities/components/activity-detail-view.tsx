@@ -37,8 +37,11 @@ export function ActivityDetailView({ id, user }: { id: string; user?: { name: st
     <AppTopbar
       crumbs={[
         { label: "Plan RRD" },
-        { label: "Acciones estratégicas" },
-        { label: action ? `N°${action.number} · ${action.year}` : "Acción" },
+        { label: "Acciones estratégicas", href: "/plan/acciones" },
+        {
+          label: action ? `N°${action.number} · ${action.year}` : "Acción",
+          href: action ? `/plan/acciones/${action.id}` : undefined,
+        },
         { label: "Actividad", current: true },
       ]}
       user={user}

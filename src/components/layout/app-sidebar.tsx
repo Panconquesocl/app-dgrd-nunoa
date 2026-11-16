@@ -20,7 +20,8 @@ import {
   Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { SignOutButton } from "@/components/auth/sign-out-button"
+import { useNavigationCounts } from "@/features/summary/queries"
+import type { NavigationCounts } from "@/features/summary/schemas"
 import "./app-sidebar.css"
 
 const COLLAPSED_KEY = "dgrd_sidebar_collapsed"
@@ -48,6 +49,7 @@ type NavItem = {
   href: string
   label: string
   icon: React.ComponentType<{ className?: string }>
+  countKey?: keyof NavigationCounts
 }
 
 type NavGroup = {
@@ -60,14 +62,14 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Emergencias",
     items: [
-      { href: "/solicitudes", label: "Solicitudes", icon: FileText },
-      { href: "/eventos", label: "Eventos", icon: Siren },
+      { href: "/solicitudes", label: "Solicitudes", icon: FileText, countKey: "requests" },
+      { href: "/eventos", label: "Eventos", icon: Siren, countKey: "events" },
     ],
   },
   {
     label: "Ayudas primera respuesta",
     items: [
-      { href: "/entregas", label: "Entregas", icon: Package },
+      { href: "/entregas", label: "Entregas", icon: Package, countKey: "deliveries" },
       { href: "/insumos", label: "Insumos", icon: Box },
       { href: "/juntas-vecinales", label: "Juntas vecinales", icon: Users },
     ],
@@ -89,8 +91,9 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ]
 
-export function AppSidebar() {
+export function AppSidebar({ viewerKey }: { viewerKey: string }) {
   const pathname = usePathname()
+  const counts = useNavigationCounts(viewerKey)
   const collapsed = useSyncExternalStore(subscribeSidebar, getCollapsed, serverCollapsed)
   const [fallbackCollapsed, setFallbackCollapsed] = useState<boolean | null>(null)
   const isCollapsed = fallbackCollapsed ?? collapsed
@@ -140,15 +143,16 @@ export function AppSidebar() {
               {group.label}
             </p>
             <ul className="flex flex-col gap-0.5">
-              {group.items.map(({ href, label, icon: Icon }) => {
+              {group.items.map(({ href, label, icon: Icon, countKey }) => {
                 const isActive = pathname === href || pathname.startsWith(`${href}/`)
+                const count = countKey && !counts.isError ? counts.data?.[countKey] : undefined
 
                 return (
                   <li key={href}>
                     <Link
                       href={href}
                       title={isCollapsed ? label : undefined}
-                      aria-label={label}
+                      aria-label={count !== undefined ? `${label}: ${count}` : label}
                       aria-current={isActive ? "page" : undefined}
                       className={cn(
                         "app-sidebar-link focus-visible:ring-brand/60 relative flex items-center gap-2.5 rounded-md px-2 py-2 text-[13.5px] font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
@@ -163,6 +167,11 @@ export function AppSidebar() {
                       )}
                       <Icon className={cn("size-4 shrink-0", isActive && "text-brand")} />
                       <span className="app-sidebar-label">{label}</span>
+                      {countKey && (
+                        <span className="app-sidebar-count" aria-hidden="true">
+                          {count !== undefined ? count.toLocaleString("es-CL") : "—"}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 )
@@ -172,7 +181,6 @@ export function AppSidebar() {
         ))}
       </nav>
       <div className="app-sidebar-footer">
-        <SignOutButton />
         <button
           type="button"
           className="app-sidebar-toggle"

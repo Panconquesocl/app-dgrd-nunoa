@@ -7,10 +7,7 @@ export default async function JuntasPage() {
   const session = await getSession()
   return (
     <>
-      <AppTopbar
-        crumbs={[{ label: "Ayudas primera respuesta" }, { label: "Juntas vecinales", current: true }]}
-        user={session?.user}
-      />
+      <AppTopbar crumbs={[]} user={session?.user} />
       <AssociationsView />
     </>
   )

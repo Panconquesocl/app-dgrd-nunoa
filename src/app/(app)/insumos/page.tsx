@@ -7,10 +7,7 @@ export default async function InsumosPage() {
   const session = await getSession()
   return (
     <>
-      <AppTopbar
-        crumbs={[{ label: "Ayudas primera respuesta" }, { label: "Insumos", current: true }]}
-        user={session?.user}
-      />
+      <AppTopbar crumbs={[]} user={session?.user} />
       <SuppliesView />
     </>
   )

@@ -1,17 +1,20 @@
 # Revisión integral
 
-Revisión del 16 de noviembre de 2026, sobre `main` después del PR #40 (`816bb9e`). Correcciones en `fix/revision-integral`. La referencia funcional y visual sigue siendo `spike/test-mockup`.
+Revisión del 16 de noviembre de 2026, sobre `main` después del PR #40 (`816bb9e`). Correcciones integradas mediante PR #41 (`835ce26`). La referencia funcional y visual sigue siendo `spike/test-mockup`.
 
 ## Correcciones
 
 - Se contiene la posición de las etiquetas accesibles de las cabeceras de tablas. Las columnas fuera de pantalla conservan el scroll interno sin ampliar el documento.
 - Se ajustan las barras de filtros, etiquetas de tipos de evento, acciones estratégicas, detalles de acción y controles de usuarios para anchos pequeños. El período de entregas se distribuye en dos filas en pantallas estrechas.
 - El listado y el detalle de acciones estratégicas usan el mismo contenedor y padding que las otras vistas. Cerrar sesión pasa de la barra superior al pie de la sidebar, con texto en el menú expandido e icono con nombre accesible en el plegado.
+
 - El formulario de entrega conserva encabezado y botones visibles con fondo sólido; solo desplazan los campos. El aviso por RUT permanece superpuesto sin desplazar otros campos.
 - Login usa la misma comprobación de sesión y cuenta desactivada que el resto de la aplicación. Los destinos de retorno se normalizan y validan para evitar salidas a otro origen o bucles hacia login.
 - El cierre de sesión cancela consultas y elimina la caché de la cuenta anterior. Si falla, muestra un mensaje y permite reintentar.
 - Se corrigen pruebas antiguas que aún exigían junta vecinal y omitían el RUT obligatorio. Se agregan pruebas de navegación y limpieza de caché entre sesiones.
 - Se actualiza el backlog para distinguir funcionalidades integradas, pendientes y exclusiones.
+
+La ubicación de Cerrar sesión se modifica posteriormente en los [ajustes de navegación](./navegacion.md): se traslada al popover del usuario en la topbar.
 
 ## Verificación
 
@@ -55,4 +58,4 @@ Los recorridos de navegador se ejecutaron con scripts temporales de QA; no se in
 
 ## Alcance pendiente
 
-Archivos y evidencia continúan pendientes. Visualización y georreferenciación quedan fuera del alcance. Exportaciones, inventario, recordatorios e importaciones genéricas requieren un acuerdo posterior. La publicación de la rama y el PR se realizan únicamente a solicitud del usuario; el merge queda a su cargo.
+Archivos y evidencia continúan pendientes. Visualización, georreferenciación e importación de datos históricos quedan fuera del alcance por decisión del usuario. Exportaciones, inventario y recordatorios son ideas sin implementación aprobada. La publicación de cada rama y PR se realiza únicamente a solicitud del usuario; el merge queda a su cargo.

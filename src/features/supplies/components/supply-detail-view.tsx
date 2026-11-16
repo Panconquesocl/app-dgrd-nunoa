@@ -5,11 +5,29 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, CalendarDays, ChevronRight, Pencil, Trash2, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { AppTopbar, type TopbarUser } from "@/components/layout/app-topbar"
 import { formatDate } from "@/lib/format"
 import { useSupply } from "../queries"
 import { SupplyFormDialog } from "./supply-form-dialog"
 import { DeleteSupplyDialog } from "./delete-supply-dialog"
 import "@/features/deliveries/components/deliveries.css"
+
+export function SupplyDetailPage({ id, user }: { id: string; user?: TopbarUser }) {
+  const query = useSupply(id)
+  return (
+    <>
+      <AppTopbar
+        user={user}
+        crumbs={[
+          { label: "Ayudas primera respuesta" },
+          { label: "Insumos", href: "/insumos" },
+          { label: query.data?.type ?? "Insumo", current: true },
+        ]}
+      />
+      <SupplyDetailView id={id} />
+    </>
+  )
+}
 
 export function SupplyDetailView({ id }: { id: string }) {
   const [order, setOrder] = useState<"asc" | "desc">("desc")

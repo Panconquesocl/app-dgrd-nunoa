@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, ChevronRight, FileText, Pencil, Plus, Siren, Trash2, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { RecordAuthor } from "@/components/layout/record-author"
+import { AppTopbar, type TopbarUser } from "@/components/layout/app-topbar"
 import { formatDate, formatDateTime } from "@/lib/format"
 import { usePermission } from "@/providers/permissions"
 import { RequestFormDialog } from "@/features/requests/components/request-form-dialog"
@@ -17,6 +19,22 @@ import { EventTypeBadge } from "./event-type-badge"
 import "@/features/deliveries/components/deliveries.css"
 import "@/features/requests/components/requests.css"
 import "./events.css"
+export function EventDetailPage({ id, user }: { id: string; user?: TopbarUser }) {
+  const query = useEvent(id)
+  return (
+    <>
+      <AppTopbar
+        user={user}
+        crumbs={[
+          { label: "Emergencias" },
+          { label: "Eventos", href: "/eventos" },
+          { label: query.data?.folio ?? "Evento", current: true },
+        ]}
+      />
+      <EventDetailView id={id} />
+    </>
+  )
+}
 export function EventDetailView({
   id,
   embedded = false,
@@ -213,8 +231,7 @@ export function EventDetailView({
         </div>
         <aside className="delivery-aside">
           <h2>Registro</h2>
-          <strong>{event.creator.name}</strong>
-          <p>Registró el evento</p>
+          <RecordAuthor name={event.creator.name} description="Registró el evento" />
           <p className="mt-3">{formatDateTime(event.createdAt)}</p>
         </aside>
       </div>

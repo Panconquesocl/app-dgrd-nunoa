@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Field, FieldLabel, FieldError } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { usePermission } from "@/providers/permissions"
 import { ApiError, getDeliveryRecurrence } from "../api"
 import { useCreateDelivery, useUpdateDelivery, useDeliveryOptions, useDeliveryRecurrence } from "../queries"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
@@ -42,7 +43,8 @@ export function DeliveryFormDialog(props: DeliveryFormDialogProps) {
 }
 
 function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEvent }: DeliveryFormDialogProps) {
-  const contextRequest = delivery ? undefined : fromRequest
+  const canAssociateRequest = usePermission("requests", "read")
+  const contextRequest = delivery || !canAssociateRequest ? undefined : fromRequest
   const contextEvent = delivery || contextRequest ? undefined : fromEvent
   const form = useForm<DeliveryFormValues>({
     resolver: zodResolver(deliveryFormSchema),
@@ -53,7 +55,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
       contact: delivery?.contact ?? "",
       address: delivery?.address ?? "",
       date: delivery?.date.slice(0, 10) ?? contextEvent?.date.slice(0, 10) ?? today(),
-      requestId: delivery?.requestId ?? contextRequest?.id ?? "",
+      requestId: canAssociateRequest ? (delivery?.requestId ?? contextRequest?.id ?? "") : "",
       items: delivery
         ? delivery.items.map((item) => ({
             type: item.supply.type,
@@ -71,8 +73,9 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
     ) ?? []
   const supplies = options.data?.supplies ?? []
   const types = Array.from(new Set(supplies.map((supply) => supply.type)))
-  const requests =
-    options.data?.requests.filter((request) => !request.delivery || request.delivery.id === delivery?.id) ?? []
+  const requests = canAssociateRequest
+    ? (options.data?.requests.filter((request) => !request.delivery || request.delivery.id === delivery?.id) ?? [])
+    : []
   const requestId = useWatch({ control: form.control, name: "requestId" })
   const rut = normalizeRut(useWatch({ control: form.control, name: "beneficiaryRut" }) ?? "")
   const debouncedRut = useDebouncedValue(rut)
@@ -99,6 +102,8 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
     if (unavailableRequest || unavailableEventRequest) return
     try {
       const payload = toDeliveryPayload(values)
+      // El selector oculto no debe sobrescribir vínculos existentes al editar.
+      if (!canAssociateRequest) delete payload.requestId
       if (!delivery) {
         // El aviso no condiciona el alta, incluso si la consulta falla.
         try {
@@ -164,7 +169,13 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
             disabled={pending}
             className="min-h-0 min-w-0 flex-1 space-y-5 overflow-y-auto px-4 py-4 disabled:opacity-70 sm:px-6 sm:py-5"
           >
-            {options.isPending && <p role="status">Cargando juntas vecinales, solicitudes e insumos…</p>}
+            {options.isPending && (
+              <p role="status">
+                {canAssociateRequest
+                  ? "Cargando juntas vecinales, solicitudes e insumos…"
+                  : "Cargando juntas vecinales e insumos…"}
+              </p>
+            )}
             {options.isError && (
               <div role="alert">
                 <p>No se pudieron cargar las opciones.</p>
@@ -173,74 +184,76 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
                 </Button>
               </div>
             )}
-            <Field data-invalid={Boolean(errors.requestId)}>
-              {contextEvent && <p className="text-muted-foreground text-xs">Solicitudes de {contextEvent.folio}</p>}
-              <FieldLabel htmlFor={`${id}-request`}>
-                Solicitud asociada{" "}
-                {!contextRequest && <span className="text-muted-foreground font-normal">Opcional</span>}
-              </FieldLabel>
-              {contextRequest ? (
-                <>
-                  <input type="hidden" {...form.register("requestId")} />
-                  <Input
+            {canAssociateRequest && (
+              <Field data-invalid={Boolean(errors.requestId)}>
+                {contextEvent && <p className="text-muted-foreground text-xs">Solicitudes de {contextEvent.folio}</p>}
+                <FieldLabel htmlFor={`${id}-request`}>
+                  Solicitud asociada{" "}
+                  {!contextRequest && <span className="text-muted-foreground font-normal">Opcional</span>}
+                </FieldLabel>
+                {contextRequest ? (
+                  <>
+                    <input type="hidden" {...form.register("requestId")} />
+                    <Input
+                      id={`${id}-request`}
+                      value={`${contextRequest.folio} — ${contextRequest.channel}`}
+                      readOnly
+                      aria-describedby={`${id}-request-hint ${id}-request-error`}
+                    />
+                  </>
+                ) : (
+                  <select
                     id={`${id}-request`}
-                    value={`${contextRequest.folio} — ${contextRequest.channel}`}
-                    readOnly
+                    className="delivery-select"
+                    {...form.register("requestId")}
+                    aria-invalid={Boolean(errors.requestId)}
                     aria-describedby={`${id}-request-hint ${id}-request-error`}
-                  />
-                </>
-              ) : (
-                <select
-                  id={`${id}-request`}
-                  className="delivery-select"
-                  {...form.register("requestId")}
-                  aria-invalid={Boolean(errors.requestId)}
-                  aria-describedby={`${id}-request-hint ${id}-request-error`}
-                >
-                  <option value="">Sin solicitud asociada</option>
-                  {visibleRequests.map((request) => (
-                    <option
-                      key={request.id}
-                      value={request.id}
-                      disabled={Boolean(request.delivery && request.delivery.id !== delivery?.id)}
-                    >
-                      {request.folio} — {request.channel} · {request.event?.folio ?? "sin evento"}
-                      {request.delivery ? " · Con entrega" : ""}
-                    </option>
-                  ))}
-                  {unavailableEventRequest && !visibleRequests.some((request) => request.id === requestId) && (
-                    <option value={requestId} disabled>
-                      Solicitud no disponible
-                    </option>
-                  )}
-                </select>
-              )}
-              <p id={`${id}-request-hint`} className="text-muted-foreground text-xs">
-                {contextRequest
-                  ? "La entrega quedará vinculada a esta solicitud y heredará su evento. Su estado no cambiará."
-                  : contextEvent
-                    ? "Puedes registrar la entrega sin solicitud. Solo se muestran solicitudes de este evento sin entrega asociada."
-                    : "Si responde a una solicitud, selecciónala. El evento se heredará de ella."}
-              </p>
-              {unavailableEventRequest && (
-                <p role="alert" className="text-destructive text-sm">
-                  La solicitud seleccionada ya tiene una entrega o no pertenece a este evento. Selecciona otra o
-                  continúa sin solicitud.
+                  >
+                    <option value="">Sin solicitud asociada</option>
+                    {visibleRequests.map((request) => (
+                      <option
+                        key={request.id}
+                        value={request.id}
+                        disabled={Boolean(request.delivery && request.delivery.id !== delivery?.id)}
+                      >
+                        {request.folio} — {request.channel} · {request.event?.folio ?? "sin evento"}
+                        {request.delivery ? " · Con entrega" : ""}
+                      </option>
+                    ))}
+                    {unavailableEventRequest && !visibleRequests.some((request) => request.id === requestId) && (
+                      <option value={requestId} disabled>
+                        Solicitud no disponible
+                      </option>
+                    )}
+                  </select>
+                )}
+                <p id={`${id}-request-hint`} className="text-muted-foreground text-xs">
+                  {contextRequest
+                    ? "La entrega quedará vinculada a esta solicitud y heredará su evento. Su estado no cambiará."
+                    : contextEvent
+                      ? "Puedes registrar la entrega sin solicitud. Solo se muestran solicitudes de este evento sin entrega asociada."
+                      : "Si responde a una solicitud, selecciónala. El evento se heredará de ella."}
                 </p>
-              )}
-              {contextEvent && options.data && visibleRequests.length === 0 && (
-                <p role="status" className="text-muted-foreground text-xs">
-                  No hay solicitudes sin entrega en este evento. Puedes continuar sin solicitud.
-                </p>
-              )}
-              {unavailableRequest && (
-                <p role="alert" className="text-destructive text-sm">
-                  Esta solicitud ya tiene una entrega o dejó de estar disponible. Cierra el formulario y actualiza el
-                  detalle antes de continuar.
-                </p>
-              )}
-              <FieldError id={`${id}-request-error`} errors={[errors.requestId]} />
-            </Field>
+                {unavailableEventRequest && (
+                  <p role="alert" className="text-destructive text-sm">
+                    La solicitud seleccionada ya tiene una entrega o no pertenece a este evento. Selecciona otra o
+                    continúa sin solicitud.
+                  </p>
+                )}
+                {contextEvent && options.data && visibleRequests.length === 0 && (
+                  <p role="status" className="text-muted-foreground text-xs">
+                    No hay solicitudes sin entrega en este evento. Puedes continuar sin solicitud.
+                  </p>
+                )}
+                {unavailableRequest && (
+                  <p role="alert" className="text-destructive text-sm">
+                    Esta solicitud ya tiene una entrega o dejó de estar disponible. Cierra el formulario y actualiza el
+                    detalle antes de continuar.
+                  </p>
+                )}
+                <FieldError id={`${id}-request-error`} errors={[errors.requestId]} />
+              </Field>
+            )}
             <Field data-invalid={Boolean(errors.neighborhoodAssociationId)}>
               <FieldLabel htmlFor={`${id}-association`}>
                 Junta vecinal <span className="text-muted-foreground font-normal">Opcional</span>

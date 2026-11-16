@@ -1,4 +1,5 @@
 import { z } from "zod"
+export type NavigationCounts = { deliveries: number; requests?: number; events?: number }
 export const summaryYearSchema = z.coerce
   .number()
   .int("El año debe ser entero.")

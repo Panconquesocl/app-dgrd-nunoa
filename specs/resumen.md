@@ -35,4 +35,4 @@ Pruebas con PostgreSQL temporal: límites anuales de fechas y de solicitudes en 
 
 Integración solo con DATABASE_URL aislada: `RUN_SUMMARY_INTEGRATION=1 node --import tsx --test src/features/summary/service.integration.test.ts`.
 
-Revisión manual: abrir Resumen como administrador y usuario normal, cambiar año y contrastar cantidades con entregas; abrir registros desde cada tarjeta; crear/editar un registro y volver a Resumen para comprobar actualización; verificar escritorio y móvil. No requiere migración ni regeneración de Prisma. Pendiente revisión visual local antes de commit/PR.
+Revisión manual: abrir Resumen como administrador y usuario normal, cambiar año y contrastar cantidades con entregas; abrir registros desde cada tarjeta; crear/editar un registro y volver a Resumen para comprobar actualización; verificar escritorio y móvil. No requiere migración ni regeneración de Prisma. La revisión integral integrada está documentada en [Revisión integral](./revision-integral.md).

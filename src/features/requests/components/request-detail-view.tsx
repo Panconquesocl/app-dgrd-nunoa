@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { AppTopbar, type TopbarUser } from "@/components/layout/app-topbar"
 import { formatDate, formatDateTime } from "@/lib/format"
 import { usePermission } from "@/providers/permissions"
 import { useRequest } from "../queries"
@@ -28,6 +29,23 @@ import "@/features/deliveries/components/deliveries.css"
 import "./requests.css"
 import { EventFormDialog } from "@/features/events/components/event-form-dialog"
 import { DeliveryFormDialog } from "@/features/deliveries/components/delivery-form-dialog"
+
+export function RequestDetailPage({ id, user }: { id: string; user?: TopbarUser }) {
+  const query = useRequest(id)
+  return (
+    <>
+      <AppTopbar
+        user={user}
+        crumbs={[
+          { label: "Emergencias" },
+          { label: "Solicitudes", href: "/solicitudes" },
+          { label: query.data?.folio ?? "Solicitud", current: true },
+        ]}
+      />
+      <RequestDetailView id={id} />
+    </>
+  )
+}
 
 export function RequestDetailView({
   id,

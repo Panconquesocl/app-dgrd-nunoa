@@ -3,6 +3,24 @@ import { Prisma } from "@/generated/prisma/client"
 import { can } from "@/lib/permissions"
 import { AppError } from "@/lib/api-error"
 import { summaryToday, summaryYearSchema } from "./schemas"
+import type { NavigationCounts } from "./schemas"
+
+/** Totales globales del menú, independientes del año y filtros del listado. */
+export async function getNavigationCounts(role: string | null | undefined): Promise<NavigationCounts> {
+  if (!can(role, "summary", "read")) throw new AppError(403, "No tienes permisos para consultar los contadores.")
+  return prisma.$transaction(
+    async (tx) => {
+      const [deliveries, requests, events] = await Promise.all([
+        tx.delivery.count(),
+        can(role, "requests", "read") ? tx.request.count() : undefined,
+        can(role, "events", "read") ? tx.event.count() : undefined,
+      ])
+      return { deliveries, ...(requests !== undefined && { requests }), ...(events !== undefined && { events }) }
+    },
+    { isolationLevel: "RepeatableRead" },
+  )
+}
+
 export async function getSummary(inputYear: number, role: string | null | undefined, now = new Date()) {
   const year = summaryYearSchema.parse(inputYear)
   if (!can(role, "summary", "read")) throw new AppError(403, "No tienes permisos para consultar el resumen.")

@@ -5,13 +5,28 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, Box, CalendarDays, Clock, MapPin, Pencil, Trash2, Truck, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { RecordAuthor } from "@/components/layout/record-author"
+import { AppTopbar, type TopbarUser } from "@/components/layout/app-topbar"
 import { useDelivery } from "../queries"
 import { formatDate } from "@/lib/format"
 import { formatRut } from "@/lib/rut"
 import { usePermission } from "@/providers/permissions"
 import { DeliveryFormDialog } from "./delivery-form-dialog"
 import { DeleteDeliveryDialog } from "./delete-delivery-dialog"
+import { deliveryBreadcrumbs } from "../breadcrumbs"
 import "./deliveries.css"
+
+export function DeliveryDetailPage({ id, user }: { id: string; user?: TopbarUser }) {
+  const query = useDelivery(id)
+  const events = usePermission("events", "read")
+  const requests = usePermission("requests", "read")
+  return (
+    <>
+      <AppTopbar user={user} crumbs={deliveryBreadcrumbs(query.data, { events, requests })} />
+      <DeliveryDetailView id={id} />
+    </>
+  )
+}
 
 export function DeliveryDetailView({
   id,
@@ -203,8 +218,7 @@ export function DeliveryDetailView({
           </section>
           <section className="delivery-aside">
             <h2>Registro</h2>
-            <strong>{delivery.creator.name}</strong>
-            <p>Registró la entrega</p>
+            <RecordAuthor name={delivery.creator.name} description="Registró la entrega" />
             <p className="mt-3 flex items-center gap-2">
               <Clock size={14} />
               {new Intl.DateTimeFormat("es-CL", {
