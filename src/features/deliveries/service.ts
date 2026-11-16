@@ -2,6 +2,7 @@ import { nextDeliveryFolio, deliveryFolioYear } from "./folio"
 import prisma from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import { AppError } from "@/lib/api-error"
+import { deliveryRecurrenceWindow } from "./recurrence"
 import {
   beneficiaryRutSchema,
   type CreateDeliveryInput,
@@ -93,6 +94,16 @@ function requiredRut(value: unknown) {
   const result = beneficiaryRutSchema.safeParse(value)
   if (!result.success) fail("beneficiaryRut", result.error.issues[0].message)
   return result.data
+}
+export async function getDeliveryRecurrence(rut: string, now = new Date()) {
+  const beneficiaryRut = requiredRut(rut)
+  const { from, through, start, end } = deliveryRecurrenceWindow(now)
+  const result = await prisma.delivery.aggregate({
+    where: { beneficiaryRut, date: { gte: start, lt: end } },
+    _count: { _all: true },
+    _max: { date: true },
+  })
+  return { count: result._count._all, from, through, lastDate: result._max.date?.toISOString() ?? null }
 }
 async function validateRelations(
   tx: Prisma.TransactionClient,
