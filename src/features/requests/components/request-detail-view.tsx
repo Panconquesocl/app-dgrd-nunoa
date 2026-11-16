@@ -165,7 +165,7 @@ export function RequestDetailView({
                   <Link href={`/eventos/${request.event.id}`} className="font-mono font-semibold hover:underline">
                     {request.event.folio}
                   </Link>
-                  <span>{request.event.sector}</span>
+                  <span>{request.event.address}</span>
                 </div>
               </div>
             ) : (

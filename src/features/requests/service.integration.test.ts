@@ -22,7 +22,7 @@ test(
     await prisma.user.create({ data: { id: userId, name: marker, email: `${userId}@example.invalid` } })
     try {
       const type = await prisma.eventType.create({ data: { name: marker, createdBy: userId } })
-      const eventData = { date: new Date(), sector: marker, institutions: "-", actions: "-", typeId: type.id }
+      const eventData = { date: new Date(), address: marker, institutions: "-", actions: "-", typeId: type.id }
       const [first, second] = await Promise.all(
         ["A", "B"].map((suffix) =>
           prisma.event.create({ data: { ...eventData, folio: `${marker}-${suffix}`, createdBy: userId } }),

@@ -9,14 +9,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Field, FieldError, FieldLabel } from "@/components/ui/field"
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"
 import { useEventTypes } from "@/features/event-types/queries"
 import { eventFormSchema, type EventFormValues, type EventItem } from "../schemas"
 import { EventApiError } from "../api"
 import { useSaveEvent } from "../queries"
 import "@/features/requests/components/requests.css"
 import "./events.css"
-const fields = ["typeId", "date", "sector", "affectedCount", "institutions", "actions"] as const
+const fields = ["typeId", "date", "address", "affectedCount", "institutions", "actions"] as const
 const today = () =>
   new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Santiago",
@@ -43,7 +43,7 @@ export function EventFormDialog({
     defaultValues: {
       typeId: event?.typeId ?? "",
       date: event?.date.slice(0, 10) ?? today(),
-      sector: event?.sector ?? "",
+      address: event?.address ?? "",
       affectedCount: event?.affectedCount?.toString() ?? "",
       institutions: event?.institutions ?? "",
       actions: event?.actions ?? fromRequest?.response ?? "",
@@ -110,20 +110,22 @@ export function EventFormDialog({
                   <Field
                     key={field}
                     data-invalid={Boolean(form.formState.errors[field])}
-                    className={field === "institutions" || field === "actions" ? "sm:col-span-2" : ""}
+                    className={
+                      field === "address" || field === "institutions" || field === "actions" ? "sm:col-span-2" : ""
+                    }
                   >
                     <FieldLabel htmlFor={`${id}-${field}`}>
                       {
                         {
                           typeId: "Tipo de evento",
                           date: "Fecha",
-                          sector: "Sector",
+                          address: "Dirección",
                           affectedCount: "Personas afectadas",
                           institutions: "Instituciones involucradas",
                           actions: "Acciones tomadas",
                         }[field]
                       }
-                      {["typeId", "date", "sector"].includes(field) ? (
+                      {["typeId", "date", "address"].includes(field) ? (
                         <span className="text-destructive">*</span>
                       ) : (
                         <span className="text-muted-foreground font-normal">Opcional</span>
@@ -178,7 +180,8 @@ export function EventFormDialog({
                         type={field === "date" ? "date" : field === "affectedCount" ? "number" : "text"}
                         min={field === "affectedCount" ? 0 : undefined}
                         step={field === "affectedCount" ? 1 : undefined}
-                        placeholder={field === "sector" ? "Ej. Villa Frei" : undefined}
+                        placeholder={field === "address" ? "Ej. Av. Grecia 4500, Ñuñoa" : undefined}
+                        maxLength={field === "address" ? 500 : undefined}
                         {...form.register(field)}
                         aria-invalid={Boolean(form.formState.errors[field])}
                         aria-describedby={`${id}-${field}-error`}
@@ -188,6 +191,51 @@ export function EventFormDialog({
                   </Field>
                 ))}
               </div>
+              <section aria-label="Adjuntos" className="space-y-4 border-t pt-4">
+                <h3 className="font-semibold">Adjuntos</h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field className="sm:col-span-2">
+                    <FieldLabel htmlFor={`${id}-alpha-report`}>
+                      Informe ALFA <span className="text-muted-foreground font-normal">Opcional</span>
+                    </FieldLabel>
+                    <Input
+                      id={`${id}-alpha-report`}
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      disabled
+                      aria-describedby={`${id}-alpha-report-hint`}
+                    />
+                    <FieldDescription id={`${id}-alpha-report-hint`}>
+                      La carga del informe PDF estará disponible cuando se habilite el manejo de archivos.
+                    </FieldDescription>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor={`${id}-photos`}>
+                      Fotografías <span className="text-muted-foreground font-normal">Opcional</span>
+                    </FieldLabel>
+                    <Input
+                      id={`${id}-photos`}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      disabled
+                      aria-describedby={`${id}-photos-hint`}
+                    />
+                    <FieldDescription id={`${id}-photos-hint`}>
+                      La carga de imágenes estará disponible cuando se habilite el manejo de archivos.
+                    </FieldDescription>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor={`${id}-files`}>
+                      Archivos <span className="text-muted-foreground font-normal">Opcional</span>
+                    </FieldLabel>
+                    <Input id={`${id}-files`} type="file" multiple disabled aria-describedby={`${id}-files-hint`} />
+                    <FieldDescription id={`${id}-files-hint`}>
+                      La carga de archivos estará disponible cuando se habilite el manejo de archivos.
+                    </FieldDescription>
+                  </Field>
+                </div>
+              </section>
             </fieldset>
           </div>
           <div className="bg-surface flex shrink-0 justify-end gap-3 border-t px-6 py-4">

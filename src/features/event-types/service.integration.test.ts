@@ -35,7 +35,7 @@ test(
           folio: id,
           typeId: type.id,
           date: new Date(),
-          sector: "Prueba",
+          address: "Prueba",
           institutions: "Prueba",
           actions: "Prueba",
           createdBy: id,

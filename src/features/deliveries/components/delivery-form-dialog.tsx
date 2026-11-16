@@ -32,7 +32,7 @@ type DeliveryFormDialogProps = {
   onOpenChange: (open: boolean) => void
   delivery?: Delivery
   fromRequest?: Pick<RequestDetail, "id" | "folio" | "channel" | "event">
-  fromEvent?: Pick<EventItem, "id" | "folio" | "date" | "sector">
+  fromEvent?: Pick<EventItem, "id" | "folio" | "date" | "address">
 }
 
 export function DeliveryFormDialog(props: DeliveryFormDialogProps) {

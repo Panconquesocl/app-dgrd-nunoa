@@ -146,9 +146,9 @@ export function EventDetailView({
                 <dt>Fecha</dt>
                 <dd>{formatDate(event.date)}</dd>
               </div>
-              <div>
-                <dt>Sector</dt>
-                <dd>{event.sector}</dd>
+              <div className="sm:col-span-2">
+                <dt>Dirección</dt>
+                <dd className="break-words">{event.address}</dd>
               </div>
               <div>
                 <dt>Personas afectadas</dt>

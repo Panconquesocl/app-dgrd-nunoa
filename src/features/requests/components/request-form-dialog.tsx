@@ -195,12 +195,12 @@ export function RequestFormDialog({
                   <option value="">Sin evento asociado</option>
                   {currentEventMissing && request?.event && (
                     <option value={request.event.id}>
-                      {request.event.folio} — {request.event.sector}
+                      {request.event.folio} — {request.event.address}
                     </option>
                   )}
                   {events.map((event) => (
                     <option key={event.id} value={event.id}>
-                      {event.folio} — {event.sector}
+                      {event.folio} — {event.address}
                     </option>
                   ))}
                 </select>

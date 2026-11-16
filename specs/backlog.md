@@ -1,6 +1,6 @@
 # Estado y backlog del proyecto DGRD Ñuñoa
 
-Actualizado el 16 de noviembre de 2026. Estado contrastado con `main` después del PR #42. La referencia funcional y visual es `spike/test-mockup`; no se usan otras ramas históricas para definir el producto. La revisión integral y los ajustes de navegación ya están integrados.
+Actualizado el 16 de noviembre de 2026. Estado contrastado con `main` después del PR #43. La referencia funcional y visual es `spike/test-mockup`; no se usan otras ramas históricas para definir el producto. La revisión integral y los ajustes de navegación ya están integrados.
 
 ## Alcance vigente
 
@@ -54,8 +54,8 @@ Se conserva la confirmación actual al eliminar usuarios, sin exigir escribir el
 
 ## Nuevos cambios aprobados: dos entregas separadas
 
-1. **Entregas**, en revisión en `feat/entregas-observaciones-adjuntos`: Observaciones opcionales persistidas y auditadas, controles de fotografías y archivos múltiples opcionales desactivados. Ver [Entregas](./entregas.md).
-2. **Eventos**, siguiente rama después de revisar Entregas: cambiar Sector por Dirección conservando los valores existentes; agregar Informe alfa (PDF), fotografías y archivos opcionales, todos desactivados hasta implementar el manejo de archivos.
+1. **Entregas**, integrado mediante PR #43: Observaciones opcionales persistidas y auditadas, controles de fotografías y archivos múltiples opcionales desactivados. Ver [Entregas](./entregas.md).
+2. **Eventos**, en revisión en `feat/eventos-direccion-adjuntos`: cambiar Sector por Dirección conservando los valores existentes; agregar Informe ALFA (PDF), fotografías y archivos opcionales, todos desactivados hasta implementar el manejo de archivos.
 
 Cada bloque se revisa antes de su commit/PR y el usuario realiza el merge. Ninguno incluye carga ni almacenamiento de archivos.
 

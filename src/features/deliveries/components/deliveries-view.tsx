@@ -227,7 +227,7 @@ export function DeliveriesView() {
                     <option value="">Todos los eventos</option>
                     {options.data?.events?.map((event) => (
                       <option key={event.id} value={event.id}>
-                        {event.folio} · {event.sector}
+                        {event.folio} · {event.address}
                       </option>
                     ))}
                   </select>

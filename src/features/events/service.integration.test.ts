@@ -11,16 +11,16 @@ import { createDeliverySchema } from "@/features/deliveries/schemas"
 import { createEventSchema, eventFormSchema, eventSchema } from "./schemas"
 import { createEvent, deleteEvent, getEvent, getEventDeletionImpact, listEvents, updateEvent } from "./service"
 test("validaciones de evento: campos, fechas, afectados opcionales y formulario", () => {
-  const base = { typeId: "cm12345678901234567890123", date: "2026-11-15", sector: " Villa Frei " }
+  const base = { typeId: "cm12345678901234567890123", date: "2026-11-15", address: " Villa Frei " }
   const parsed = eventSchema.parse(base)
-  assert.equal(parsed.sector, "Villa Frei")
+  assert.equal(parsed.address, "Villa Frei")
   assert.equal(parsed.affectedCount, null)
   assert.equal(parsed.institutions, "")
   for (const affectedCount of [-1, 1.5, 2147483648, "2"])
     assert.equal(eventSchema.safeParse({ ...base, affectedCount }).success, false)
   for (const date of ["2026-02-30", "2026-11-15T12:00:00Z", ""])
     assert.equal(eventSchema.safeParse({ ...base, date }).success, false)
-  assert.equal(eventSchema.safeParse({ ...base, sector: " " }).success, false)
+  assert.equal(eventSchema.safeParse({ ...base, address: " " }).success, false)
   assert.equal(eventSchema.safeParse({ ...base, typeId: "x" }).success, false)
   assert.equal(eventFormSchema.safeParse({ ...parsed, affectedCount: "" }).success, true)
   assert.equal(eventFormSchema.safeParse({ ...parsed, affectedCount: "1.5" }).success, false)
@@ -34,7 +34,7 @@ test(
     await prisma.user.create({ data: { id: userId, name: "Prueba", email: `${userId}@example.invalid` } })
     try {
       const type = await prisma.eventType.create({ data: { name: userId, createdBy: userId } })
-      const base = eventSchema.parse({ typeId: type.id, date: "2026-11-15", sector: userId })
+      const base = eventSchema.parse({ typeId: type.id, date: "2026-11-15", address: userId })
       const [first, second] = await Promise.all([createEvent(base, userId), createEvent(base, userId)])
       assert.notEqual(first.folio, second.folio)
       assert.match(first.folio, /^EV-\d{4}-\d{3,}$/)
@@ -64,11 +64,26 @@ test(
       assert.equal((await prisma.delivery.findUniqueOrThrow({ where: { id: delivery.id } })).eventId, contextual.id)
       assert.equal((await getEvent(contextual.id)).requests.length, 1)
       assert.equal((await getEvent(contextual.id)).deliveries.length, 1)
-      const countBefore = (await listEvents()).data.filter((event) => event.sector === userId).length
+      const countBefore = (await listEvents()).data.filter((event) => event.address === userId).length
       await assert.rejects(createEvent({ ...base, requestId: request.id }, userId), conflict)
-      assert.equal((await listEvents()).data.filter((event) => event.sector === userId).length, countBefore)
-      await updateEvent(contextual.id, { ...base, affectedCount: 0, actions: "Acción actualizada" }, userId)
+      assert.equal((await listEvents()).data.filter((event) => event.address === userId).length, countBefore)
+      await updateEvent(
+        contextual.id,
+        { ...base, address: "Av. Grecia 4500", affectedCount: 0, actions: "Acción actualizada" },
+        userId,
+      )
       assert.equal((await getEvent(contextual.id)).affectedCount, 0)
+      assert.equal((await getEvent(contextual.id)).address, "Av. Grecia 4500")
+      const addressEdit = await prisma.auditLog.findFirstOrThrow({
+        where: {
+          resource: "events",
+          entityId: contextual.id,
+          action: "update",
+          after: { path: ["address"], equals: "Av. Grecia 4500" },
+        },
+      })
+      assert.equal((addressEdit.before as Record<string, unknown>).address, base.address)
+      assert.equal(Object.hasOwn(addressEdit.after as object, "sector"), false)
       const seen = await getEventDeletionImpact(contextual.id)
       await createRequest(createRequestSchema.parse({ channel: "Correo", eventId: contextual.id }), userId)
       await assert.rejects(deleteEvent(contextual.id, seen, userId), conflict)

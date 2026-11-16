@@ -47,7 +47,7 @@ test(
           folio: `${marker}-event`,
           typeId: type.id,
           date: new Date("2092-06-15"),
-          sector: marker,
+          address: `${marker}-solo-direccion`,
           institutions: "privado-evento",
           actions: "",
           createdBy: marker,
@@ -82,6 +82,12 @@ test(
         assert.ok(result.href.endsWith(`/${id}`))
       }
       const regular = await searchAll(marker, "regular")
+      const addressMatches = await searchAll(`${marker}-solo-direccion`, "admin")
+      assert.ok(
+        addressMatches.groups
+          .find((group) => group.key === "events")
+          ?.results.some((row) => row.id === event.id && row.description.includes(`${marker}-solo-direccion`)),
+      )
       assert.equal(regular.groups.length, 5)
       assert.ok(!JSON.stringify(regular).includes(request.id))
       assert.ok(!JSON.stringify(regular).includes(event.id))

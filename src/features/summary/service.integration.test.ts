@@ -96,7 +96,7 @@ test(
           data: {
             folio: `${id}-${suffix}`,
             date: new Date(date),
-            sector: `${id}-private`,
+            address: `${id}-private`,
             typeId: type.id,
             institutions: "Prueba",
             actions: "Prueba",

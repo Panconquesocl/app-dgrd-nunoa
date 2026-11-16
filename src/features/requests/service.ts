@@ -5,7 +5,7 @@ import { AppError } from "@/lib/api-error"
 import { deliveryFolioYear } from "@/features/deliveries/folio"
 import type { CreateRequestInput, ListRequestsQuery, UpdateRequestInput } from "./schemas"
 
-const eventSelect = { select: { id: true, folio: true, sector: true } } as const
+const eventSelect = { select: { id: true, folio: true, address: true } } as const
 
 const listSelect = {
   id: true,
@@ -59,7 +59,7 @@ export async function getRequest(id: string) {
 /** Eventos disponibles para asociar a una solicitud. */
 export async function getRequestOptions() {
   const events = await prisma.event.findMany({
-    select: { id: true, folio: true, sector: true, date: true },
+    select: { id: true, folio: true, address: true, date: true },
     orderBy: [{ date: "desc" }, { id: "desc" }],
   })
   return { events }

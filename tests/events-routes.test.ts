@@ -46,7 +46,7 @@ test("eventos: endpoints rechazan acceso antes de parsear o consultar", async ()
                 role === "admin"
                   ? method === "DELETE"
                     ? JSON.stringify({ requestIds: [], deliveryIds: [] })
-                    : JSON.stringify({ typeId: "cm12345678901234567890123", date: "2026-11-15", sector: "Prueba" })
+                    : JSON.stringify({ typeId: "cm12345678901234567890123", date: "2026-11-15", address: "Prueba" })
                   : "{",
             }
           : {}),
