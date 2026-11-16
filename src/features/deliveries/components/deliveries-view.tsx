@@ -36,6 +36,9 @@ function period(key: "month" | "30" | "year"): [string, string] {
 }
 export function DeliveriesView() {
   const [search, setSearch] = useState("")
+  const [beneficiary, setBeneficiary] = useState("")
+  const [beneficiaryRut, setBeneficiaryRut] = useState("")
+  const [eventId, setEventId] = useState("")
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
   const [event, setEvent] = useState<NonNullable<ListDeliveriesQuery["event"]>>("all")
@@ -48,10 +51,15 @@ export function DeliveriesView() {
   const [detailId, setDetailId] = useState<string | null>(null)
   const focusReturn = useRef<HTMLElement | null>(null)
   const q = useDebouncedValue(search)
+  const beneficiaryQuery = useDebouncedValue(beneficiary)
+  const rutQuery = useDebouncedValue(beneficiaryRut)
   const validPeriod = !from || !to || from <= to
   const query = useDeliveries(
     {
       q: q || undefined,
+      beneficiary: beneficiaryQuery.trim() || undefined,
+      beneficiaryRut: rutQuery.trim() || undefined,
+      eventId: eventId || undefined,
       from: from || undefined,
       to: to || undefined,
       event,
@@ -63,6 +71,9 @@ export function DeliveriesView() {
   )
   const options = useDeliveryOptions()
   const advancedCount =
+    Number(Boolean(beneficiary.trim())) +
+    Number(Boolean(beneficiaryRut.trim())) +
+    Number(Boolean(eventId)) +
     Number(event !== "all") +
     Number(Boolean(supplyId)) +
     Number(Boolean(neighborhoodAssociationId)) +
@@ -71,6 +82,9 @@ export function DeliveriesView() {
   const rows = validPeriod ? (query.data?.data ?? []) : []
   function clear() {
     setSearch("")
+    setBeneficiary("")
+    setBeneficiaryRut("")
+    setEventId("")
     setFrom("")
     setTo("")
     setEvent("all")
@@ -173,6 +187,52 @@ export function DeliveriesView() {
               <Popover.Content className="spike-filter-menu" align="end" sideOffset={8} collisionPadding={16}>
                 <h2>Filtros avanzados</h2>
                 <div className="spike-filter-group">
+                  <label className="spike-filter-label" htmlFor="delivery-filter-beneficiary">
+                    Beneficiario
+                  </label>
+                  <div className="px-2">
+                    <Input
+                      id="delivery-filter-beneficiary"
+                      placeholder="Nombre o parte del nombre"
+                      maxLength={500}
+                      value={beneficiary}
+                      onChange={(event) => setBeneficiary(event.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="spike-filter-group">
+                  <label className="spike-filter-label" htmlFor="delivery-filter-rut">
+                    RUT del beneficiario
+                  </label>
+                  <div className="px-2">
+                    <Input
+                      id="delivery-filter-rut"
+                      placeholder="RUT completo o parcial"
+                      maxLength={24}
+                      value={beneficiaryRut}
+                      onChange={(event) => setBeneficiaryRut(event.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="spike-filter-group">
+                  <label className="spike-filter-label" htmlFor="delivery-filter-event">
+                    Evento
+                  </label>
+                  <select
+                    id="delivery-filter-event"
+                    className="delivery-select"
+                    value={eventId}
+                    onChange={(event) => setEventId(event.target.value)}
+                  >
+                    <option value="">Todos los eventos</option>
+                    {options.data?.events?.map((event) => (
+                      <option key={event.id} value={event.id}>
+                        {event.folio} · {event.sector}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="spike-filter-group">
                   <label className="spike-filter-label" htmlFor="delivery-filter-association">
                     Junta vecinal
                   </label>
@@ -253,26 +313,17 @@ export function DeliveriesView() {
                 </div>
                 {options.isPending && (
                   <p className="px-2 py-2 text-xs" role="status">
-                    Cargando juntas e insumos…
+                    Cargando opciones de filtros…
                   </p>
                 )}
                 {options.isError && (
                   <button type="button" className="spike-filter-option" onClick={() => options.refetch()}>
-                    Reintentar carga de juntas e insumos
+                    Reintentar carga de opciones
                   </button>
                 )}
                 <div className="spike-filter-footer">
-                  <button
-                    type="button"
-                    disabled={!advancedCount}
-                    onClick={() => {
-                      setEvent("all")
-                      setSupplyId("")
-                      setNeighborhoodAssociationId("")
-                      setOrder("desc")
-                    }}
-                  >
-                    Limpiar filtros
+                  <button type="button" disabled={!hasFilters} onClick={clear}>
+                    Limpiar todo
                   </button>
                 </div>
               </Popover.Content>
@@ -287,12 +338,18 @@ export function DeliveriesView() {
           />
           <Input
             className="w-full pl-9 sm:w-[280px]"
-            placeholder="Buscar por folio, beneficiario o J.V.…"
+            placeholder="Buscar por folio, beneficiario, RUT o J.V.…"
+            maxLength={500}
             aria-label="Buscar entregas"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        {hasFilters && (
+          <Button variant="ghost" onClick={clear}>
+            <X size={14} aria-hidden="true" /> Limpiar todo
+          </Button>
+        )}
       </div>
       {!validPeriod && (
         <p id="delivery-period-error" role="alert" className="text-destructive mb-3 text-sm">

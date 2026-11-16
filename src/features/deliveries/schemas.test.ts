@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
+import { rutSearchFragments } from "./search"
 import {
   createDeliverySchema,
   updateDeliverySchema,
@@ -74,6 +75,21 @@ test("valida rango de fechas y filtros", () => {
   assert.equal(listDeliveriesQuerySchema.safeParse({ from: "2026-10-15", to: "2026-10-14" }).success, false)
   assert.equal(listDeliveriesQuerySchema.safeParse({ from: "2026-10-14", to: "2026-10-14" }).success, true)
   assert.equal(listDeliveriesQuerySchema.safeParse({ event: "invalid" }).success, false)
+})
+test("filtros de búsqueda admiten RUT parcial, normalizan texto y validan evento", () => {
+  const query = listDeliveriesQuerySchema.parse({
+    beneficiary: " Vecina ",
+    beneficiaryRut: "678-5",
+    eventId: "cm12345678901234567890123",
+  })
+  assert.equal(query.beneficiary, "Vecina")
+  assert.equal(query.beneficiaryRut, "678-5")
+  assert.equal(listDeliveriesQuerySchema.safeParse({ eventId: "invalid" }).success, false)
+  assert.equal(listDeliveriesQuerySchema.safeParse({ beneficiaryRut: "1".repeat(25) }).success, false)
+  assert.deepEqual(rutSearchFragments(" 12.345.678-5 "), ["123456785", "12345678-5"])
+  assert.deepEqual(rutSearchFragments("678-5"), ["6785", "678-5"])
+  assert.deepEqual(rutSearchFragments("k"), ["K"])
+  assert.deepEqual(rutSearchFragments("María"), [])
 })
 test("admite un evento directo sin solicitud y PATCH distingue omisión de desvinculación", () => {
   const eventId = "cm12345678901234567890123"

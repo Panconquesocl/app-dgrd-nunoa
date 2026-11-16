@@ -51,7 +51,7 @@ El alcance se amplió para incorporar esas funciones del spike.
 ## Contrato
 
 ```text
-GET    /api/deliveries        ?q&from&to&event=all|with|without&supplyId&order=asc|desc
+GET    /api/deliveries        ?q&beneficiary&beneficiaryRut&eventId&from&to&event=all|with|without&supplyId&order=asc|desc
 POST   /api/deliveries
 GET    /api/deliveries/options
 GET    /api/deliveries/:id
@@ -120,3 +120,13 @@ El formulario consulta al completar un RUT válido y muestra un popover con el n
 GET `/api/deliveries/recurrence?rut=...` exige permiso `deliveries:create`, valida/normaliza RUT y responde `{ count, from, through, lastDate }` sin caché HTTP. Los históricos sin RUT no se atribuyen por nombre. Crear, editar o eliminar entregas invalida las consultas de recurrencia. Se utiliza el índice existente `(beneficiaryRut, date)`, sin nueva migración.
 
 Verificación: límites inclusivos y meses bisiestos, día de Chile frente a UTC, formatos de RUT, exclusión de otras identidades/históricos/futuros y registro permitido con recurrencia; permisos y validación de la ruta.
+
+## Búsqueda y filtros independientes
+
+La caja general busca por folio, beneficiario, dirección, junta (nombre o número), folio de evento y RUT completo o parcial. Para RUT se ignoran puntos, guion, espacios y mayúsculas del verificador; también se reconocen fragmentos que atraviesan el guion (por ejemplo, «6785» o «678-5» en «12.345.678-5»). No se exige un dígito verificador válido al buscar fragmentos. No se infieren identidades por nombres coincidentes.
+
+El popover de filtros mantiene el estilo existente e incorpora beneficiario (nombre parcial), RUT (completo o parcial) y evento (selector por folio y sector). Los tres se combinan con búsqueda general, fechas, junta, insumo y con/sin evento mediante AND. Una combinación contradictoria devuelve cero resultados y estadísticas en cero. La búsqueda general combina sus campos con OR. El servidor aplica los filtros y calcula estadísticas sobre el mismo resultado.
+
+Las opciones de evento incluyen únicamente id, folio y sector de eventos con entregas, también cuando la entrega no tiene solicitud; usuarios normales usan los permisos de lectura de entregas sin acceder al módulo administrativo de eventos. Las opciones no dependen de la búsqueda actual, de modo que un resultado vacío no impide cambiar de evento.
+
+Los campos de texto consultan con el debounce existente; el botón de filtros cuenta los filtros avanzados activos. «Limpiar todo», disponible en la toolbar y el popover, restablece búsqueda, periodo, campos independientes, selecciones y orden. El menú conserva desplazamiento limitado al espacio disponible en móvil. No hay nueva migración. La búsqueda global se implementará en otra rama tras revisar esta feature.

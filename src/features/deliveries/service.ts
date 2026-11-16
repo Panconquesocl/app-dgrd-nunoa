@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import { AppError } from "@/lib/api-error"
 import { deliveryRecurrenceWindow } from "./recurrence"
+import { rutSearchFragments } from "./search"
 import {
   beneficiaryRutSchema,
   type CreateDeliveryInput,
@@ -19,8 +20,27 @@ const include = {
 } satisfies Prisma.DeliveryInclude
 
 export async function listDeliveries(query: ListDeliveriesQuery) {
-  const { q, from, to, event, supplyId, neighborhoodAssociationId, order = "desc" } = query
+  const {
+    q,
+    beneficiary,
+    beneficiaryRut,
+    eventId,
+    from,
+    to,
+    event,
+    supplyId,
+    neighborhoodAssociationId,
+    order = "desc",
+  } = query
+  const rutConditions = (value: string): Prisma.DeliveryWhereInput[] =>
+    rutSearchFragments(value).map((fragment) => ({ beneficiaryRut: { contains: fragment, mode: "insensitive" } }))
+  const rutFilter = beneficiaryRut ? rutConditions(beneficiaryRut) : null
   const where: Prisma.DeliveryWhereInput = {
+    AND: [
+      ...(rutFilter ? [rutFilter.length ? { OR: rutFilter } : { id: { in: [] } }] : []),
+      ...(eventId ? [{ eventId }] : []),
+    ],
+    ...(beneficiary && { beneficiary: { contains: beneficiary, mode: "insensitive" } }),
     ...(from || to
       ? {
           date: {
@@ -34,6 +54,7 @@ export async function listDeliveries(query: ListDeliveriesQuery) {
     ...(supplyId && { items: { some: { supplyId } } }),
     ...(q && {
       OR: [
+        ...rutConditions(q),
         ...["folio", "beneficiary", "address"].map((field) => ({
           [field]: { contains: q, mode: "insensitive" },
         })),
@@ -65,7 +86,7 @@ export async function getDelivery(id: string) {
   return delivery
 }
 export async function getDeliveryOptions() {
-  const [supplies, requests, neighborhoodAssociations] = await Promise.all([
+  const [supplies, requests, neighborhoodAssociations, events] = await Promise.all([
     prisma.supply.findMany({
       select: { id: true, type: true, unit: true },
       orderBy: [{ type: "asc" }, { unit: "asc" }],
@@ -84,8 +105,13 @@ export async function getDeliveryOptions() {
       select: { id: true, number: true, name: true, active: true },
       orderBy: { number: "asc" },
     }),
+    prisma.event.findMany({
+      where: { deliveries: { some: {} } },
+      select: { id: true, folio: true, sector: true },
+      orderBy: [{ date: "desc" }, { id: "desc" }],
+    }),
   ])
-  return { supplies, requests, neighborhoodAssociations }
+  return { supplies, requests, neighborhoodAssociations, events }
 }
 function fail(field: string, message: string, status = 400): never {
   throw new AppError(status, message, { fieldErrors: { [field]: [message] } })
