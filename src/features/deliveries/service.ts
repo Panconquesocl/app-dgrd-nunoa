@@ -2,7 +2,12 @@ import { nextDeliveryFolio, deliveryFolioYear } from "./folio"
 import prisma from "@/lib/prisma"
 import { Prisma } from "@/generated/prisma/client"
 import { AppError } from "@/lib/api-error"
-import type { CreateDeliveryInput, UpdateDeliveryInput, ListDeliveriesQuery } from "./schemas"
+import {
+  beneficiaryRutSchema,
+  type CreateDeliveryInput,
+  type UpdateDeliveryInput,
+  type ListDeliveriesQuery,
+} from "./schemas"
 
 const include = {
   neighborhoodAssociation: { select: { id: true, number: true, name: true, active: true } },
@@ -47,7 +52,9 @@ export async function listDeliveries(query: ListDeliveriesQuery) {
     stats: {
       deliveries: data.length,
       units: data.reduce((sum, row) => sum + row.items.reduce((total, item) => total + item.quantity, 0), 0),
-      neighborhoods: new Set(data.map((row) => row.neighborhoodAssociationId)).size,
+      neighborhoods: new Set(
+        data.flatMap((row) => (row.neighborhoodAssociationId ? [row.neighborhoodAssociationId] : [])),
+      ).size,
     },
   }
 }
@@ -82,13 +89,18 @@ export async function getDeliveryOptions() {
 function fail(field: string, message: string, status = 400): never {
   throw new AppError(status, message, { fieldErrors: { [field]: [message] } })
 }
+function requiredRut(value: unknown) {
+  const result = beneficiaryRutSchema.safeParse(value)
+  if (!result.success) fail("beneficiaryRut", result.error.issues[0].message)
+  return result.data
+}
 async function validateRelations(
   tx: Prisma.TransactionClient,
   input: UpdateDeliveryInput,
   id?: string,
-  currentAssociationId?: string,
+  currentAssociationId?: string | null,
 ) {
-  if (input.neighborhoodAssociationId !== undefined) {
+  if (input.neighborhoodAssociationId) {
     const associations = await tx.$queryRaw<
       { id: string; active: boolean }[]
     >`SELECT id, active FROM neighborhood_association WHERE id = ${input.neighborhoodAssociationId} FOR SHARE`
@@ -149,9 +161,12 @@ export async function updateDelivery(id: string, input: UpdateDeliveryInput) {
       await tx.$queryRaw`SELECT id FROM "delivery" WHERE id = ${id} FOR UPDATE`
       const current = await tx.delivery.findUnique({
         where: { id },
-        select: { id: true, neighborhoodAssociationId: true, requestId: true, eventId: true },
+        select: { id: true, neighborhoodAssociationId: true, requestId: true, eventId: true, beneficiaryRut: true },
       })
       if (!current) throw new AppError(404, "La entrega no existe.")
+      const beneficiaryRut = requiredRut(
+        input.beneficiaryRut === undefined ? current.beneficiaryRut : input.beneficiaryRut,
+      )
       const changesRelation = input.requestId !== undefined || input.eventId !== undefined
       const eventId = await validateRelations(
         tx,
@@ -174,6 +189,7 @@ export async function updateDelivery(id: string, input: UpdateDeliveryInput) {
         where: { id },
         data: {
           ...fields,
+          beneficiaryRut,
           ...(changesRelation && { eventId }),
           ...(items && { items: { create: items } }),
         },
@@ -193,6 +209,7 @@ export async function deleteDelivery(id: string) {
 }
 
 export async function createDelivery(input: CreateDeliveryInput, userId: string) {
+  const beneficiaryRut = requiredRut(input.beneficiaryRut)
   try {
     return await prisma.$transaction(async (tx) => {
       const year = deliveryFolioYear()
@@ -208,6 +225,7 @@ export async function createDelivery(input: CreateDeliveryInput, userId: string)
       return tx.delivery.create({
         data: {
           ...fields,
+          beneficiaryRut,
           eventId,
           createdBy: userId,
           folio: nextDeliveryFolio(

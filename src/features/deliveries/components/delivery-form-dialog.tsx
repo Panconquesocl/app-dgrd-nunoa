@@ -43,6 +43,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
     resolver: zodResolver(deliveryFormSchema),
     defaultValues: {
       beneficiary: delivery?.beneficiary ?? "",
+      beneficiaryRut: delivery?.beneficiaryRut ?? "",
       neighborhoodAssociationId: delivery?.neighborhoodAssociationId ?? "",
       contact: delivery?.contact ?? "",
       address: delivery?.address ?? "",
@@ -221,7 +222,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
             </Field>
             <Field data-invalid={Boolean(errors.neighborhoodAssociationId)}>
               <FieldLabel htmlFor={`${id}-association`}>
-                Junta vecinal <span className="text-destructive">*</span>
+                Junta vecinal <span className="text-muted-foreground font-normal">Opcional</span>
               </FieldLabel>
               <select
                 id={`${id}-association`}
@@ -230,7 +231,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
                 aria-invalid={Boolean(errors.neighborhoodAssociationId)}
                 aria-describedby={`${id}-association-error`}
               >
-                <option value="">Selecciona una junta vecinal…</option>
+                <option value="">Sin junta vecinal</option>
                 {associations.map((association) => (
                   <option key={association.id} value={association.id}>
                     N°{association.number} · {association.name}
@@ -253,6 +254,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
                 [
                   ["date", "Fecha", "date", ""],
                   ["beneficiary", "Beneficiario", "text", "Nombre del beneficiario o comité"],
+                  ["beneficiaryRut", "RUT del beneficiario", "text", "Ej. 12.345.678-5"],
                   ["contact", "Contacto", "text", "Teléfono o correo"],
                   ["address", "Dirección", "text", "Calle, número, depto/casa"],
                 ] as const
@@ -406,8 +408,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
                 options.isError ||
                 unavailableRequest ||
                 unavailableEventRequest ||
-                supplies.length === 0 ||
-                associations.length === 0
+                supplies.length === 0
               }
             >
               {pending ? "Guardando…" : delivery ? "Guardar cambios" : "Registrar entrega"}

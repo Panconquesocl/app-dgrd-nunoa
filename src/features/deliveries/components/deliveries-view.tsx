@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { formatDate } from "@/lib/format"
+import { formatRut } from "@/lib/rut"
 import { useDeliveries, useDeliveryOptions } from "../queries"
 import type { Delivery, ListDeliveriesQuery } from "../schemas"
 import { DeliveryDetailView } from "./delivery-detail-view"
@@ -386,15 +387,24 @@ export function DeliveriesView() {
                       </Link>
                     </td>
                     <td className="font-mono text-xs whitespace-nowrap">{formatDate(delivery.date)}</td>
-                    <td className="font-semibold">{delivery.beneficiary}</td>
+                    <td className="font-semibold">
+                      {delivery.beneficiary}
+                      <span className="text-muted-foreground block font-mono text-xs font-normal">
+                        {delivery.beneficiaryRut ? formatRut(delivery.beneficiaryRut) : "Sin RUT registrado"}
+                      </span>
+                    </td>
                     <td>
-                      <Link
-                        href={`/juntas-vecinales/${delivery.neighborhoodAssociationId}`}
-                        onClick={(event) => event.stopPropagation()}
-                        className="hover:underline"
-                      >
-                        N°{delivery.neighborhoodAssociation.number} · {delivery.neighborhoodAssociation.name}
-                      </Link>
+                      {delivery.neighborhoodAssociation ? (
+                        <Link
+                          href={`/juntas-vecinales/${delivery.neighborhoodAssociationId}`}
+                          onClick={(event) => event.stopPropagation()}
+                          className="hover:underline"
+                        >
+                          N°{delivery.neighborhoodAssociation.number} · {delivery.neighborhoodAssociation.name}
+                        </Link>
+                      ) : (
+                        <span className="text-muted-foreground">Sin junta vecinal</span>
+                      )}
                     </td>
                     <td>
                       <span className={`delivery-badge ${delivery.event ? "delivery-badge-event" : ""}`}>

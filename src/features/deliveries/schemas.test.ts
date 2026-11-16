@@ -11,6 +11,7 @@ import {
 const supplyId = "clxxxxxxxxxxxxxxxxxxxxxxx"
 const input = {
   beneficiary: " Vecina ",
+  beneficiaryRut: "12345678-5",
   neighborhoodAssociationId: "clyyyyyyyyyyyyyyyyyyyyyyy",
   address: "Calle 123",
   date: "2026-10-14",
@@ -23,6 +24,30 @@ test("normaliza textos, contacto y fecha calendario UTC", () => {
   assert.equal(parsed.contact, null)
   assert.equal(parsed.date.toISOString(), "2026-10-14T00:00:00.000Z")
   assert.equal(createDeliverySchema.parse({ ...input, contact: "  " }).contact, null)
+})
+test("requiere RUT válido, normaliza formatos y permite omitir la junta vecinal", () => {
+  for (const beneficiaryRut of ["12.345.678-5", "123456785", " 12345678-5 "]) {
+    assert.equal(createDeliverySchema.parse({ ...input, beneficiaryRut }).beneficiaryRut, "12345678-5")
+  }
+  assert.equal(createDeliverySchema.parse({ ...input, beneficiaryRut: "6.000.000-k" }).beneficiaryRut, "6000000-K")
+  assert.equal(createDeliverySchema.parse({ ...input, beneficiaryRut: "10.000.004-0" }).beneficiaryRut, "10000004-0")
+  for (const beneficiaryRut of [undefined, null, "", "12345678-9", "abc", "0-0"]) {
+    assert.equal(createDeliverySchema.safeParse({ ...input, beneficiaryRut }).success, false)
+  }
+  assert.equal(
+    createDeliverySchema.parse({ ...input, neighborhoodAssociationId: null }).neighborhoodAssociationId,
+    null,
+  )
+  assert.equal(createDeliverySchema.safeParse({ ...input, neighborhoodAssociationId: undefined }).success, true)
+  assert.equal(createDeliverySchema.safeParse({ ...input, neighborhoodAssociationId: "invalid" }).success, false)
+  const form = deliveryFormSchema.parse({
+    ...input,
+    contact: "",
+    requestId: "",
+    neighborhoodAssociationId: "",
+    items: [{ type: "Agua", supplyId, quantity: "2" }],
+  })
+  assert.equal(toDeliveryPayload(form).neighborhoodAssociationId, null)
 })
 test("rechaza fechas imposibles y timestamps con hora", () => {
   for (const date of ["2026-02-30", "2026-10-14T10:00:00Z", "", "ayer"]) {

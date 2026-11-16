@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useDelivery } from "../queries"
 import { formatDate } from "@/lib/format"
+import { formatRut } from "@/lib/rut"
 import { usePermission } from "@/providers/permissions"
 import { DeliveryFormDialog } from "./delivery-form-dialog"
 import { DeleteDeliveryDialog } from "./delete-delivery-dialog"
@@ -98,12 +99,27 @@ export function DeliveryDetailView({
                 <dd>{delivery.beneficiary}</dd>
               </div>
               <div>
+                <dt>RUT del beneficiario</dt>
+                <dd>{delivery.beneficiaryRut ? formatRut(delivery.beneficiaryRut) : "Sin RUT registrado"}</dd>
+              </div>
+              <div>
                 <dt>Junta vecinal</dt>
                 <dd>
-                  <Link href={`/juntas-vecinales/${delivery.neighborhoodAssociationId}`} className="hover:underline">
-                    N°{delivery.neighborhoodAssociation.number} · {delivery.neighborhoodAssociation.name}
-                  </Link>
-                  {!delivery.neighborhoodAssociation.active && <span className="delivery-badge ml-2">Inactiva</span>}
+                  {delivery.neighborhoodAssociation ? (
+                    <>
+                      <Link
+                        href={`/juntas-vecinales/${delivery.neighborhoodAssociationId}`}
+                        className="hover:underline"
+                      >
+                        N°{delivery.neighborhoodAssociation.number} · {delivery.neighborhoodAssociation.name}
+                      </Link>
+                      {!delivery.neighborhoodAssociation.active && (
+                        <span className="delivery-badge ml-2">Inactiva</span>
+                      )}
+                    </>
+                  ) : (
+                    "Sin junta vecinal"
+                  )}
                 </dd>
               </div>
               <div>

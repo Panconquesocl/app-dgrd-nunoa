@@ -202,16 +202,18 @@ model Request {
 }
 
 model Delivery {
-  id                        String                  @id @default(cuid())
-  folio                     String                  @unique
+  id                        String                   @id @default(cuid())
+  folio                     String                   @unique
   beneficiary               String
-  neighborhoodAssociationId String
-  neighborhoodAssociation   NeighborhoodAssociation @relation(fields: [neighborhoodAssociationId], references: [id], onDelete: Restrict)
+  // Nullable únicamente para conservar registros históricos sin identidad conocida.
+  beneficiaryRut            String?
+  neighborhoodAssociationId String?
+  neighborhoodAssociation   NeighborhoodAssociation? @relation(fields: [neighborhoodAssociationId], references: [id], onDelete: Restrict)
   contact                   String?
   address                   String
   date                      DateTime
-  createdAt                 DateTime                @default(now())
-  updatedAt                 DateTime                @updatedAt
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
 
   // Una solicitud con entrega no puede eliminarse. Una entrega por solicitud.
   requestId String?  @unique
@@ -229,6 +231,7 @@ model Delivery {
 
   @@index([eventId])
   @@index([neighborhoodAssociationId])
+  @@index([beneficiaryRut, date])
   @@map("delivery")
 }
 
