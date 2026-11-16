@@ -5,7 +5,7 @@ import { authorizeUser } from "../src/lib/authorization"
 import { AppError } from "../src/lib/api-error"
 
 const operational = new Set(["deliveries", "supplies", "activities", "evidence"])
-const readable = new Set(["neighborhood-associations", "strategic-actions", "summary"])
+const readable = new Set(["neighborhood-associations", "strategic-actions", "summary", "search"])
 
 test("matriz completa: administrador, roles normales y valores desconocidos", () => {
   for (const resource of resources) {

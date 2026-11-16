@@ -4,14 +4,15 @@ Implementación de B20–B21 en `feat/permisos-por-rol`.
 
 ## Matriz acordada
 
-| Recurso                                  | Usuario normal                                                               | Administrador    |
-| ---------------------------------------- | ---------------------------------------------------------------------------- | ---------------- |
-| Entregas e insumos                       | Consultar, crear, editar y eliminar registros de cualquier autor             | Gestión completa |
-| Juntas vecinales y acciones estratégicas | Consultar listados, detalles e historiales                                   | Gestión completa |
-| Solicitudes y eventos                    | Sin acceso al módulo; datos mínimos y selector de solicitudes desde entregas | Acceso completo  |
-| Resumen actual                           | Consultar entregas, insumos, acciones y actividades del año                  | Acceso completo  |
-| Actividades y evidencia                  | Política preparada para CRUD de cualquier autor; módulos pendientes          | Gestión completa |
-| Usuarios y tipos de evento               | Sin administración                                                           | Gestión completa |
+| Recurso                                  | Usuario normal                                                               | Administrador                 |
+| ---------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------- |
+| Entregas e insumos                       | Consultar, crear, editar y eliminar registros de cualquier autor             | Gestión completa              |
+| Juntas vecinales y acciones estratégicas | Consultar listados, detalles e historiales                                   | Gestión completa              |
+| Solicitudes y eventos                    | Sin acceso al módulo; datos mínimos y selector de solicitudes desde entregas | Acceso completo               |
+| Búsqueda global                          | Consultar entregas, juntas, insumos, acciones y actividades                  | Incluye solicitudes y eventos |
+| Resumen actual                           | Consultar entregas, insumos, acciones y actividades del año                  | Acceso completo               |
+| Actividades y evidencia                  | Política preparada para CRUD de cualquier autor; módulos pendientes          | Gestión completa              |
+| Usuarios y tipos de evento               | Sin administración                                                           | Gestión completa              |
 
 Las restricciones actuales de integridad y las confirmaciones de eliminación se
 mantienen para ambos roles. Administrar todo no permite ignorar estas reglas.
@@ -101,3 +102,7 @@ PostgreSQL de cada módulo, que requieren sus flags de activación existentes.
 - Los logs de auditoría se implementarán en B34.
 - El resumen anual excluye solicitudes y eventos para usuarios normales, incluidas cifras y años disponibles. Ver [Resumen](./resumen.md).
 - El menú móvil y la nueva administración de cuentas no forman parte de B20–B21.
+
+## Búsqueda global
+
+`search:read` está permitido para usuarios normales y administradores. GET `/api/search` autoriza antes de validar y usa el rol de la sesión. El servicio comprueba además la lectura de cada módulo antes de ejecutar su consulta; los módulos restringidos se omiten por completo de la respuesta. No se buscan cuentas de usuario ni tipos de evento como recursos independientes. No hay endpoints de escritura de búsqueda. Ver [Búsqueda global](./busqueda-global.md).
