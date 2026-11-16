@@ -26,6 +26,21 @@ test("normaliza textos, contacto y fecha calendario UTC", () => {
   assert.equal(parsed.date.toISOString(), "2026-10-14T00:00:00.000Z")
   assert.equal(createDeliverySchema.parse({ ...input, contact: "  " }).contact, null)
 })
+test("observaciones opcionales: normaliza vacíos, conserva saltos y limita el texto; PATCH distingue omitir y borrar", () => {
+  assert.equal(createDeliverySchema.parse(input).observations, undefined)
+  for (const observations of [null, "", "   "]) {
+    assert.equal(createDeliverySchema.parse({ ...input, observations }).observations, null)
+  }
+  assert.equal(
+    createDeliverySchema.parse({ ...input, observations: "  Primera línea\nSegunda línea  " }).observations,
+    "Primera línea\nSegunda línea",
+  )
+  assert.equal(createDeliverySchema.safeParse({ ...input, observations: "a".repeat(4000) }).success, true)
+  assert.equal(createDeliverySchema.safeParse({ ...input, observations: "a".repeat(4001) }).success, false)
+  assert.equal(Object.hasOwn(updateDeliverySchema.parse({ contact: "123" }), "observations"), false)
+  assert.deepEqual(updateDeliverySchema.parse({ observations: "  " }), { observations: null })
+  assert.deepEqual(updateDeliverySchema.parse({ observations: null }), { observations: null })
+})
 test("requiere RUT válido, normaliza formatos y permite omitir la junta vecinal", () => {
   for (const beneficiaryRut of ["12.345.678-5", "123456785", " 12345678-5 "]) {
     assert.equal(createDeliverySchema.parse({ ...input, beneficiaryRut }).beneficiaryRut, "12345678-5")
@@ -108,6 +123,8 @@ test("el formulario convierte strings al contrato del servidor", () => {
   const payload = toDeliveryPayload(values)
   assert.equal(payload.requestId, null)
   assert.equal(payload.contact, null)
+  assert.equal(payload.observations, null)
+  assert.equal(toDeliveryPayload({ ...values, observations: "Texto adicional" }).observations, "Texto adicional")
   assert.deepEqual(payload.items, [{ supplyId, quantity: 2 }])
   assert.equal(createDeliverySchema.safeParse(payload).success, true)
 })

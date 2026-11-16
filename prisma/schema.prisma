@@ -211,6 +211,7 @@ model Delivery {
   neighborhoodAssociation   NeighborhoodAssociation? @relation(fields: [neighborhoodAssociationId], references: [id], onDelete: Restrict)
   contact                   String?
   address                   String
+  observations              String?
   date                      DateTime
   createdAt                 DateTime                 @default(now())
   updatedAt                 DateTime                 @updatedAt

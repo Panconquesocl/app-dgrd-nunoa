@@ -51,6 +51,7 @@ export const AUDIT_FIELDS: Record<string, string> = {
   neighborhoodAssociationId: "Junta vecinal",
   contact: "Contacto",
   address: "Dirección",
+  observations: "Observaciones",
   date: "Fecha",
   requestId: "Solicitud",
   eventId: "Evento",

@@ -58,6 +58,33 @@ test(
       const direct = await createDelivery({ ...input, requestId: null, eventId: event.id }, userId)
       assert.equal(direct.eventId, event.id)
       assert.equal(direct.requestId, null)
+      assert.equal(direct.observations, null)
+      const withObservations = await updateDelivery(
+        direct.id,
+        updateDeliverySchema.parse({ observations: "  Primera línea\nSegunda línea  " }),
+        userId,
+      )
+      assert.equal(withObservations.observations, "Primera línea\nSegunda línea")
+      assert.equal((await getDelivery(direct.id)).observations, withObservations.observations)
+      assert.equal(
+        (await listDeliveries({ q: marker })).data.find((row) => row.id === direct.id)?.observations,
+        withObservations.observations,
+      )
+      const observationLog = await prisma.auditLog.findFirstOrThrow({
+        where: {
+          entityId: direct.id,
+          action: "update",
+          after: { path: ["observations"], equals: withObservations.observations },
+        },
+      })
+      assert.deepEqual(observationLog.before, { observations: null })
+      assert.deepEqual(observationLog.after, { observations: withObservations.observations })
+      await updateDelivery(direct.id, { contact: "123" }, userId)
+      assert.equal((await getDelivery(direct.id)).observations, withObservations.observations)
+      assert.equal(
+        (await updateDelivery(direct.id, updateDeliverySchema.parse({ observations: "" }), userId)).observations,
+        null,
+      )
       assert.ok((await getDeliveryOptions()).events.some((option) => option.id === event.id))
       assert.equal((await getEvent(event.id)).deliveries[0].items[0].quantity, 2)
       assert.equal((await updateDelivery(direct.id, { beneficiary: `${marker}-edit` }, userId)).eventId, event.id)
