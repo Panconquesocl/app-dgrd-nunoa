@@ -1,3 +1,4 @@
+import { auditedTransaction } from "@/features/audit/transaction"
 import { summarizeAssociationHistory } from "./history"
 import type { AssociationHistoryQuery } from "./schemas"
 import prisma from "@/lib/prisma"
@@ -105,14 +106,16 @@ function translateError(error: unknown): never {
 }
 export async function createNeighborhoodAssociation(input: NeighborhoodAssociationPayload, userId: string) {
   try {
-    return await prisma.neighborhoodAssociation.create({ data: { ...input, createdBy: userId }, select })
+    return await auditedTransaction(userId, (tx) =>
+      tx.neighborhoodAssociation.create({ data: { ...input, createdBy: userId }, select }),
+    )
   } catch (error) {
     translateError(error)
   }
 }
-export async function updateNeighborhoodAssociation(id: string, input: NeighborhoodAssociationPatch) {
+export async function updateNeighborhoodAssociation(id: string, input: NeighborhoodAssociationPatch, actorId: string) {
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await auditedTransaction(actorId, async (tx) => {
       // Compatible con FOR SHARE al asociar entregas: la desactivación y las
       // asociaciones nuevas tienen un orden definido, incluso con concurrencia.
       await tx.$queryRaw`SELECT id FROM neighborhood_association WHERE id = ${id} FOR UPDATE`
@@ -122,9 +125,9 @@ export async function updateNeighborhoodAssociation(id: string, input: Neighborh
     translateError(error)
   }
 }
-export async function deleteNeighborhoodAssociation(id: string) {
+export async function deleteNeighborhoodAssociation(id: string, actorId: string) {
   try {
-    await prisma.$transaction(async (tx) => {
+    await auditedTransaction(actorId, async (tx) => {
       await tx.$queryRaw`SELECT id FROM neighborhood_association WHERE id = ${id} FOR UPDATE`
       if (!(await tx.neighborhoodAssociation.findUnique({ where: { id }, select: { id: true } })))
         throw new AppError(404, "La junta vecinal no existe.")

@@ -1,3 +1,4 @@
+import { auditedTransaction, recordPasswordReset } from "@/features/audit/transaction"
 import { randomUUID } from "node:crypto"
 import { hashPassword } from "better-auth/crypto"
 import prisma from "@/lib/prisma"
@@ -108,7 +109,7 @@ export async function createUser(input: UserCreateInput, actorId: string) {
     })
   const password = await hashPassword(values.password)
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await auditedTransaction(actorId, async (tx) => {
       await guardActor(tx, actorId)
       const id = randomUUID()
       const user = await tx.user.create({
@@ -132,7 +133,7 @@ export async function createUser(input: UserCreateInput, actorId: string) {
 export async function updateUser(id: string, input: UserEditInput, actorId: string) {
   const values = userEditSchema.parse(input)
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await auditedTransaction(actorId, async (tx) => {
       await guardActor(tx, actorId)
       const current = await lockTarget(tx, id)
       const roleChanged = normalizeRole(current.role) !== values.role
@@ -148,7 +149,7 @@ export async function updateUser(id: string, input: UserEditInput, actorId: stri
 }
 export async function setUserActive(id: string, active: boolean, actorId: string) {
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await auditedTransaction(actorId, async (tx) => {
       await guardActor(tx, actorId)
       const current = await lockTarget(tx, id)
       if (!active && id === actorId) throw new AppError(409, "No puedes desactivar tu propia cuenta.")
@@ -172,9 +173,9 @@ export async function setUserActive(id: string, active: boolean, actorId: string
 export async function resetUserPassword(id: string, value: string, actorId: string) {
   const password = await hashPassword(passwordSchema.parse(value))
   try {
-    await prisma.$transaction(async (tx) => {
+    await auditedTransaction(actorId, async (tx) => {
       await guardActor(tx, actorId)
-      await lockTarget(tx, id)
+      const target = await lockTarget(tx, id)
       const credential = await tx.account.findFirst({
         where: { userId: id, providerId: "credential" },
         select: { id: true },
@@ -185,6 +186,7 @@ export async function resetUserPassword(id: string, value: string, actorId: stri
           data: { id: randomUUID(), accountId: id, providerId: "credential", userId: id, password },
         })
       await tx.session.deleteMany({ where: { userId: id } })
+      await recordPasswordReset(tx, target)
     })
   } catch (error) {
     translate(error)
@@ -192,7 +194,7 @@ export async function resetUserPassword(id: string, value: string, actorId: stri
 }
 export async function deleteUser(id: string, actorId: string) {
   try {
-    await prisma.$transaction(async (tx) => {
+    await auditedTransaction(actorId, async (tx) => {
       await guardActor(tx, actorId)
       const current = await lockTarget(tx, id)
       if (id === actorId) throw new AppError(409, "No puedes eliminar tu propia cuenta.")

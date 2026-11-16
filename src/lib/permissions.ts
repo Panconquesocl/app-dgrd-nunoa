@@ -10,6 +10,7 @@ export const resources = [
   "evidence",
   "summary",
   "search",
+  "audit",
   "users",
   "event-types",
 ] as const

@@ -6,19 +6,19 @@ import { deleteEventType, updateEventType } from "@/features/event-types/service
 type Context = { params: Promise<{ id: string }> }
 export async function PATCH(request: Request, { params }: Context) {
   try {
-    await requirePermission("event-types", "update")
+    const auditActor = await requirePermission("event-types", "update")
     const { id } = await params
     const input = eventTypeSchema.parse(await request.json())
-    return NextResponse.json(await updateEventType(id, input))
+    return NextResponse.json(await updateEventType(id, input, auditActor.id))
   } catch (error) {
     return toErrorResponse(error)
   }
 }
 export async function DELETE(_request: Request, { params }: Context) {
   try {
-    await requirePermission("event-types", "delete")
+    const auditActor = await requirePermission("event-types", "delete")
     const { id } = await params
-    await deleteEventType(id)
+    await deleteEventType(id, auditActor.id)
     return new NextResponse(null, { status: 204 })
   } catch (error) {
     return toErrorResponse(error)

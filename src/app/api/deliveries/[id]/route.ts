@@ -19,11 +19,11 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   try {
-    await requirePermission("deliveries", "update")
+    const auditActor = await requirePermission("deliveries", "update")
     const { id } = await params
     const input = updateDeliverySchema.parse(await request.json())
 
-    return NextResponse.json(await updateDelivery(id, input))
+    return NextResponse.json(await updateDelivery(id, input, auditActor.id))
   } catch (error) {
     return toErrorResponse(error)
   }
@@ -31,9 +31,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
 export async function DELETE(_request: NextRequest, { params }: RouteContext) {
   try {
-    await requirePermission("deliveries", "delete")
+    const auditActor = await requirePermission("deliveries", "delete")
     const { id } = await params
-    await deleteDelivery(id)
+    await deleteDelivery(id, auditActor.id)
 
     return new NextResponse(null, { status: 204 })
   } catch (error) {

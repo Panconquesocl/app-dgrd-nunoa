@@ -15,20 +15,20 @@ export async function GET(_request: NextRequest, { params }: Context) {
 }
 export async function PATCH(request: NextRequest, { params }: Context) {
   try {
-    await requirePermission("requests", "update")
+    const auditActor = await requirePermission("requests", "update")
     const { id } = await params
     const input = updateRequestSchema.parse(await request.json())
-    return NextResponse.json(await updateRequest(id, input))
+    return NextResponse.json(await updateRequest(id, input, auditActor.id))
   } catch (error) {
     return toErrorResponse(error)
   }
 }
 export async function DELETE(request: NextRequest, { params }: Context) {
   try {
-    await requirePermission("requests", "delete")
+    const auditActor = await requirePermission("requests", "delete")
     const { id } = await params
     const { expectedDeliveryId } = deleteRequestQuerySchema.parse(Object.fromEntries(request.nextUrl.searchParams))
-    await deleteRequest(id, expectedDeliveryId)
+    await deleteRequest(id, expectedDeliveryId, auditActor.id)
     return new NextResponse(null, { status: 204 })
   } catch (error) {
     return toErrorResponse(error)

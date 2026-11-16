@@ -14,6 +14,8 @@ Implementación de B20–B21 en `feat/permisos-por-rol`.
 | Actividades y evidencia                  | Política preparada para CRUD de cualquier autor; módulos pendientes          | Gestión completa              |
 | Usuarios y tipos de evento               | Sin administración                                                           | Gestión completa              |
 
+La auditoría (`audit:read`) es exclusiva de administradores. La página `/admin/auditoria` y sus rutas GET aplican guard propio; no se exponen operaciones de edición o borrado del historial. Los servicios de escritura reciben la identidad de sesión para registrar quién realizó cada cambio, incluyendo los de registros ajenos. Ver [Auditoría](./auditoria.md).
+
 Las restricciones actuales de integridad y las confirmaciones de eliminación se
 mantienen para ambos roles. Administrar todo no permite ignorar estas reglas.
 El borrado de solicitudes con entrega vinculada está bloqueado, incluso para administradores.

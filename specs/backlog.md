@@ -201,7 +201,9 @@ pruebas de integración se omitieron por requerir activación explícita. TypeSc
 falló por archivos duplicados en `.next/types` y no se ejecutó build. Es evidencia
 histórica, no una certificación del estado actual.
 
-### B34 — Logs de auditoría (requisito confirmado, implementación posterior)
+### B34 — Logs de auditoría (implementación en revisión)
+
+Implementación y decisiones actuales en [Auditoría de cambios](./auditoria.md): transacciones con actor de sesión, operaciones de todos los módulos, valores antes/después sin credenciales e historial administrativo con filtros y paginación. La descripción siguiente conserva el requerimiento original.
 
 Prioridad propuesta: Media, como etapa posterior de trazabilidad.
 

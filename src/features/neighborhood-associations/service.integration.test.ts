@@ -41,7 +41,7 @@ test(
         createNeighborhoodAssociation({ number, name: "Duplicada", active: true }, userId),
         (error) => hasStatus(409)(error) && Boolean((error as AppError).fieldErrors?.number),
       )
-      await assert.rejects(updateNeighborhoodAssociation(second.id, { number }), hasStatus(409))
+      await assert.rejects(updateNeighborhoodAssociation(second.id, { number }, userId), hasStatus(409))
       const races = await Promise.allSettled([
         createNeighborhoodAssociation({ number: number + 2, name: marker, active: true }, userId),
         createNeighborhoodAssociation({ number: number + 2, name: marker, active: true }, userId),
@@ -72,7 +72,7 @@ test(
       assert.equal(history.totalUnits, 3)
       assert.equal(history.deliveries[0].id, delivery.id)
       await assert.rejects(
-        deleteNeighborhoodAssociation(first.id),
+        deleteNeighborhoodAssociation(first.id, userId),
         (error) => hasStatus(409)(error) && (error as AppError).details?.deliveryCount === 1,
       )
       // La FK protege incluso si se omite el servicio.
@@ -80,7 +80,11 @@ test(
         prisma.neighborhoodAssociation.delete({ where: { id: first.id } }),
         (error: unknown) => error instanceof Error && error.message.includes("delivery_neighborhoodAssociationId_fkey"),
       )
-      await updateNeighborhoodAssociation(first.id, { name: `${marker} corregida`, number: number + 3, active: false })
+      await updateNeighborhoodAssociation(
+        first.id,
+        { name: `${marker} corregida`, number: number + 3, active: false },
+        userId,
+      )
       assert.equal((await getDelivery(delivery.id)).neighborhoodAssociation?.name, `${marker} corregida`)
       assert.equal((await listNeighborhoodAssociations({ q: marker, status: "inactive" })).data.length, 1)
       assert.equal(
@@ -88,22 +92,23 @@ test(
         false,
       )
       await assert.rejects(createDelivery(input, userId), hasStatus(409))
-      await assert.rejects(updateDelivery(next.id, { neighborhoodAssociationId: first.id }), hasStatus(409))
+      await assert.rejects(updateDelivery(next.id, { neighborhoodAssociationId: first.id }, userId), hasStatus(409))
       assert.equal(
-        (await updateDelivery(delivery.id, { neighborhoodAssociationId: first.id, address: "Corregida" })).address,
+        (await updateDelivery(delivery.id, { neighborhoodAssociationId: first.id, address: "Corregida" }, userId))
+          .address,
         "Corregida",
       )
-      await updateDelivery(delivery.id, { contact: "123" })
+      await updateDelivery(delivery.id, { contact: "123" }, userId)
       await assert.rejects(
         createDelivery({ ...input, neighborhoodAssociationId: "clxxxxxxxxxxxxxxxxxxxxxxx" }, userId),
         hasStatus(400),
       )
-      await updateNeighborhoodAssociation(first.id, { active: true })
-      await deleteDelivery(delivery.id)
-      await deleteNeighborhoodAssociation(first.id)
+      await updateNeighborhoodAssociation(first.id, { active: true }, userId)
+      await deleteDelivery(delivery.id, userId)
+      await deleteNeighborhoodAssociation(first.id, userId)
       await assert.rejects(getNeighborhoodAssociation(first.id), hasStatus(404))
-      await assert.rejects(updateNeighborhoodAssociation(first.id, { name: marker }), hasStatus(404))
-      await assert.rejects(deleteNeighborhoodAssociation(first.id), hasStatus(404))
+      await assert.rejects(updateNeighborhoodAssociation(first.id, { name: marker }, userId), hasStatus(404))
+      await assert.rejects(deleteNeighborhoodAssociation(first.id, userId), hasStatus(404))
 
       const raceAssociation = await createNeighborhoodAssociation(
         { number: number + 4, name: marker, active: true },
@@ -134,8 +139,8 @@ test(
       })
       await ready
       const changes = Promise.allSettled([
-        deleteNeighborhoodAssociation(raceAssociation.id),
-        updateNeighborhoodAssociation(raceAssociation.id, { active: false }),
+        deleteNeighborhoodAssociation(raceAssociation.id, userId),
+        updateNeighborhoodAssociation(raceAssociation.id, { active: false }, userId),
       ])
       proceed()
       await reference
@@ -157,6 +162,7 @@ test(
             prisma.user.deleteMany({ where: { id: userId } }),
           ])
       } finally {
+        await prisma.auditLog.deleteMany({ where: { actorId: userId } })
         await prisma.$disconnect()
       }
     }
@@ -267,7 +273,7 @@ test(
         0,
       )
       assert.equal((await getNeighborhoodAssociation(association.id, { to: "2025-12-31" })).filteredDeliveryCount, 0)
-      await updateNeighborhoodAssociation(association.id, { active: false })
+      await updateNeighborhoodAssociation(association.id, { active: false }, userId)
       assert.equal((await getNeighborhoodAssociation(association.id)).filteredDeliveryCount, 3)
       assert.deepEqual(
         (await getNeighborhoodAssociation(association.id, "asc")).deliveries.map((row) => row.id),
@@ -281,6 +287,7 @@ test(
           prisma.neighborhoodAssociation.deleteMany({ where: { createdBy: userId } }),
           prisma.user.deleteMany({ where: { id: userId } }),
         ])
+      await prisma.auditLog.deleteMany({ where: { actorId: userId } })
       await prisma.$disconnect()
     }
   },

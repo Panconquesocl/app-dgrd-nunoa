@@ -61,6 +61,7 @@ test(
       await prisma.delivery.deleteMany({ where: { createdBy: marker } })
       await prisma.supply.deleteMany({ where: { createdBy: marker } })
       await prisma.user.deleteMany({ where: { id: marker } })
+      await prisma.auditLog.deleteMany({ where: { actorId: marker } })
       await prisma.$disconnect()
     }
   },

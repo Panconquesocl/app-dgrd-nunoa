@@ -23,19 +23,19 @@ export async function GET(request: NextRequest, { params }: Context) {
 }
 export async function PATCH(request: NextRequest, { params }: Context) {
   try {
-    await requirePermission("neighborhood-associations", "update")
+    const auditActor = await requirePermission("neighborhood-associations", "update")
     const { id } = await params
     const input = updateNeighborhoodAssociationSchema.parse(await request.json())
-    return NextResponse.json(await updateNeighborhoodAssociation(id, input))
+    return NextResponse.json(await updateNeighborhoodAssociation(id, input, auditActor.id))
   } catch (error) {
     return toErrorResponse(error)
   }
 }
 export async function DELETE(_request: NextRequest, { params }: Context) {
   try {
-    await requirePermission("neighborhood-associations", "delete")
+    const auditActor = await requirePermission("neighborhood-associations", "delete")
     const { id } = await params
-    await deleteNeighborhoodAssociation(id)
+    await deleteNeighborhoodAssociation(id, auditActor.id)
     return new NextResponse(null, { status: 204 })
   } catch (error) {
     return toErrorResponse(error)
