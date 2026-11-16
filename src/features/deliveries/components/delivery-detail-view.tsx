@@ -152,6 +152,10 @@ export function DeliveryDetailView({
                   {delivery.address}
                 </dd>
               </div>
+              <div className="sm:col-span-2">
+                <dt>Observaciones</dt>
+                <dd className="break-words whitespace-pre-wrap">{delivery.observations || "Sin observaciones"}</dd>
+              </div>
             </dl>
           </section>
           <section className="delivery-panel">

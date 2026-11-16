@@ -130,4 +130,22 @@ Los campos de texto consultan con el debounce existente; el botón de filtros cu
 
 ## Revisión integral
 
-El formulario conserva encabezado y botones fijos, con desplazamiento solo en los campos. El pie usa fondo sólido. En pantallas estrechas el período se apila para mantener fechas legibles. Ver [revisión integral](./revision-integral.md).
+El formulario conserva encabezado y botones fijos, con desplazamiento solo en los campos. El scroll se aplica a un contenedor que envuelve el fieldset, evitando que el comportamiento nativo del fieldset oculte contenido al crecer el formulario. El pie usa fondo sólido. En pantallas estrechas el período se apila para mantener fechas legibles. Ver [revisión integral](./revision-integral.md).
+
+## Observaciones y controles de adjuntos
+
+En revisión en `feat/entregas-observaciones-adjuntos`, pendiente de integración:
+
+- Observaciones es texto opcional, con un máximo de 4000 caracteres, disponible al crear y editar para ambos roles. Se quitan espacios exteriores, se conservan saltos de línea y el texto vacío se guarda como `null`. Un PATCH que omite el campo conserva su valor; `null` o vacío permiten borrarlo.
+- El detalle y el panel lateral muestran el texto con sus saltos de línea, o «Sin observaciones». No se interpreta HTML ni se modifican los criterios de búsqueda existentes.
+- El formulario muestra dos controles opcionales desactivados: Fotografías (`image/*`, selección múltiple) y Archivos (selección múltiple). Incluyen una indicación de disponibilidad futura; no registran valores en el formulario ni envían archivos o metadatos a la API.
+- `20261116070000_delivery_observations` agrega la columna nullable y actualiza el trigger de Entregas para auditar Observaciones. Conserva datos existentes, que quedan sin observaciones; no modifica migraciones aplicadas ni implementa almacenamiento de archivos.
+
+Aplicar la migración antes de ejecutar esta versión y regenerar Prisma:
+
+```bash
+pnpm exec prisma migrate deploy
+pnpm exec prisma generate
+```
+
+Verificación de este bloque: 63 pruebas generales y 20 integraciones aprobadas contra base aislada; integración de Entregas repetida tras ajustar la compatibilidad del campo opcional. TypeScript, lint y formato correctos. El build habitual con Turbopack falló al resolver las fuentes de Google; `pnpm exec next build --webpack` compiló correctamente sin cambios de configuración. En navegador se verificaron alta, edición, borrado de observaciones, saltos de línea, auditoría, edición por usuario normal y controles de adjuntos desactivados, incluyendo formularios a 390 y 320 píxeles sin errores de JavaScript.

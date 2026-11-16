@@ -1,6 +1,6 @@
 # Navegación y paridad con spike
 
-Ajustes desde `main` después del PR #41, con referencia exclusiva a `spike/test-mockup`. Rama `feat/navegacion-contadores`, pendiente de integración, sin migración.
+Ajustes desde `main` después del PR #41, con referencia exclusiva a `spike/test-mockup`. Integrados mediante PR #42, sin migración.
 
 ## Breadcrumbs
 

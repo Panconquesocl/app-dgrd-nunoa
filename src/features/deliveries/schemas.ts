@@ -19,6 +19,7 @@ const requiredText = (label: string) =>
     .min(1, `Debes indicar ${label.toLowerCase()}.`)
     .max(500, `${label} no puede superar los 500 caracteres.`)
 const day = z.iso.date("La fecha no es válida.")
+const observationsText = z.string().trim().max(4000, "Las observaciones no pueden superar los 4000 caracteres.")
 const itemsSchema = z
   .array(
     z.object({
@@ -48,6 +49,10 @@ export const deliveryFieldsSchema = z.object({
     .optional()
     .transform((value) => value || null),
   address: requiredText("La dirección"),
+  observations: observationsText
+    .nullable()
+    .transform((value) => value || null)
+    .optional(),
   date: day.transform((value) => new Date(`${value}T00:00:00.000Z`)),
   requestId: z.cuid("Selecciona una solicitud válida.").nullable().optional(),
   eventId: z.cuid("Selecciona un evento válido.").nullable().optional(),
@@ -95,6 +100,7 @@ export type Delivery = {
   neighborhoodAssociation: { id: string; number: number; name: string; active: boolean } | null
   contact: string | null
   address: string
+  observations: string | null
   date: string
   createdAt: string
   updatedAt: string
@@ -129,6 +135,7 @@ export const deliveryFormSchema = z.object({
   neighborhoodAssociationId: z.union([z.literal(""), z.cuid("Selecciona una junta vecinal válida.")]),
   contact: z.string().trim().max(500, "El contacto no puede superar los 500 caracteres."),
   address: requiredText("La dirección"),
+  observations: observationsText.optional(),
   date: day,
   requestId: z.string(),
   items: z
@@ -153,6 +160,7 @@ export function toDeliveryPayload(values: DeliveryFormValues): DeliveryPayload {
   return {
     ...values,
     contact: values.contact || null,
+    observations: values.observations || null,
     neighborhoodAssociationId: values.neighborhoodAssociationId || null,
     requestId: values.requestId || null,
     items: values.items.map((item) => ({ supplyId: item.supplyId, quantity: Number(item.quantity) })),

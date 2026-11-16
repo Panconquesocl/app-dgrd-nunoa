@@ -9,8 +9,9 @@ import { Popover } from "radix-ui"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Field, FieldLabel, FieldError } from "@/components/ui/field"
+import { Field, FieldLabel, FieldDescription, FieldError } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { usePermission } from "@/providers/permissions"
 import { ApiError, getDeliveryRecurrence } from "../api"
 import { useCreateDelivery, useUpdateDelivery, useDeliveryOptions, useDeliveryRecurrence } from "../queries"
@@ -54,6 +55,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
       neighborhoodAssociationId: delivery?.neighborhoodAssociationId ?? "",
       contact: delivery?.contact ?? "",
       address: delivery?.address ?? "",
+      observations: delivery?.observations ?? "",
       date: delivery?.date.slice(0, 10) ?? contextEvent?.date.slice(0, 10) ?? today(),
       requestId: canAssociateRequest ? (delivery?.requestId ?? contextRequest?.id ?? "") : "",
       items: delivery
@@ -165,335 +167,379 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <fieldset
-            disabled={pending}
-            className="min-h-0 min-w-0 flex-1 space-y-5 overflow-y-auto px-4 py-4 disabled:opacity-70 sm:px-6 sm:py-5"
-          >
-            {options.isPending && (
-              <p role="status">
-                {canAssociateRequest
-                  ? "Cargando juntas vecinales, solicitudes e insumos…"
-                  : "Cargando juntas vecinales e insumos…"}
-              </p>
-            )}
-            {options.isError && (
-              <div role="alert">
-                <p>No se pudieron cargar las opciones.</p>
-                <Button type="button" variant="outline" onClick={() => options.refetch()}>
-                  Reintentar
-                </Button>
-              </div>
-            )}
-            {canAssociateRequest && (
-              <Field data-invalid={Boolean(errors.requestId)}>
-                {contextEvent && <p className="text-muted-foreground text-xs">Solicitudes de {contextEvent.folio}</p>}
-                <FieldLabel htmlFor={`${id}-request`}>
-                  Solicitud asociada{" "}
-                  {!contextRequest && <span className="text-muted-foreground font-normal">Opcional</span>}
-                </FieldLabel>
-                {contextRequest ? (
-                  <>
-                    <input type="hidden" {...form.register("requestId")} />
-                    <Input
-                      id={`${id}-request`}
-                      value={`${contextRequest.folio} — ${contextRequest.channel}`}
-                      readOnly
-                      aria-describedby={`${id}-request-hint ${id}-request-error`}
-                    />
-                  </>
-                ) : (
-                  <select
-                    id={`${id}-request`}
-                    className="delivery-select"
-                    {...form.register("requestId")}
-                    aria-invalid={Boolean(errors.requestId)}
-                    aria-describedby={`${id}-request-hint ${id}-request-error`}
-                  >
-                    <option value="">Sin solicitud asociada</option>
-                    {visibleRequests.map((request) => (
-                      <option
-                        key={request.id}
-                        value={request.id}
-                        disabled={Boolean(request.delivery && request.delivery.id !== delivery?.id)}
-                      >
-                        {request.folio} — {request.channel} · {request.event?.folio ?? "sin evento"}
-                        {request.delivery ? " · Con entrega" : ""}
-                      </option>
-                    ))}
-                    {unavailableEventRequest && !visibleRequests.some((request) => request.id === requestId) && (
-                      <option value={requestId} disabled>
-                        Solicitud no disponible
-                      </option>
-                    )}
-                  </select>
-                )}
-                <p id={`${id}-request-hint`} className="text-muted-foreground text-xs">
-                  {contextRequest
-                    ? "La entrega quedará vinculada a esta solicitud y heredará su evento. Su estado no cambiará."
-                    : contextEvent
-                      ? "Puedes registrar la entrega sin solicitud. Solo se muestran solicitudes de este evento sin entrega asociada."
-                      : "Si responde a una solicitud, selecciónala. El evento se heredará de ella."}
-                </p>
-                {unavailableEventRequest && (
-                  <p role="alert" className="text-destructive text-sm">
-                    La solicitud seleccionada ya tiene una entrega o no pertenece a este evento. Selecciona otra o
-                    continúa sin solicitud.
-                  </p>
-                )}
-                {contextEvent && options.data && visibleRequests.length === 0 && (
-                  <p role="status" className="text-muted-foreground text-xs">
-                    No hay solicitudes sin entrega en este evento. Puedes continuar sin solicitud.
-                  </p>
-                )}
-                {unavailableRequest && (
-                  <p role="alert" className="text-destructive text-sm">
-                    Esta solicitud ya tiene una entrega o dejó de estar disponible. Cierra el formulario y actualiza el
-                    detalle antes de continuar.
-                  </p>
-                )}
-                <FieldError id={`${id}-request-error`} errors={[errors.requestId]} />
-              </Field>
-            )}
-            <Field data-invalid={Boolean(errors.neighborhoodAssociationId)}>
-              <FieldLabel htmlFor={`${id}-association`}>
-                Junta vecinal <span className="text-muted-foreground font-normal">Opcional</span>
-              </FieldLabel>
-              <select
-                id={`${id}-association`}
-                className="delivery-select"
-                {...form.register("neighborhoodAssociationId")}
-                aria-invalid={Boolean(errors.neighborhoodAssociationId)}
-                aria-describedby={`${id}-association-error`}
-              >
-                <option value="">Sin junta vecinal</option>
-                {associations.map((association) => (
-                  <option key={association.id} value={association.id}>
-                    N°{association.number} · {association.name}
-                    {association.active ? "" : " (inactiva)"}
-                  </option>
-                ))}
-              </select>
-              <FieldError id={`${id}-association-error`} errors={[errors.neighborhoodAssociationId]} />
-              {options.data && associations.length === 0 && (
-                <p className="text-muted-foreground text-sm">
-                  No hay juntas activas.{" "}
-                  <Link href="/juntas-vecinales" className="underline">
-                    Gestionar juntas vecinales
-                  </Link>
+          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain" data-slot="delivery-form-fields">
+            <fieldset disabled={pending} className="min-w-0 space-y-5 px-4 py-4 disabled:opacity-70 sm:px-6 sm:py-5">
+              {options.isPending && (
+                <p role="status">
+                  {canAssociateRequest
+                    ? "Cargando juntas vecinales, solicitudes e insumos…"
+                    : "Cargando juntas vecinales e insumos…"}
                 </p>
               )}
-            </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {(
-                [
-                  ["date", "Fecha", "date", ""],
-                  ["beneficiary", "Beneficiario", "text", "Nombre del beneficiario o comité"],
-                  ["beneficiaryRut", "RUT del beneficiario", "text", "Ej. 12.345.678-5"],
-                  ["contact", "Contacto", "text", "Teléfono o correo"],
-                  ["address", "Dirección", "text", "Calle, número, depto/casa"],
-                ] as const
-              ).map(([name, label, type, placeholder]) => (
-                <Field
-                  key={name}
-                  className={name === "address" ? "sm:col-span-2" : ""}
-                  data-invalid={Boolean(errors[name])}
-                >
-                  <FieldLabel htmlFor={`${id}-${name}`}>
-                    {label}{" "}
-                    {name === "contact" ? (
-                      <span className="text-muted-foreground font-normal">Opcional</span>
-                    ) : (
-                      <span className="text-destructive">*</span>
-                    )}
-                  </FieldLabel>
-                  <div className="relative">
-                    <Input
-                      id={`${id}-${name}`}
-                      type={type}
-                      placeholder={placeholder}
-                      className={name === "beneficiaryRut" ? "pr-10" : undefined}
-                      {...form.register(name)}
-                      aria-invalid={Boolean(errors[name])}
-                      aria-describedby={`${id}-${name}-error`}
-                    />
-                    {name === "beneficiaryRut" && checkRecurrence && (
-                      <>
-                        {recurrence.isFetching && (
-                          <span className="sr-only" role="status">
-                            Consultando entregas anteriores…
-                          </span>
-                        )}
-                        {(recurrence.isError || (recurrence.data?.count ?? 0) > 0) && (
-                          <Popover.Root key={rut} defaultOpen>
-                            <Popover.Trigger asChild>
-                              <button
-                                type="button"
-                                className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-amber-700 hover:bg-amber-50 focus-visible:outline-2 focus-visible:outline-offset-2"
-                                aria-label="Ver advertencia de entregas anteriores"
-                              >
-                                <AlertTriangle size={17} aria-hidden="true" />
-                              </button>
-                            </Popover.Trigger>
-                            <Popover.Portal>
-                              <Popover.Content
-                                side="bottom"
-                                align="start"
-                                sideOffset={8}
-                                collisionPadding={16}
-                                className="z-[60] w-80 max-w-[calc(100vw-2rem)] rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 shadow-md"
-                                onOpenAutoFocus={(event) => event.preventDefault()}
-                              >
-                                <div className="mb-2 flex items-center justify-between gap-3">
-                                  <strong>Entregas anteriores</strong>
-                                  <Popover.Close asChild>
-                                    <button
-                                      type="button"
-                                      aria-label="Cerrar advertencia"
-                                      className="rounded p-1 hover:bg-amber-100"
-                                    >
-                                      <X size={14} aria-hidden="true" />
-                                    </button>
-                                  </Popover.Close>
-                                </div>
-                                <div role="status">
-                                  {recurrence.isError ? (
-                                    <p>
-                                      No se pudieron consultar las entregas anteriores. Puedes registrar la entrega
-                                      igualmente.
-                                    </p>
-                                  ) : (
-                                    recurrence.data && (
-                                      <>
-                                        <p>{deliveryRecurrenceMessage(recurrence.data.count)}</p>
-                                        {recurrence.data.lastDate && (
-                                          <p className="mt-1 text-xs">
-                                            Última entrega: {formatDate(recurrence.data.lastDate)}.
-                                          </p>
-                                        )}
-                                      </>
-                                    )
-                                  )}
-                                </div>
-                              </Popover.Content>
-                            </Popover.Portal>
-                          </Popover.Root>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  <FieldError id={`${id}-${name}-error`} errors={[errors[name]]} />
-                </Field>
-              ))}
-            </div>
-            <div>
-              <h3 className="mb-3 font-semibold">
-                Insumos entregados <span className="text-destructive">*</span>
-              </h3>
-              {!options.isPending && !options.isError && supplies.length === 0 && (
-                <p role="status" className="mb-3 text-sm">
-                  No hay insumos en el catálogo. Debes registrar insumos antes de crear una entrega.
-                </p>
-              )}
-              <div className="delivery-repeater">
-                <div className="delivery-item-row delivery-item-heading">
-                  <span>Insumo</span>
-                  <span>Cantidad</span>
-                  <span>Unidad</span>
-                  <span />
-                </div>
-                {fields.map((field, index) => {
-                  const value = values[index]
-                  const variants = supplies.filter((supply) => supply.type === value?.type)
-                  const available = (supplyId: string) =>
-                    !values.some((item, i) => i !== index && item.supplyId === supplyId)
-                  const itemErrors = errors.items?.[index]
-                  return (
-                    <div key={field.id} className="border-t p-3">
-                      <div className="delivery-item-row">
-                        <select
-                          className="delivery-select"
-                          aria-label={`Insumo ${index + 1}`}
-                          aria-invalid={Boolean(itemErrors?.type)}
-                          aria-describedby={`${id}-item-${index}-error`}
-                          value={value?.type ?? ""}
-                          onChange={(event) => {
-                            const variants = supplies.filter((supply) => supply.type === event.target.value)
-                            update(index, {
-                              type: event.target.value,
-                              supplyId: variants.length === 1 ? variants[0].id : "",
-                              quantity: value?.quantity ?? "",
-                            })
-                          }}
-                        >
-                          <option value="">Selecciona un insumo…</option>
-                          {types.map((type) => (
-                            <option
-                              key={type}
-                              disabled={!supplies.some((supply) => supply.type === type && available(supply.id))}
-                            >
-                              {type}
-                            </option>
-                          ))}
-                        </select>
-                        <Input
-                          aria-label={`Cantidad del insumo ${index + 1}`}
-                          aria-invalid={Boolean(itemErrors?.quantity)}
-                          aria-describedby={`${id}-item-${index}-error`}
-                          type="number"
-                          min="1"
-                          max="2147483647"
-                          step="1"
-                          placeholder="0"
-                          {...form.register(`items.${index}.quantity`)}
-                        />
-                        <select
-                          className="delivery-select"
-                          aria-label={`Unidad del insumo ${index + 1}`}
-                          aria-invalid={Boolean(itemErrors?.supplyId)}
-                          aria-describedby={`${id}-item-${index}-error`}
-                          {...form.register(`items.${index}.supplyId`)}
-                        >
-                          <option value="">Unidad…</option>
-                          {variants.map((supply) => (
-                            <option key={supply.id} value={supply.id} disabled={!available(supply.id)}>
-                              {supply.unit}
-                            </option>
-                          ))}
-                        </select>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Quitar insumo ${index + 1}`}
-                          onClick={() => remove(index)}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                      <div id={`${id}-item-${index}-error`}>
-                        <FieldError errors={[itemErrors?.type, itemErrors?.supplyId, itemErrors?.quantity]} />
-                      </div>
-                    </div>
-                  )
-                })}
-                <div className="border-t p-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => append({ type: "", supplyId: "", quantity: "" })}
-                    disabled={fields.length >= supplies.length}
-                  >
-                    <Plus size={15} /> Agregar insumo
+              {options.isError && (
+                <div role="alert">
+                  <p>No se pudieron cargar las opciones.</p>
+                  <Button type="button" variant="outline" onClick={() => options.refetch()}>
+                    Reintentar
                   </Button>
-                  <span className="text-muted-foreground ml-3 text-xs">
-                    Puedes agregar varios insumos con sus cantidades.
-                  </span>
                 </div>
+              )}
+              {canAssociateRequest && (
+                <Field data-invalid={Boolean(errors.requestId)}>
+                  {contextEvent && <p className="text-muted-foreground text-xs">Solicitudes de {contextEvent.folio}</p>}
+                  <FieldLabel htmlFor={`${id}-request`}>
+                    Solicitud asociada{" "}
+                    {!contextRequest && <span className="text-muted-foreground font-normal">Opcional</span>}
+                  </FieldLabel>
+                  {contextRequest ? (
+                    <>
+                      <input type="hidden" {...form.register("requestId")} />
+                      <Input
+                        id={`${id}-request`}
+                        value={`${contextRequest.folio} — ${contextRequest.channel}`}
+                        readOnly
+                        aria-describedby={`${id}-request-hint ${id}-request-error`}
+                      />
+                    </>
+                  ) : (
+                    <select
+                      id={`${id}-request`}
+                      className="delivery-select"
+                      {...form.register("requestId")}
+                      aria-invalid={Boolean(errors.requestId)}
+                      aria-describedby={`${id}-request-hint ${id}-request-error`}
+                    >
+                      <option value="">Sin solicitud asociada</option>
+                      {visibleRequests.map((request) => (
+                        <option
+                          key={request.id}
+                          value={request.id}
+                          disabled={Boolean(request.delivery && request.delivery.id !== delivery?.id)}
+                        >
+                          {request.folio} — {request.channel} · {request.event?.folio ?? "sin evento"}
+                          {request.delivery ? " · Con entrega" : ""}
+                        </option>
+                      ))}
+                      {unavailableEventRequest && !visibleRequests.some((request) => request.id === requestId) && (
+                        <option value={requestId} disabled>
+                          Solicitud no disponible
+                        </option>
+                      )}
+                    </select>
+                  )}
+                  <p id={`${id}-request-hint`} className="text-muted-foreground text-xs">
+                    {contextRequest
+                      ? "La entrega quedará vinculada a esta solicitud y heredará su evento. Su estado no cambiará."
+                      : contextEvent
+                        ? "Puedes registrar la entrega sin solicitud. Solo se muestran solicitudes de este evento sin entrega asociada."
+                        : "Si responde a una solicitud, selecciónala. El evento se heredará de ella."}
+                  </p>
+                  {unavailableEventRequest && (
+                    <p role="alert" className="text-destructive text-sm">
+                      La solicitud seleccionada ya tiene una entrega o no pertenece a este evento. Selecciona otra o
+                      continúa sin solicitud.
+                    </p>
+                  )}
+                  {contextEvent && options.data && visibleRequests.length === 0 && (
+                    <p role="status" className="text-muted-foreground text-xs">
+                      No hay solicitudes sin entrega en este evento. Puedes continuar sin solicitud.
+                    </p>
+                  )}
+                  {unavailableRequest && (
+                    <p role="alert" className="text-destructive text-sm">
+                      Esta solicitud ya tiene una entrega o dejó de estar disponible. Cierra el formulario y actualiza
+                      el detalle antes de continuar.
+                    </p>
+                  )}
+                  <FieldError id={`${id}-request-error`} errors={[errors.requestId]} />
+                </Field>
+              )}
+              <Field data-invalid={Boolean(errors.neighborhoodAssociationId)}>
+                <FieldLabel htmlFor={`${id}-association`}>
+                  Junta vecinal <span className="text-muted-foreground font-normal">Opcional</span>
+                </FieldLabel>
+                <select
+                  id={`${id}-association`}
+                  className="delivery-select"
+                  {...form.register("neighborhoodAssociationId")}
+                  aria-invalid={Boolean(errors.neighborhoodAssociationId)}
+                  aria-describedby={`${id}-association-error`}
+                >
+                  <option value="">Sin junta vecinal</option>
+                  {associations.map((association) => (
+                    <option key={association.id} value={association.id}>
+                      N°{association.number} · {association.name}
+                      {association.active ? "" : " (inactiva)"}
+                    </option>
+                  ))}
+                </select>
+                <FieldError id={`${id}-association-error`} errors={[errors.neighborhoodAssociationId]} />
+                {options.data && associations.length === 0 && (
+                  <p className="text-muted-foreground text-sm">
+                    No hay juntas activas.{" "}
+                    <Link href="/juntas-vecinales" className="underline">
+                      Gestionar juntas vecinales
+                    </Link>
+                  </p>
+                )}
+              </Field>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {(
+                  [
+                    ["date", "Fecha", "date", ""],
+                    ["beneficiary", "Beneficiario", "text", "Nombre del beneficiario o comité"],
+                    ["beneficiaryRut", "RUT del beneficiario", "text", "Ej. 12.345.678-5"],
+                    ["contact", "Contacto", "text", "Teléfono o correo"],
+                    ["address", "Dirección", "text", "Calle, número, depto/casa"],
+                  ] as const
+                ).map(([name, label, type, placeholder]) => (
+                  <Field
+                    key={name}
+                    className={name === "address" ? "sm:col-span-2" : ""}
+                    data-invalid={Boolean(errors[name])}
+                  >
+                    <FieldLabel htmlFor={`${id}-${name}`}>
+                      {label}{" "}
+                      {name === "contact" ? (
+                        <span className="text-muted-foreground font-normal">Opcional</span>
+                      ) : (
+                        <span className="text-destructive">*</span>
+                      )}
+                    </FieldLabel>
+                    <div className="relative">
+                      <Input
+                        id={`${id}-${name}`}
+                        type={type}
+                        placeholder={placeholder}
+                        className={name === "beneficiaryRut" ? "pr-10" : undefined}
+                        {...form.register(name)}
+                        aria-invalid={Boolean(errors[name])}
+                        aria-describedby={`${id}-${name}-error`}
+                      />
+                      {name === "beneficiaryRut" && checkRecurrence && (
+                        <>
+                          {recurrence.isFetching && (
+                            <span className="sr-only" role="status">
+                              Consultando entregas anteriores…
+                            </span>
+                          )}
+                          {(recurrence.isError || (recurrence.data?.count ?? 0) > 0) && (
+                            <Popover.Root key={rut} defaultOpen>
+                              <Popover.Trigger asChild>
+                                <button
+                                  type="button"
+                                  className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-amber-700 hover:bg-amber-50 focus-visible:outline-2 focus-visible:outline-offset-2"
+                                  aria-label="Ver advertencia de entregas anteriores"
+                                >
+                                  <AlertTriangle size={17} aria-hidden="true" />
+                                </button>
+                              </Popover.Trigger>
+                              <Popover.Portal>
+                                <Popover.Content
+                                  side="bottom"
+                                  align="start"
+                                  sideOffset={8}
+                                  collisionPadding={16}
+                                  className="z-[60] w-80 max-w-[calc(100vw-2rem)] rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950 shadow-md"
+                                  onOpenAutoFocus={(event) => event.preventDefault()}
+                                >
+                                  <div className="mb-2 flex items-center justify-between gap-3">
+                                    <strong>Entregas anteriores</strong>
+                                    <Popover.Close asChild>
+                                      <button
+                                        type="button"
+                                        aria-label="Cerrar advertencia"
+                                        className="rounded p-1 hover:bg-amber-100"
+                                      >
+                                        <X size={14} aria-hidden="true" />
+                                      </button>
+                                    </Popover.Close>
+                                  </div>
+                                  <div role="status">
+                                    {recurrence.isError ? (
+                                      <p>
+                                        No se pudieron consultar las entregas anteriores. Puedes registrar la entrega
+                                        igualmente.
+                                      </p>
+                                    ) : (
+                                      recurrence.data && (
+                                        <>
+                                          <p>{deliveryRecurrenceMessage(recurrence.data.count)}</p>
+                                          {recurrence.data.lastDate && (
+                                            <p className="mt-1 text-xs">
+                                              Última entrega: {formatDate(recurrence.data.lastDate)}.
+                                            </p>
+                                          )}
+                                        </>
+                                      )
+                                    )}
+                                  </div>
+                                </Popover.Content>
+                              </Popover.Portal>
+                            </Popover.Root>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <FieldError id={`${id}-${name}-error`} errors={[errors[name]]} />
+                  </Field>
+                ))}
               </div>
-              <FieldError errors={[errors.items, errors.items?.root]} />
-            </div>
-          </fieldset>
+              <Field data-invalid={Boolean(errors.observations)}>
+                <FieldLabel htmlFor={`${id}-observations`}>
+                  Observaciones <span className="text-muted-foreground font-normal">Opcional</span>
+                </FieldLabel>
+                <Textarea
+                  id={`${id}-observations`}
+                  placeholder="Información adicional sobre la entrega…"
+                  rows={3}
+                  maxLength={4000}
+                  {...form.register("observations")}
+                  aria-invalid={Boolean(errors.observations)}
+                  aria-describedby={`${id}-observations-error`}
+                />
+                <FieldError id={`${id}-observations-error`} errors={[errors.observations]} />
+              </Field>
+              <div>
+                <h3 className="mb-3 font-semibold">
+                  Insumos entregados <span className="text-destructive">*</span>
+                </h3>
+                {!options.isPending && !options.isError && supplies.length === 0 && (
+                  <p role="status" className="mb-3 text-sm">
+                    No hay insumos en el catálogo. Debes registrar insumos antes de crear una entrega.
+                  </p>
+                )}
+                <div className="delivery-repeater">
+                  <div className="delivery-item-row delivery-item-heading">
+                    <span>Insumo</span>
+                    <span>Cantidad</span>
+                    <span>Unidad</span>
+                    <span />
+                  </div>
+                  {fields.map((field, index) => {
+                    const value = values[index]
+                    const variants = supplies.filter((supply) => supply.type === value?.type)
+                    const available = (supplyId: string) =>
+                      !values.some((item, i) => i !== index && item.supplyId === supplyId)
+                    const itemErrors = errors.items?.[index]
+                    return (
+                      <div key={field.id} className="border-t p-3">
+                        <div className="delivery-item-row">
+                          <select
+                            className="delivery-select"
+                            aria-label={`Insumo ${index + 1}`}
+                            aria-invalid={Boolean(itemErrors?.type)}
+                            aria-describedby={`${id}-item-${index}-error`}
+                            value={value?.type ?? ""}
+                            onChange={(event) => {
+                              const variants = supplies.filter((supply) => supply.type === event.target.value)
+                              update(index, {
+                                type: event.target.value,
+                                supplyId: variants.length === 1 ? variants[0].id : "",
+                                quantity: value?.quantity ?? "",
+                              })
+                            }}
+                          >
+                            <option value="">Selecciona un insumo…</option>
+                            {types.map((type) => (
+                              <option
+                                key={type}
+                                disabled={!supplies.some((supply) => supply.type === type && available(supply.id))}
+                              >
+                                {type}
+                              </option>
+                            ))}
+                          </select>
+                          <Input
+                            aria-label={`Cantidad del insumo ${index + 1}`}
+                            aria-invalid={Boolean(itemErrors?.quantity)}
+                            aria-describedby={`${id}-item-${index}-error`}
+                            type="number"
+                            min="1"
+                            max="2147483647"
+                            step="1"
+                            placeholder="0"
+                            {...form.register(`items.${index}.quantity`)}
+                          />
+                          <select
+                            className="delivery-select"
+                            aria-label={`Unidad del insumo ${index + 1}`}
+                            aria-invalid={Boolean(itemErrors?.supplyId)}
+                            aria-describedby={`${id}-item-${index}-error`}
+                            {...form.register(`items.${index}.supplyId`)}
+                          >
+                            <option value="">Unidad…</option>
+                            {variants.map((supply) => (
+                              <option key={supply.id} value={supply.id} disabled={!available(supply.id)}>
+                                {supply.unit}
+                              </option>
+                            ))}
+                          </select>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Quitar insumo ${index + 1}`}
+                            onClick={() => remove(index)}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                        <div id={`${id}-item-${index}-error`}>
+                          <FieldError errors={[itemErrors?.type, itemErrors?.supplyId, itemErrors?.quantity]} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                  <div className="border-t p-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => append({ type: "", supplyId: "", quantity: "" })}
+                      disabled={fields.length >= supplies.length}
+                    >
+                      <Plus size={15} /> Agregar insumo
+                    </Button>
+                    <span className="text-muted-foreground ml-3 text-xs">
+                      Puedes agregar varios insumos con sus cantidades.
+                    </span>
+                  </div>
+                </div>
+                <FieldError errors={[errors.items, errors.items?.root]} />
+              </div>
+              <section aria-label="Adjuntos" className="space-y-4 border-t pt-4">
+                <h3 className="font-semibold">Adjuntos</h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field>
+                    <FieldLabel htmlFor={`${id}-photos`}>
+                      Fotografías <span className="text-muted-foreground font-normal">Opcional</span>
+                    </FieldLabel>
+                    <Input
+                      id={`${id}-photos`}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      disabled
+                      aria-describedby={`${id}-photos-hint`}
+                    />
+                    <FieldDescription id={`${id}-photos-hint`}>
+                      La carga de imágenes estará disponible cuando se habilite el manejo de archivos.
+                    </FieldDescription>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor={`${id}-files`}>
+                      Archivos <span className="text-muted-foreground font-normal">Opcional</span>
+                    </FieldLabel>
+                    <Input id={`${id}-files`} type="file" multiple disabled aria-describedby={`${id}-files-hint`} />
+                    <FieldDescription id={`${id}-files-hint`}>
+                      La carga de archivos estará disponible cuando se habilite el manejo de archivos.
+                    </FieldDescription>
+                  </Field>
+                </div>
+              </section>
+            </fieldset>
+          </div>
           <div className="bg-background flex shrink-0 flex-wrap items-center justify-end gap-3 border-t px-4 py-4 sm:px-6">
             <span className="text-muted-foreground mr-auto text-xs">
               {fields.length} {fields.length === 1 ? "insumo" : "insumos"} en la entrega

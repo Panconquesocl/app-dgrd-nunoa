@@ -1,10 +1,10 @@
 # Estado y backlog del proyecto DGRD Ñuñoa
 
-Actualizado el 16 de noviembre de 2026. Estado contrastado con `main` después del PR #41. La referencia funcional y visual es `spike/test-mockup`; no se usan otras ramas históricas para definir el producto. La revisión integral ya está integrada. Los ajustes de navegación y contadores están en `feat/navegacion-contadores`, pendientes de integración.
+Actualizado el 16 de noviembre de 2026. Estado contrastado con `main` después del PR #42. La referencia funcional y visual es `spike/test-mockup`; no se usan otras ramas históricas para definir el producto. La revisión integral y los ajustes de navegación ya están integrados.
 
 ## Alcance vigente
 
-- Archivos: evidencia de actividades y fotografías de entregas siguen pendientes por decisión del usuario.
+- Manejo de archivos: evidencia de actividades, fotografías, informes y otros adjuntos siguen pendientes. Se aprobó mostrar controles desactivados en Entregas y Eventos, sin habilitar carga ni almacenamiento todavía.
 - Visualización y georreferenciación quedan fuera del alcance, incluyendo gráficos/mapas adicionales del backlog original.
 - No se implementarán importación ni mapeo de datos históricos.
 - Identificación, alerta por RUT, búsqueda por campos, búsqueda global y auditoría ya están integradas.
@@ -46,11 +46,18 @@ El catálogo de insumos y sus historiales están implementados sin stock ni inve
 
 Exportaciones, recordatorios e inventario fueron ideas por validar; no son requisitos aprobados ni funciones pendientes del spike. La importación de datos históricos está descartada.
 
-## Ajustes de paridad en revisión
+## Ajustes de paridad integrados en PR #42
 
 En `feat/navegacion-contadores` se implementan breadcrumbs navegables en detalles, contadores globales en la sidebar, topbar sticky con búsqueda centrada y cierre de sesión en el popover del usuario, eyebrows de sección y círculos de autor en registros de entrega/evento. Se unifican las acciones de tabla y el acceso por fila en juntas; el selector de solicitud en el formulario de entrega se oculta a usuarios normales. Ver [Navegación](./navegacion.md).
 
-Se conserva la confirmación actual al eliminar usuarios, sin exigir escribir el correo, y la identidad actual de la barra superior. Son decisiones de producto, no pendientes de paridad. Después de estos ajustes no hay otra funcionalidad del alcance actual identificada como pendiente aparte de los archivos pospuestos.
+Se conserva la confirmación actual al eliminar usuarios, sin exigir escribir el correo, y la identidad actual de la barra superior. Son decisiones de producto, no pendientes de paridad.
+
+## Nuevos cambios aprobados: dos entregas separadas
+
+1. **Entregas**, en revisión en `feat/entregas-observaciones-adjuntos`: Observaciones opcionales persistidas y auditadas, controles de fotografías y archivos múltiples opcionales desactivados. Ver [Entregas](./entregas.md).
+2. **Eventos**, siguiente rama después de revisar Entregas: cambiar Sector por Dirección conservando los valores existentes; agregar Informe alfa (PDF), fotografías y archivos opcionales, todos desactivados hasta implementar el manejo de archivos.
+
+Cada bloque se revisa antes de su commit/PR y el usuario realiza el merge. Ninguno incluye carga ni almacenamiento de archivos.
 
 ## Verificación reproducible
 
