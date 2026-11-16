@@ -1,4 +1,5 @@
 "use client"
+import { useAttachmentDraft } from "@/features/attachments/client"
 import { useId } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -29,7 +30,8 @@ export function ActivityFormDialog({
 }) {
   const id = useId()
   const options = useSchedule()
-  const mutation = useSaveActivity(activity?.id)
+  const attachments = useAttachmentDraft("activities", activity?.id)
+  const mutation = useSaveActivity(attachments.savedId)
   const form = useForm<ActivityInput>({
     resolver: zodResolver(activitySchema),
     defaultValues: {
@@ -51,6 +53,7 @@ export function ActivityFormDialog({
     }
     try {
       const saved = await mutation.mutateAsync(values)
+      await attachments.finish(saved.id)
       toast.success(activity ? "Actividad actualizada." : "Actividad registrada.")
       onClose()
       onSaved?.(saved)
@@ -67,16 +70,16 @@ export function ActivityFormDialog({
     <Dialog
       open
       onOpenChange={(open) => {
-        if (!open && !mutation.isPending) onClose()
+        if (!open && !(mutation.isPending || attachments.busy || form.formState.isSubmitting)) onClose()
       }}
     >
       <DialogContent
         className="requests-form flex h-[min(90svh,800px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[680px]"
         onEscapeKeyDown={(e) => {
-          if (mutation.isPending) e.preventDefault()
+          if (mutation.isPending || attachments.busy || form.formState.isSubmitting) e.preventDefault()
         }}
         onPointerDownOutside={(e) => {
-          if (mutation.isPending) e.preventDefault()
+          if (mutation.isPending || attachments.busy || form.formState.isSubmitting) e.preventDefault()
         }}
       >
         <DialogHeader className="shrink-0 border-b px-6 py-5 pr-12 text-left">
@@ -90,7 +93,10 @@ export function ActivityFormDialog({
         </DialogHeader>
         <form onSubmit={save} noValidate className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-            <fieldset disabled={mutation.isPending} className="space-y-5 px-6 py-5">
+            <fieldset
+              disabled={mutation.isPending || attachments.busy || form.formState.isSubmitting}
+              className="space-y-5 px-6 py-5"
+            >
               <Field data-invalid={Boolean(form.formState.errors.actionId)}>
                 <FieldLabel htmlFor={`${id}-actionId`}>
                   Acción estratégica <span className="text-destructive">*</span>
@@ -170,14 +176,26 @@ export function ActivityFormDialog({
                   <FieldError id={`${id}-${field}-error`} errors={[form.formState.errors[field]]} />
                 </Field>
               ))}
+              <section aria-label="Adjuntos" className="space-y-4 border-t pt-4">
+                {attachments.pickers}
+              </section>
             </fieldset>
           </div>
           <div className="bg-surface flex shrink-0 justify-end gap-3 border-t px-6 py-4">
-            <Button type="button" variant="outline" disabled={mutation.isPending} onClick={onClose}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={mutation.isPending || attachments.busy || form.formState.isSubmitting}
+              onClick={onClose}
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? "Guardando…" : activity ? "Guardar cambios" : "Registrar actividad"}
+            <Button type="submit" disabled={mutation.isPending || attachments.busy || form.formState.isSubmitting}>
+              {mutation.isPending || attachments.busy || form.formState.isSubmitting
+                ? "Guardando…"
+                : activity
+                  ? "Guardar cambios"
+                  : "Registrar actividad"}
             </Button>
           </div>
         </form>

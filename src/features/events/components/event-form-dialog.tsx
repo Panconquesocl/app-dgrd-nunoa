@@ -1,4 +1,5 @@
 "use client"
+import { useAttachmentDraft } from "@/features/attachments/client"
 import { useId } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -9,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"
+import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { useEventTypes } from "@/features/event-types/queries"
 import { eventFormSchema, type EventFormValues, type EventItem } from "../schemas"
 import { EventApiError } from "../api"
@@ -37,7 +38,8 @@ export function EventFormDialog({
 }) {
   const id = useId()
   const types = useEventTypes()
-  const mutation = useSaveEvent(event?.id)
+  const attachments = useAttachmentDraft("events", event?.id)
+  const mutation = useSaveEvent(attachments.savedId)
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
@@ -54,8 +56,9 @@ export function EventFormDialog({
       const saved = await mutation.mutateAsync({
         ...values,
         affectedCount: values.affectedCount === "" ? null : Number(values.affectedCount),
-        ...(fromRequest && { requestId: fromRequest.id }),
+        ...(fromRequest && !attachments.savedId && { requestId: fromRequest.id }),
       })
+      await attachments.finish(saved.id)
       toast.success(event ? "Evento actualizado." : "Evento registrado.")
       onClose()
       onSaved?.(saved)
@@ -72,16 +75,16 @@ export function EventFormDialog({
     <Dialog
       open
       onOpenChange={(open) => {
-        if (!open && !mutation.isPending) onClose()
+        if (!open && !(mutation.isPending || attachments.busy || form.formState.isSubmitting)) onClose()
       }}
     >
       <DialogContent
         className="requests-form flex h-[min(90svh,800px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[680px]"
         onEscapeKeyDown={(e) => {
-          if (mutation.isPending) e.preventDefault()
+          if (mutation.isPending || attachments.busy || form.formState.isSubmitting) e.preventDefault()
         }}
         onPointerDownOutside={(e) => {
-          if (mutation.isPending) e.preventDefault()
+          if (mutation.isPending || attachments.busy || form.formState.isSubmitting) e.preventDefault()
         }}
       >
         <DialogHeader className="shrink-0 border-b px-6 py-5 pr-12 text-left">
@@ -95,7 +98,10 @@ export function EventFormDialog({
         </DialogHeader>
         <form onSubmit={save} noValidate className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5">
-            <fieldset disabled={mutation.isPending} className="space-y-5">
+            <fieldset
+              disabled={mutation.isPending || attachments.busy || form.formState.isSubmitting}
+              className="space-y-5"
+            >
               {fromRequest && (
                 <p className="events-info">
                   <Info size={17} />
@@ -192,58 +198,21 @@ export function EventFormDialog({
                 ))}
               </div>
               <section aria-label="Adjuntos" className="space-y-4 border-t pt-4">
-                <h3 className="font-semibold">Adjuntos</h3>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field className="sm:col-span-2">
-                    <FieldLabel htmlFor={`${id}-alpha-report`}>
-                      Informe ALFA <span className="text-muted-foreground font-normal">Opcional</span>
-                    </FieldLabel>
-                    <Input
-                      id={`${id}-alpha-report`}
-                      type="file"
-                      accept=".pdf,application/pdf"
-                      disabled
-                      aria-describedby={`${id}-alpha-report-hint`}
-                    />
-                    <FieldDescription id={`${id}-alpha-report-hint`}>
-                      La carga del informe PDF estará disponible cuando se habilite el manejo de archivos.
-                    </FieldDescription>
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor={`${id}-photos`}>
-                      Fotografías <span className="text-muted-foreground font-normal">Opcional</span>
-                    </FieldLabel>
-                    <Input
-                      id={`${id}-photos`}
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      disabled
-                      aria-describedby={`${id}-photos-hint`}
-                    />
-                    <FieldDescription id={`${id}-photos-hint`}>
-                      La carga de imágenes estará disponible cuando se habilite el manejo de archivos.
-                    </FieldDescription>
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor={`${id}-files`}>
-                      Archivos <span className="text-muted-foreground font-normal">Opcional</span>
-                    </FieldLabel>
-                    <Input id={`${id}-files`} type="file" multiple disabled aria-describedby={`${id}-files-hint`} />
-                    <FieldDescription id={`${id}-files-hint`}>
-                      La carga de archivos estará disponible cuando se habilite el manejo de archivos.
-                    </FieldDescription>
-                  </Field>
-                </div>
+                {attachments.pickers}
               </section>
             </fieldset>
           </div>
           <div className="bg-surface flex shrink-0 justify-end gap-3 border-t px-6 py-4">
-            <Button type="button" variant="outline" disabled={mutation.isPending} onClick={onClose}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={mutation.isPending || attachments.busy || form.formState.isSubmitting}
+              onClick={onClose}
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending
+            <Button type="submit" disabled={mutation.isPending || attachments.busy || form.formState.isSubmitting}>
+              {mutation.isPending || attachments.busy || form.formState.isSubmitting
                 ? "Guardando…"
                 : event
                   ? "Guardar cambios"

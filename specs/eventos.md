@@ -27,11 +27,11 @@ El formulario mantiene encabezado y botones visibles; solo los campos se desplaz
 
 ### Dirección y controles de adjuntos
 
-En revisión en `feat/eventos-direccion-adjuntos`, pendiente de integración:
+Integrado mediante PR #44; adjuntos R2 en revisión local:
 
 - Dirección reemplaza Sector en el formulario, listado, detalle, búsquedas, resumen y selectores relacionados de Solicitudes y Entregas. Es obligatoria, se normalizan espacios exteriores y admite hasta 500 caracteres.
 - El contrato de eventos y sus relaciones usa `address`; `sector` deja de ser el campo editable de la API.
-- Informe ALFA es un control opcional de un solo PDF (`.pdf,application/pdf`). Fotografías (`image/*`) y Archivos permiten selección múltiple. Los tres controles están desactivados en alta y edición; no se registran en el formulario ni se envían archivos o metadatos.
+- Informe ALFA es un control opcional de un solo PDF (`.pdf,application/pdf`). Fotografías (`image/*`) y Archivos permiten selección múltiple. El PR #44 los dejó desactivados. La etapa R2 actual activa los tres, con ALFA único, hasta 20 fotografías y 20 archivos de 25 MB, acceso privado y borrado con previsualización. Ver [Archivos R2](./archivos-r2.md).
 - Se mantiene la navegación y el scroll del formulario; los adjuntos quedan dentro del área desplazable y los botones permanecen visibles.
 
 ## API
@@ -49,7 +49,7 @@ Aplicar en el entorno de revisión con `pnpm exec prisma migrate deploy` y regen
 
 `20261116080000_event_address` renombra la columna `event.sector` a `event.address` sin borrar ni reinterpretar su contenido, y actualiza el trigger de auditoría para las operaciones nuevas. Conserva ids, folios, fechas, solicitudes, entregas y auditoría previa. Los JSON antiguos mantienen `sector`, que se presenta como «Sector (anterior)»; los cambios nuevos usan `address`, presentado como «Dirección». No se actualizan migraciones ya aplicadas.
 
-Esta versión requiere aplicar la migración y regenerar Prisma antes de ejecutarse; el nombre de columna y el contrato de la versión anterior eran `sector`. No se crean tablas ni endpoints para adjuntos.
+Esta versión requiere aplicar la migración y regenerar Prisma antes de ejecutarse; el nombre de columna y el contrato de la versión anterior eran `sector`. Esa migración no crea adjuntos; los agrega `20261116180000_r2_attachments`.
 
 ## Verificación
 

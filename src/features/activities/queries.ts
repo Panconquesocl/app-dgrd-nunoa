@@ -21,5 +21,8 @@ export function useSaveActivity(id?: string) {
 }
 export function useDeleteActivity(id: string) {
   const invalidate = useInvalidate()
-  return useMutation({ mutationFn: () => api.deleteActivity(id), onSuccess: invalidate })
+  return useMutation({
+    mutationFn: (attachmentIds: string[]) => api.deleteActivity(id, attachmentIds),
+    onSuccess: invalidate,
+  })
 }

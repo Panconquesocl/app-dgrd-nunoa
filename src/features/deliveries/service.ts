@@ -1,3 +1,4 @@
+import { confirmAttachments, processDeletions } from "@/features/attachments/service"
 import { auditedTransaction } from "@/features/audit/transaction"
 import { nextDeliveryFolio, deliveryFolioYear } from "./folio"
 import prisma from "@/lib/prisma"
@@ -238,9 +239,14 @@ export async function updateDelivery(id: string, input: UpdateDeliveryInput, act
     translateError(error)
   }
 }
-export async function deleteDelivery(id: string, actorId: string) {
+export async function deleteDelivery(id: string, actorId: string, attachmentIds: string[] = []) {
   try {
-    await auditedTransaction(actorId, (tx) => tx.delivery.delete({ where: { id } }))
+    await auditedTransaction(actorId, async (tx) => {
+      await tx.$queryRaw`SELECT id FROM delivery WHERE id = ${id} FOR UPDATE`
+      await confirmAttachments(tx, { resource: "deliveries", recordId: id }, attachmentIds)
+      await tx.delivery.delete({ where: { id } })
+    })
+    await processDeletions({ resource: "deliveries", recordId: id }).catch(() => undefined)
   } catch (error) {
     translateError(error)
   }

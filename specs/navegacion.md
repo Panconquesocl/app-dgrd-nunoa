@@ -31,7 +31,7 @@ Cerrar sesión se encuentra en el popover que abre el usuario de la topbar, junt
 
 Entregas y Eventos incorporan el círculo con iniciales junto al autor en Registro, coherente con Solicitudes y Actividades. Las iniciales son decorativas; el nombre completo permanece visible.
 
-Se conserva la confirmación actual de eliminación de usuarios, sin escritura obligatoria del correo, y la presentación actual de identidad en la barra superior. Los archivos siguen pospuestos. Datos históricos, visualización y georreferenciación están descartados del alcance.
+Se conserva la confirmación actual de eliminación de usuarios, sin escritura obligatoria del correo, y la presentación actual de identidad en la barra superior. Los archivos se incorporan en la etapa R2 actual; ver [Archivos R2](./archivos-r2.md). Datos históricos, visualización y georreferenciación están descartados del alcance.
 
 En los listados de Solicitudes, Eventos, Entregas, Insumos y Juntas vecinales, las acciones de fila comparten el mismo estilo: con ratón aparecen al pasar el cursor por la fila o al enfocar sus controles con teclado. En pantallas táctiles permanecen visibles, sin depender de hover.
 

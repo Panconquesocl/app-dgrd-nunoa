@@ -1,6 +1,6 @@
 # Actividades y cronograma
 
-Implementación desde main con referencia funcional y visual exclusiva al spike. Sin carga, descarga ni gestión de archivos, y sin estados de actividad.
+Implementación desde main con referencia funcional y visual exclusiva al spike. La etapa actual incorpora evidencia privada en R2; no agrega estados de actividad. Ver [Archivos R2](./archivos-r2.md).
 
 ## Reglas
 
@@ -8,16 +8,16 @@ Acción estratégica, fecha calendario, dirección, objetivo y participantes son
 
 La fecha debe quedar dentro del periodo de la acción, incluyendo ambos extremos. El servidor valida dentro de una transacción bajo bloqueo compartido de la acción. Editar el periodo toma bloqueo exclusivo y rechaza cambios que dejen actividades fuera. Esto impide violaciones por creación o edición concurrente. Reasignar una actividad valida también el periodo de la nueva acción.
 
-Eliminar exige confirmación y conserva la acción. Si hubiera evidencia histórica, se bloquea el borrado para evitar eliminar metadatos sin gestionar los archivos, fuera del alcance acordado. No se implementan endpoints ni controles de archivos.
+Eliminar exige confirmación y conserva la acción. La evidencia nueva se elimina de R2 con advertencia y previsualización previa. La evidencia histórica sin bucket sigue bloqueando el borrado hasta revisión.
 
-No se corrigen ni borran datos históricos fuera de periodo. Una actividad histórica debe guardarse con una fecha válida al editarla; el periodo de su acción solo se puede guardar si incluye todas las actividades. No se requiere migración ni regeneración de Prisma.
+No se corrigen ni borran datos históricos fuera de periodo. Una actividad histórica debe guardarse con una fecha válida al editarla; el periodo de su acción solo se puede guardar si incluye todas las actividades. La etapa R2 requiere su migración y regeneración de Prisma.
 
 ## Interfaz
 
 - Acciones estratégicas y Cronograma tienen accesos separados en la sidebar y eyebrow «Plan RRD», sin pestañas de navegación entre módulos.
 - Nueva actividad desde el detalle de la acción o desde el cronograma. Edición, detalle y eliminación desde `/plan/actividades/[id]`.
 - Formulario con encabezado y botones fijos, solo los campos desplazan; fecha con límites visibles según acción seleccionada.
-- `/plan/cronograma`: selector de año, barras amarillas del periodo de acción, puntos y agrupaciones de actividades cercanas, leyenda, marca Hoy y enlaces a acciones/actividades. Vista alternativa de agenda agrupada por mes. Se conserva la estructura visual del spike, sin controles de evidencia.
+- `/plan/cronograma`: selector de año, barras amarillas del periodo de acción, puntos y agrupaciones de actividades cercanas, leyenda, marca Hoy y enlaces a acciones/actividades. Vista alternativa de agenda agrupada por mes. Se conserva la estructura visual del spike, con evidencia disponible en el detalle de actividad.
 - Línea temporal con desplazamiento horizontal en pantallas pequeñas; enlaces accesibles por teclado y detalles de los puntos al enfocar.
 - Fechas de calendario y posiciones en UTC; Hoy usa la fecha de Chile. Barras recortadas a los límites del año. La agenda utiliza el año calendario de cada actividad; las filas de acciones siguen su año declarado, como en el spike.
 

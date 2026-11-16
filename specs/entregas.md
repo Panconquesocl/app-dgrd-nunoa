@@ -138,7 +138,7 @@ Integrado mediante PR #43:
 
 - Observaciones es texto opcional, con un máximo de 4000 caracteres, disponible al crear y editar para ambos roles. Se quitan espacios exteriores, se conservan saltos de línea y el texto vacío se guarda como `null`. Un PATCH que omite el campo conserva su valor; `null` o vacío permiten borrarlo.
 - El detalle y el panel lateral muestran el texto con sus saltos de línea, o «Sin observaciones». No se interpreta HTML ni se modifican los criterios de búsqueda existentes.
-- El formulario muestra dos controles opcionales desactivados: Fotografías (`image/*`, selección múltiple) y Archivos (selección múltiple). Incluyen una indicación de disponibilidad futura; no registran valores en el formulario ni envían archivos o metadatos a la API.
+- El PR #43 introdujo Fotografías y Archivos desactivados. En la etapa R2 actual se activan ambos grupos opcionales, hasta 20 archivos de 25 MB por grupo, con previsualización y borrado asociado advertido. Ver [Archivos R2](./archivos-r2.md).
 - `20261116070000_delivery_observations` agrega la columna nullable y actualiza el trigger de Entregas para auditar Observaciones. Conserva datos existentes, que quedan sin observaciones; no modifica migraciones aplicadas ni implementa almacenamiento de archivos.
 
 Aplicar la migración antes de ejecutar esta versión y regenerar Prisma:

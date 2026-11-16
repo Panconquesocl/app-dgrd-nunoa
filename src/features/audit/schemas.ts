@@ -45,6 +45,7 @@ export type AuditEntry = {
 export type AuditResponse = { data: AuditEntry[]; nextCursor: string | null }
 export type AuditActor = { actorId: string; actorName: string; actorEmail: string }
 export const AUDIT_FIELDS: Record<string, string> = {
+  attachment: "Archivo adjunto",
   folio: "Folio",
   beneficiary: "Beneficiario",
   beneficiaryRut: "RUT",

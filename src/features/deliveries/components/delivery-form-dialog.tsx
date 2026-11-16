@@ -1,4 +1,5 @@
 "use client"
+import { useAttachmentDraft } from "@/features/attachments/client"
 
 import Link from "next/link"
 import { useId } from "react"
@@ -9,7 +10,7 @@ import { Popover } from "radix-ui"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Field, FieldLabel, FieldDescription, FieldError } from "@/components/ui/field"
+import { Field, FieldLabel, FieldError } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { usePermission } from "@/providers/permissions"
@@ -95,9 +96,10 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
     contextRequest && options.data && !requests.some((request) => request.id === contextRequest.id),
   )
   const values = useWatch({ control: form.control, name: "items" })
+  const attachments = useAttachmentDraft("deliveries", delivery?.id)
   const create = useCreateDelivery()
-  const edit = useUpdateDelivery(delivery?.id ?? "")
-  const mutation = delivery ? edit : create
+  const edit = useUpdateDelivery(attachments.savedId ?? "")
+  const mutation = attachments.savedId ? edit : create
   const id = useId()
   const errors = form.formState.errors
   const submit = form.handleSubmit(async (values) => {
@@ -115,10 +117,11 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
           toast.warning("No se pudo consultar las entregas anteriores. Se continuará con el registro.")
         }
       }
-      await mutation.mutateAsync({
+      const saved = await mutation.mutateAsync({
         ...payload,
         ...(contextEvent && { eventId: contextEvent.id }),
       })
+      await attachments.finish(saved.id)
       toast.success(delivery ? "Entrega actualizada." : "Entrega registrada.")
       onOpenChange(false)
     } catch (error) {
@@ -131,7 +134,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
       toast.error(error instanceof Error ? error.message : "No se pudo guardar la entrega.")
     }
   })
-  const pending = mutation.isPending || form.formState.isSubmitting
+  const pending = mutation.isPending || attachments.busy || form.formState.isSubmitting
   return (
     <Dialog
       open={open}
@@ -509,34 +512,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
                 <FieldError errors={[errors.items, errors.items?.root]} />
               </div>
               <section aria-label="Adjuntos" className="space-y-4 border-t pt-4">
-                <h3 className="font-semibold">Adjuntos</h3>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field>
-                    <FieldLabel htmlFor={`${id}-photos`}>
-                      Fotografías <span className="text-muted-foreground font-normal">Opcional</span>
-                    </FieldLabel>
-                    <Input
-                      id={`${id}-photos`}
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      disabled
-                      aria-describedby={`${id}-photos-hint`}
-                    />
-                    <FieldDescription id={`${id}-photos-hint`}>
-                      La carga de imágenes estará disponible cuando se habilite el manejo de archivos.
-                    </FieldDescription>
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor={`${id}-files`}>
-                      Archivos <span className="text-muted-foreground font-normal">Opcional</span>
-                    </FieldLabel>
-                    <Input id={`${id}-files`} type="file" multiple disabled aria-describedby={`${id}-files-hint`} />
-                    <FieldDescription id={`${id}-files-hint`}>
-                      La carga de archivos estará disponible cuando se habilite el manejo de archivos.
-                    </FieldDescription>
-                  </Field>
-                </div>
+                {attachments.pickers}
               </section>
             </fieldset>
           </div>
