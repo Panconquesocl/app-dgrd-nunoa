@@ -213,7 +213,7 @@ export function DeliveryDetailView({
               <div className="delivery-related">
                 <span className="delivery-badge delivery-badge-event">{delivery.event.folio}</span>
                 <span>
-                  {delivery.event.type.name} · {delivery.event.sector}
+                  {delivery.event.type.name} · {delivery.event.address}
                 </span>
               </div>
             ) : (

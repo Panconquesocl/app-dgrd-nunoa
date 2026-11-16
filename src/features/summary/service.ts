@@ -175,7 +175,7 @@ export async function getSummary(inputYear: number, role: string | null | undefi
             count: await tx.event.count({ where: { date: dates } }),
             recent: await tx.event.findMany({
               where: { date: dates },
-              select: { id: true, folio: true, sector: true, date: true, type: { select: { name: true } } },
+              select: { id: true, folio: true, address: true, date: true, type: { select: { name: true } } },
               orderBy: [{ date: "desc" }, { id: "desc" }],
               take: 4,
             }),

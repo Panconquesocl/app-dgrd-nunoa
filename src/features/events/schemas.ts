@@ -2,7 +2,11 @@ import { z } from "zod"
 const fields = {
   typeId: z.cuid("Selecciona un tipo de evento válido."),
   date: z.iso.date("Indica una fecha válida."),
-  sector: z.string().trim().min(1, "Indica el sector.").max(500, "El sector no puede superar los 500 caracteres."),
+  address: z
+    .string("Indica la dirección.")
+    .trim()
+    .min(1, "Indica la dirección.")
+    .max(500, "La dirección no puede superar los 500 caracteres."),
   affectedCount: z
     .number()
     .int("Indica una cantidad entera.")
@@ -43,7 +47,7 @@ export type EventItem = {
   typeId: string
   type: { id: string; name: string }
   date: string
-  sector: string
+  address: string
   affectedCount: number | null
   institutions: string
   actions: string

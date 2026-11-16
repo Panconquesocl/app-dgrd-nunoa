@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
 import { deliveryBreadcrumbs } from "./breadcrumbs"
-const event = { id: "evento", folio: "EV-2026-001", sector: "Sector", type: { name: "Incendio" } }
+const event = { id: "evento", folio: "EV-2026-001", address: "Dirección de prueba", type: { name: "Incendio" } }
 const request = { id: "solicitud", folio: "SOL-2026-001", channel: "Teléfono" }
 const delivery = { folio: "ENT-2026-001", event, request }
 const admin = { events: true, requests: true }

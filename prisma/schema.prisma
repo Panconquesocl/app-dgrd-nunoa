@@ -158,7 +158,7 @@ model Event {
   id            String   @id @default(cuid())
   folio         String   @unique
   date          DateTime
-  sector        String
+  address       String
   affectedCount Int? // afectados
   institutions  String
   actions       String

@@ -108,7 +108,7 @@ export type Delivery = {
   eventId: string | null
   creator: { id: string; name: string }
   request: { id: string; folio: string; channel: string } | null
-  event: { id: string; folio: string; sector: string; type: { name: string } } | null
+  event: { id: string; folio: string; address: string; type: { name: string } } | null
   items: { supplyId: string; quantity: number; supply: { id: string; type: string; unit: string } }[]
 }
 export type DeliveryListResponse = {
@@ -116,7 +116,7 @@ export type DeliveryListResponse = {
   stats: { deliveries: number; units: number; neighborhoods: number }
 }
 export type DeliveryOptions = {
-  events: { id: string; folio: string; sector: string }[]
+  events: { id: string; folio: string; address: string }[]
   neighborhoodAssociations: { id: string; number: number; name: string; active: boolean }[]
   supplies: { id: string; type: string; unit: string }[]
   requests: {
@@ -124,7 +124,7 @@ export type DeliveryOptions = {
     folio: string
     channel: string
     delivery: { id: string } | null
-    event: { id: string; folio: string; date: string; sector: string } | null
+    event: { id: string; folio: string; date: string; address: string } | null
   }[]
 }
 export type DeliveryPayload = Omit<CreateDeliveryInput, "date"> & { date: string }

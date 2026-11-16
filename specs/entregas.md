@@ -122,9 +122,9 @@ Verificación: límites inclusivos y meses bisiestos, día de Chile frente a UTC
 
 La caja general busca por folio, beneficiario, dirección, junta (nombre o número), folio de evento y RUT completo o parcial. Para RUT se ignoran puntos, guion, espacios y mayúsculas del verificador; también se reconocen fragmentos que atraviesan el guion (por ejemplo, «6785» o «678-5» en «12.345.678-5»). No se exige un dígito verificador válido al buscar fragmentos. No se infieren identidades por nombres coincidentes.
 
-El popover de filtros mantiene el estilo existente e incorpora beneficiario (nombre parcial), RUT (completo o parcial) y evento (selector por folio y sector). Los tres se combinan con búsqueda general, fechas, junta, insumo y con/sin evento mediante AND. Una combinación contradictoria devuelve cero resultados y estadísticas en cero. La búsqueda general combina sus campos con OR. El servidor aplica los filtros y calcula estadísticas sobre el mismo resultado.
+El popover de filtros mantiene el estilo existente e incorpora beneficiario (nombre parcial), RUT (completo o parcial) y evento (selector por folio y dirección). Los tres se combinan con búsqueda general, fechas, junta, insumo y con/sin evento mediante AND. Una combinación contradictoria devuelve cero resultados y estadísticas en cero. La búsqueda general combina sus campos con OR. El servidor aplica los filtros y calcula estadísticas sobre el mismo resultado.
 
-Las opciones de evento incluyen únicamente id, folio y sector de eventos con entregas, también cuando la entrega no tiene solicitud; usuarios normales usan los permisos de lectura de entregas sin acceder al módulo administrativo de eventos. Las opciones no dependen de la búsqueda actual, de modo que un resultado vacío no impide cambiar de evento.
+Las opciones de evento incluyen únicamente id, folio y dirección de eventos con entregas, también cuando la entrega no tiene solicitud; usuarios normales usan los permisos de lectura de entregas sin acceder al módulo administrativo de eventos. Las opciones no dependen de la búsqueda actual, de modo que un resultado vacío no impide cambiar de evento.
 
 Los campos de texto consultan con el debounce existente; el botón de filtros cuenta los filtros avanzados activos. «Limpiar todo», disponible en la toolbar y el popover, restablece búsqueda, periodo, campos independientes, selecciones y orden. El menú conserva desplazamiento limitado al espacio disponible en móvil. No hay nueva migración. La búsqueda global ya está implementada; ver [Búsqueda global](./busqueda-global.md).
 
@@ -134,7 +134,7 @@ El formulario conserva encabezado y botones fijos, con desplazamiento solo en lo
 
 ## Observaciones y controles de adjuntos
 
-En revisión en `feat/entregas-observaciones-adjuntos`, pendiente de integración:
+Integrado mediante PR #43:
 
 - Observaciones es texto opcional, con un máximo de 4000 caracteres, disponible al crear y editar para ambos roles. Se quitan espacios exteriores, se conservan saltos de línea y el texto vacío se guarda como `null`. Un PATCH que omite el campo conserva su valor; `null` o vacío permiten borrarlo.
 - El detalle y el panel lateral muestran el texto con sus saltos de línea, o «Sin observaciones». No se interpreta HTML ni se modifican los criterios de búsqueda existentes.

@@ -153,20 +153,20 @@ export async function searchAll(q: string, role: string | null | undefined) {
             where: {
               OR: [
                 { folio: text },
-                { sector: text },
+                { address: text },
                 { institutions: text },
                 { actions: text },
                 { type: { name: text } },
               ],
             },
-            select: { id: true, folio: true, sector: true, date: true, type: { select: { name: true } } },
+            select: { id: true, folio: true, address: true, date: true, type: { select: { name: true } } },
             orderBy: [{ date: "desc" }, { id: "desc" }],
             take,
           })
         ).map((row) => ({
           id: row.id,
           title: row.folio,
-          description: `${row.type.name} · ${row.sector} · ${formatDate(row.date.toISOString())}`,
+          description: `${row.type.name} · ${row.address} · ${formatDate(row.date.toISOString())}`,
           href: `/eventos/${row.id}`,
         })),
     },

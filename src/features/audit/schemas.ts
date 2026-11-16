@@ -70,7 +70,7 @@ export const AUDIT_FIELDS: Record<string, string> = {
   response: "Respuesta",
   status: "Estado",
   typeId: "Tipo de evento",
-  sector: "Sector",
+  sector: "Sector (anterior)",
   affectedCount: "Personas afectadas",
   institutions: "Instituciones",
   actions: "Acciones realizadas",

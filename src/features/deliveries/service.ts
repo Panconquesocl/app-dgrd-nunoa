@@ -16,7 +16,7 @@ const include = {
   neighborhoodAssociation: { select: { id: true, number: true, name: true, active: true } },
   creator: { select: { id: true, name: true } },
   request: { select: { id: true, folio: true, channel: true } },
-  event: { select: { id: true, folio: true, sector: true, type: { select: { name: true } } } },
+  event: { select: { id: true, folio: true, address: true, type: { select: { name: true } } } },
   items: { include: { supply: { select: { id: true, type: true, unit: true } } } },
 } satisfies Prisma.DeliveryInclude
 
@@ -98,7 +98,7 @@ export async function getDeliveryOptions() {
         folio: true,
         channel: true,
         delivery: { select: { id: true } },
-        event: { select: { id: true, folio: true, date: true, sector: true } },
+        event: { select: { id: true, folio: true, date: true, address: true } },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -108,7 +108,7 @@ export async function getDeliveryOptions() {
     }),
     prisma.event.findMany({
       where: { deliveries: { some: {} } },
-      select: { id: true, folio: true, sector: true },
+      select: { id: true, folio: true, address: true },
       orderBy: [{ date: "desc" }, { id: "desc" }],
     }),
   ])

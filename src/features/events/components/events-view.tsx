@@ -38,7 +38,7 @@ export function EventsView() {
       (!type || event.typeId === type) &&
       (!from || event.date.slice(0, 10) >= from) &&
       (!to || event.date.slice(0, 10) <= to) &&
-      `${event.folio} ${event.type.name} ${event.sector}`
+      `${event.folio} ${event.type.name} ${event.address}`
         .toLocaleLowerCase("es")
         .includes(search.trim().toLocaleLowerCase("es")),
   )
@@ -66,7 +66,7 @@ export function EventsView() {
         <div className="requests-search">
           <Search size={16} aria-hidden="true" />
           <Input
-            placeholder="Buscar por folio, tipo o sector…"
+            placeholder="Buscar por folio, tipo o dirección…"
             aria-label="Buscar eventos"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -145,7 +145,7 @@ export function EventsView() {
                   <th>Folio</th>
                   <th>Tipo</th>
                   <th>Fecha</th>
-                  <th>Sector</th>
+                  <th>Dirección</th>
                   <th>Afectados</th>
                   <th>Solicitudes</th>
                   <th>Entregas</th>
@@ -179,7 +179,7 @@ export function EventsView() {
                     </td>
                     <td className="font-mono text-xs whitespace-nowrap">{formatDate(event.date)}</td>
                     <td>
-                      <span className="requests-clamp">{event.sector}</span>
+                      <span className="requests-clamp">{event.address}</span>
                     </td>
                     <td>{event.affectedCount ?? "—"}</td>
                     <td>

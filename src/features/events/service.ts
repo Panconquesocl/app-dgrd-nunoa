@@ -10,7 +10,7 @@ const select = {
   typeId: true,
   type: { select: { id: true, name: true } },
   date: true,
-  sector: true,
+  address: true,
   affectedCount: true,
   institutions: true,
   actions: true,

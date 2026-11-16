@@ -88,7 +88,7 @@ test(
         {
           typeId: type.id,
           date: "2091-06-01",
-          sector: marker,
+          address: marker,
           institutions: "",
           actions: "",
           affectedCount: null,

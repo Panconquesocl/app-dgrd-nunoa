@@ -20,7 +20,7 @@ Hay estados inicial, búsqueda en curso, sin resultados y error con reintento. C
 | Acciones estratégicas | Título, temas, implementación, número o año                                                      | Detalle de acción    |
 | Actividades           | Objetivo, dirección, participantes o título de la acción                                         | Detalle de actividad |
 | Solicitudes           | Folio, medio, descripción o respuesta                                                            | Detalle de solicitud |
-| Eventos               | Folio, sector, instituciones, acciones o tipo                                                    | Detalle de evento    |
+| Eventos               | Folio, dirección, instituciones, acciones o tipo                                                 | Detalle de evento    |
 
 Los textos no distinguen mayúsculas, manteniendo el comportamiento de los módulos actuales. El RUT usa la misma búsqueda parcial de Entregas, ignorando puntos, guion, espacios y mayúscula del verificador, incluso en fragmentos que incluyen el verificador. No se identifican personas por coincidencias de nombre ni se crean fichas nuevas de beneficiarios.
 

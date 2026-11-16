@@ -71,7 +71,7 @@ export type RequestPayload = z.input<typeof createRequestSchema>
 export type RequestPatch = z.input<typeof updateRequestSchema>
 export type ListRequestsQuery = { q?: string; event?: "all" | "with" | "without"; status?: RequestStatus }
 
-type RelatedEvent = { id: string; folio: string; sector: string }
+type RelatedEvent = { id: string; folio: string; address: string }
 
 export type RequestListItem = {
   id: string

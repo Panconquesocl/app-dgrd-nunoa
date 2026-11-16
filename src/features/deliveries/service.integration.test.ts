@@ -36,7 +36,7 @@ test(
         data: {
           folio: marker,
           date: new Date("2026-10-14"),
-          sector: marker,
+          address: marker,
           institutions: "Test",
           actions: "Test",
           typeId: type.id,
@@ -94,7 +94,7 @@ test(
         data: {
           folio: `${marker}-other`,
           date: new Date("2026-10-15"),
-          sector: marker,
+          address: marker,
           institutions: "",
           actions: "",
           typeId: type.id,
@@ -176,7 +176,7 @@ test(
       assert.equal(options.requests.find((row) => row.id === request.id)?.delivery?.id, delivery.id)
       const eventOption = options.events.find((row) => row.id === event.id)
       assert.ok(eventOption)
-      assert.deepEqual(Object.keys(eventOption).sort(), ["folio", "id", "sector"])
+      assert.deepEqual(Object.keys(eventOption).sort(), ["address", "folio", "id"])
       for (const term of ["12.345.678-5", "123456785", "345.678", "678-5", "6785"]) {
         assert.deepEqual(
           (await listDeliveries({ q: term, beneficiary: marker.toUpperCase() })).data.map((row) => row.id),

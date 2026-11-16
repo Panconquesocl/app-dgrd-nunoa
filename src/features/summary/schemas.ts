@@ -65,6 +65,6 @@ export type SummaryData = {
   }
   events?: {
     count: number
-    recent: { id: string; folio: string; sector: string; date: string; type: { name: string } }[]
+    recent: { id: string; folio: string; address: string; date: string; type: { name: string } }[]
   }
 }

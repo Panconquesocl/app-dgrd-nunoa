@@ -403,7 +403,7 @@ export function SummaryView({ initialYear, viewerKey }: { initialYear: number; v
                       accent
                       href={`/eventos/${event.id}`}
                       icon={<Siren size={16} />}
-                      title={event.sector}
+                      title={event.address}
                       meta={
                         <>
                           <span className="font-mono">{event.folio}</span> · {event.type.name} ·{" "}
