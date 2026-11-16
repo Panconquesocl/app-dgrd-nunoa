@@ -25,6 +25,7 @@ import type { StrategicActionActivity, StrategicActionDetail } from "../schemas"
 import { useStrategicAction } from "../queries"
 import { DeleteActionDialog, type DeletableAction } from "./delete-action-dialog"
 import { StrategicActionFormDialog } from "./strategic-action-form-dialog"
+import "@/features/deliveries/components/deliveries.css"
 
 type Props = {
   id: string
@@ -49,7 +50,7 @@ export function StrategicActionDetailView({ id, user }: Props) {
         user={user}
       />
 
-      <div className="mx-auto flex w-full max-w-[1200px] flex-col px-5 py-6 sm:px-7">
+      <div className="delivery-page flex flex-col">
         <Link
           href="/plan/acciones"
           className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex w-fit items-center gap-1.5 rounded-sm text-[13px] focus-visible:ring-2 focus-visible:outline-none"
@@ -80,7 +81,7 @@ export function StrategicActionDetailView({ id, user }: Props) {
               }
             />
 
-            <div className="mt-6 grid items-start gap-5 lg:grid-cols-[1.15fr_1fr]">
+            <div className="mt-6 grid grid-cols-1 items-start gap-5 lg:grid-cols-[1.15fr_1fr]">
               <ActivitiesCard
                 activities={action.activities}
                 onCreate={canCreateActivity ? () => setActivityForm(true) : undefined}
@@ -171,8 +172,8 @@ function pluralizeDays(days: number) {
 
 function ActivitiesCard({ activities, onCreate }: { activities: StrategicActionActivity[]; onCreate?: () => void }) {
   return (
-    <section className="bg-surface rounded-xl border">
-      <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
+    <section className="bg-surface min-w-0 rounded-xl border">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4">
         <h2 className="flex items-center gap-2 text-[15px] font-semibold">
           <ActivityIcon aria-hidden="true" className="text-muted-foreground size-4" />
           Actividades
@@ -207,7 +208,7 @@ function ActivitiesCard({ activities, onCreate }: { activities: StrategicActionA
 
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13.5px] font-medium">{activity.objective}</p>
-                  <p className="text-muted-foreground mt-1 flex items-center gap-2 text-[12px]">
+                  <p className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-[12px]">
                     <span className="shrink-0 font-mono whitespace-nowrap">{formatDate(activity.date)}</span>
                     <span aria-hidden="true">·</span>
                     <span className="flex min-w-0 items-center gap-1">
@@ -272,7 +273,7 @@ function DetailSkeleton() {
         <Skeleton className="h-8 w-[520px] max-w-full" />
         <Skeleton className="h-4 w-64" />
       </div>
-      <div className="grid gap-5 lg:grid-cols-[1.15fr_1fr]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.15fr_1fr]">
         <Skeleton className="h-64 w-full rounded-xl" />
         <Skeleton className="h-80 w-full rounded-xl" />
       </div>

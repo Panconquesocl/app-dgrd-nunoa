@@ -14,6 +14,10 @@
   html {
     @apply font-sans;
   }
+  th {
+    /* Contiene las etiquetas sr-only incluso en columnas fuera del scroll visible. */
+    @apply relative;
+  }
 }
 
 @theme inline {

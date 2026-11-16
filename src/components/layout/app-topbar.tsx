@@ -1,5 +1,4 @@
 import { ChevronRight } from "lucide-react"
-import { SignOutButton } from "@/components/auth/sign-out-button"
 import { GlobalSearch } from "@/features/search/components/global-search"
 
 export type Crumb = { label: string; current?: boolean }
@@ -50,8 +49,6 @@ export function AppTopbar({
             <span className="block text-[12.5px] font-semibold">{fullName}</span>
             <span className="text-muted-foreground block text-[11.5px]">{user.email}</span>
           </span>
-          <span aria-hidden="true" className="bg-border ml-1 h-6 w-px" />
-          <SignOutButton />
         </div>
       )}
     </header>

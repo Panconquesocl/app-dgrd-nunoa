@@ -1,10 +1,10 @@
 import type { Metadata } from "next"
 import Image from "next/image"
-import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { ShieldCheck } from "lucide-react"
 import { LoginForm } from "@/components/auth/login-form"
-import { auth } from "@/lib/auth"
+import { getSession } from "@/lib/session"
+import { safeLoginRedirect } from "@/lib/auth-redirect"
 
 export const metadata: Metadata = {
   title: "Iniciar sesión · DGRD Ñuñoa",
@@ -16,19 +16,16 @@ export const metadata: Metadata = {
  * manipulado (`?redirectTo=https://…`) no puede convertir el login en un
  * redirector abierto.
  */
-function safeRedirect(target: string | undefined) {
-  if (!target || !target.startsWith("/") || target.startsWith("//") || target.startsWith("/login")) {
-    return "/"
-  }
-  return target
-}
-
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ redirectTo?: string }> }) {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirectTo?: string | string[] }>
+}) {
   const { redirectTo } = await searchParams
-  const redirectTarget = safeRedirect(redirectTo)
+  const redirectTarget = safeLoginRedirect(redirectTo)
 
   // Si ya hay una sesión válida en la base de datos, no tiene sentido el login.
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession()
   if (session) {
     redirect(redirectTarget)
   }

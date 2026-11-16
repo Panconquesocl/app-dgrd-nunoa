@@ -25,6 +25,7 @@
   color: #805b17;
 }
 .events-type {
+  max-width: 100%;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -37,6 +38,7 @@
   color: var(--muted-foreground);
 }
 .events-type::before {
+  flex-shrink: 0;
   content: "";
   width: 6px;
   height: 6px;

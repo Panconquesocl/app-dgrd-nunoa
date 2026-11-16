@@ -11,5 +11,9 @@ export function EventTypeBadge({ name }: { name: string }) {
           : n.includes("social")
             ? "yellow"
             : "neutral"
-  return <span className={`events-type events-type-${tone}`}>{name}</span>
+  return (
+    <span className={`events-type events-type-${tone}`} title={name}>
+      <span className="min-w-0 truncate">{name}</span>
+    </span>
+  )
 }

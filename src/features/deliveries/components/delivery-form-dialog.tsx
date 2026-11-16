@@ -141,7 +141,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
           if (pending) event.preventDefault()
         }}
       >
-        <DialogHeader className="shrink-0 border-b px-6 py-5 text-left">
+        <DialogHeader className="shrink-0 border-b px-4 py-4 text-left sm:px-6 sm:py-5">
           <DialogTitle className="flex items-center gap-3">
             <span className="delivery-icon">
               <Truck size={20} />
@@ -159,8 +159,11 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
                   : ""}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={submit} noValidate className="min-h-0 overflow-y-auto">
-          <fieldset disabled={pending} className="space-y-5 px-6 py-5 disabled:opacity-70">
+        <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <fieldset
+            disabled={pending}
+            className="min-h-0 min-w-0 flex-1 space-y-5 overflow-y-auto px-4 py-4 disabled:opacity-70 sm:px-6 sm:py-5"
+          >
             {options.isPending && <p role="status">Cargando juntas vecinales, solicitudes e insumos…</p>}
             {options.isError && (
               <div role="alert">
@@ -478,7 +481,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
               <FieldError errors={[errors.items, errors.items?.root]} />
             </div>
           </fieldset>
-          <div className="bg-muted/30 flex flex-wrap items-center justify-end gap-3 border-t px-6 py-4">
+          <div className="bg-background flex shrink-0 flex-wrap items-center justify-end gap-3 border-t px-4 py-4 sm:px-6">
             <span className="text-muted-foreground mr-auto text-xs">
               {fields.length} {fields.length === 1 ? "insumo" : "insumos"} en la entrega
             </span>

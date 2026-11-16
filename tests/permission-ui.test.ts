@@ -12,6 +12,7 @@ import type {
 import { PermissionsProvider } from "../src/providers/permissions"
 
 const file = (path: string) => pathToFileURL(resolve(path)).href
+mock.module(file("src/components/auth/sign-out-button.tsx"), { namedExports: { SignOutButton: () => null } })
 mock.module(file("src/features/deliveries/components/deliveries.css"), { namedExports: {} })
 mock.module(file("src/components/layout/app-sidebar.css"), { namedExports: {} })
 mock.module(file("src/features/activities/components/plan-tabs.tsx"), { namedExports: { PlanTabs: () => null } })

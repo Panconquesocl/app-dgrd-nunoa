@@ -11,7 +11,7 @@ Implementación de B20–B21 en `feat/permisos-por-rol`.
 | Solicitudes y eventos                    | Sin acceso al módulo; datos mínimos y selector de solicitudes desde entregas | Acceso completo               |
 | Búsqueda global                          | Consultar entregas, juntas, insumos, acciones y actividades                  | Incluye solicitudes y eventos |
 | Resumen actual                           | Consultar entregas, insumos, acciones y actividades del año                  | Acceso completo               |
-| Actividades y evidencia                  | Política preparada para CRUD de cualquier autor; módulos pendientes          | Gestión completa              |
+| Actividades y evidencia                  | Actividades: CRUD de cualquier autor; evidencia pendiente                    | Gestión completa              |
 | Usuarios y tipos de evento               | Sin administración                                                           | Gestión completa              |
 
 La auditoría (`audit:read`) es exclusiva de administradores. La página `/admin/auditoria` y sus rutas GET aplican guard propio; no se exponen operaciones de edición o borrado del historial. Los servicios de escritura reciben la identidad de sesión para registrar quién realizó cada cambio, incluyendo los de registros ajenos. Ver [Auditoría](./auditoria.md).
