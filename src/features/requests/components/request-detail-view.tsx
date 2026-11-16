@@ -27,6 +27,7 @@ import { RequestStatusBadge } from "./request-status-badge"
 import "@/features/deliveries/components/deliveries.css"
 import "./requests.css"
 import { EventFormDialog } from "@/features/events/components/event-form-dialog"
+import { DeliveryFormDialog } from "@/features/deliveries/components/delivery-form-dialog"
 
 export function RequestDetailView({
   id,
@@ -38,6 +39,8 @@ export function RequestDetailView({
   onClose?: () => void
 }) {
   const [creatingEvent, setCreatingEvent] = useState(false)
+  const [creatingDelivery, setCreatingDelivery] = useState(false)
+  const canCreateDelivery = usePermission("deliveries", "create")
   const canCreateEvent = usePermission("events", "create")
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -186,6 +189,12 @@ export function RequestDetailView({
               </p>
             )}
           </section>
+          {!request.delivery && canCreateDelivery && (
+            <Button className="w-full" onClick={() => setCreatingDelivery(true)}>
+              <Plus size={16} />
+              Registrar entrega
+            </Button>
+          )}
           <section className="delivery-aside">
             <h2>Registro</h2>
             <div className="requests-author">
@@ -222,6 +231,7 @@ export function RequestDetailView({
           onSaved={(event) => router.push(`/eventos/${event.id}`)}
         />
       )}
+      {creatingDelivery && <DeliveryFormDialog open onOpenChange={setCreatingDelivery} fromRequest={request} />}
       {editing && <RequestFormDialog request={request} onClose={() => setEditing(false)} />}
       {deleting && (
         <DeleteRequestDialog
