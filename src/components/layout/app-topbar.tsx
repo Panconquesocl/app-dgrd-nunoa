@@ -1,5 +1,6 @@
 import { ChevronRight } from "lucide-react"
 import { SignOutButton } from "@/components/auth/sign-out-button"
+import { GlobalSearch } from "@/features/search/components/global-search"
 
 export type Crumb = { label: string; current?: boolean }
 
@@ -23,8 +24,8 @@ export function AppTopbar({
 
   return (
     <header className="bg-surface flex h-14 shrink-0 items-center justify-between gap-4 border-b px-5 sm:px-7">
-      <nav aria-label="Ruta actual">
-        <ol className="flex items-center gap-1.5 text-[13px]">
+      <nav aria-label="Ruta actual" className="min-w-0 overflow-x-auto">
+        <ol className="flex items-center gap-1.5 text-[13px] whitespace-nowrap">
           {crumbs.map((crumb, index) => (
             <li key={crumb.label} className="flex items-center gap-1.5">
               {index > 0 && <ChevronRight aria-hidden="true" className="text-muted-foreground size-3.5" />}
@@ -40,7 +41,8 @@ export function AppTopbar({
       </nav>
 
       {user && (
-        <div className="flex items-center gap-2.5">
+        <div className="flex shrink-0 items-center gap-2.5">
+          <GlobalSearch viewerKey={user.email} />
           <span className="bg-ink flex size-8 shrink-0 items-center justify-center rounded-full text-[11.5px] font-semibold text-white">
             {initials}
           </span>

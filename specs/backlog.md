@@ -4,7 +4,7 @@
 
 1. Identificación en entregas: RUT del beneficiario obligatorio, validado y normalizado; junta vecinal opcional. Conservar históricos sin inferir identidades por nombre.
 2. Alertas: al intentar registrar una entrega, avisar si existe al menos una entrega anterior del mismo RUT en los últimos seis meses. Solo informativa, sin impedir el registro. Reemplaza la propuesta anterior de alertar al crear solicitudes por responsable.
-3. Búsqueda acordada: primero Entregas, con RUT parcial en la caja general y filtros independientes de beneficiario, RUT y evento dentro del popover, combinables con los actuales y con limpieza completa. Después, búsqueda global en la barra superior con resultados agrupados por módulo y acceso al detalle, respetando permisos. Cada feature se revisa en su propia rama.
+3. Búsqueda acordada: primero Entregas, con RUT parcial en la caja general y filtros independientes de beneficiario, RUT y evento dentro del popover, combinables con los actuales y con limpieza completa. Después, búsqueda global en la barra superior con resultados agrupados por módulo y acceso al detalle, respetando permisos; implementación en revisión documentada en [Búsqueda global](./busqueda-global.md). Cada feature se revisa en su propia rama.
 
 Archivos y evidencia continúan pendientes. Visualización y georreferenciación quedan fuera del alcance. Después de estos pasos se volverá a acordar con qué seguir. El resto de este documento conserva propuestas y estados históricos; este acuerdo prevalece cuando haya diferencias.
 

@@ -9,6 +9,7 @@ export const resources = [
   "activities",
   "evidence",
   "summary",
+  "search",
   "users",
   "event-types",
 ] as const
@@ -36,6 +37,7 @@ export function can(role: string | null | undefined, resource: Resource, action:
     case "neighborhood-associations":
     case "strategic-actions":
     case "summary":
+    case "search":
       return action === "read"
     default:
       return false
