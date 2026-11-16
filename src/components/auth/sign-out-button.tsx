@@ -39,7 +39,7 @@ export function SignOutButton() {
       disabled={isPending}
       aria-label={isPending ? "Cerrando sesión" : "Cerrar sesión"}
       title={isPending ? "Cerrando sesión" : "Cerrar sesión"}
-      className="app-sidebar-toggle disabled:cursor-wait disabled:opacity-60"
+      className="text-destructive hover:bg-destructive/10 focus-visible:ring-ring flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
     >
       <LogOut className="size-[18px] shrink-0" aria-hidden="true" />
       <span>{isPending ? "Cerrando…" : "Cerrar sesión"}</span>

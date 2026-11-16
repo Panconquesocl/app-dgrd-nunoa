@@ -1,55 +1,54 @@
 import { ChevronRight } from "lucide-react"
+import Link from "next/link"
 import { GlobalSearch } from "@/features/search/components/global-search"
+import { UserMenu } from "@/components/auth/user-menu"
 
-export type Crumb = { label: string; current?: boolean }
+export type Crumb = { label: string; href?: string; current?: boolean }
+export type TopbarUser = { name: string; email: string; lastName?: string | null } | null
 
 /**
- * Barra superior de las vistas autenticadas: ruta actual a la izquierda e
+ * Barra superior fija al desplazar: ruta a la izquierda, búsqueda centrada e
  * identidad a la derecha.
  */
-export function AppTopbar({
-  crumbs,
-  user,
-}: {
-  crumbs: Crumb[]
-  user?: { name: string; email: string; lastName?: string | null } | null
-}) {
-  const fullName = user ? [user.name, user.lastName].filter(Boolean).join(" ") : ""
-  const initials = fullName
-    .split(" ")
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("")
-
+export function AppTopbar({ crumbs, user }: { crumbs: Crumb[]; user?: TopbarUser }) {
   return (
-    <header className="bg-surface flex h-14 shrink-0 items-center justify-between gap-4 border-b px-5 sm:px-7">
-      <nav aria-label="Ruta actual" className="min-w-0 overflow-x-auto">
-        <ol className="flex items-center gap-1.5 text-[13px] whitespace-nowrap">
-          {crumbs.map((crumb, index) => (
-            <li key={crumb.label} className="flex items-center gap-1.5">
-              {index > 0 && <ChevronRight aria-hidden="true" className="text-muted-foreground size-3.5" />}
-              <span
-                aria-current={crumb.current ? "page" : undefined}
-                className={crumb.current ? "font-semibold" : "text-muted-foreground"}
-              >
-                {crumb.label}
-              </span>
-            </li>
-          ))}
-        </ol>
-      </nav>
+    <header className="bg-surface sticky top-0 z-30 grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 border-b px-5 sm:gap-4 sm:px-7">
+      {crumbs.length > 0 && (
+        <nav aria-label="Ruta actual" className="col-start-1 row-start-1 min-w-0 overflow-x-auto">
+          <ol className="flex items-center gap-1.5 text-[13px] whitespace-nowrap">
+            {crumbs.map((crumb, index) => (
+              <li key={`${index}:${crumb.label}`} className="flex items-center gap-1.5">
+                {index > 0 && <ChevronRight aria-hidden="true" className="text-muted-foreground size-3.5" />}
+                {crumb.href && index < crumbs.length - 1 && !crumb.current ? (
+                  <Link
+                    href={crumb.href}
+                    className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-sm hover:underline focus-visible:ring-2 focus-visible:outline-none"
+                  >
+                    {crumb.label}
+                  </Link>
+                ) : (
+                  <span
+                    aria-current={index === crumbs.length - 1 ? "page" : undefined}
+                    className={index === crumbs.length - 1 ? "font-semibold" : "text-muted-foreground"}
+                  >
+                    {crumb.label}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )}
 
       {user && (
-        <div className="flex shrink-0 items-center gap-2.5">
-          <GlobalSearch viewerKey={user.email} />
-          <span className="bg-ink flex size-8 shrink-0 items-center justify-center rounded-full text-[11.5px] font-semibold text-white">
-            {initials}
-          </span>
-          <span className="hidden leading-tight sm:block">
-            <span className="block text-[12.5px] font-semibold">{fullName}</span>
-            <span className="text-muted-foreground block text-[11.5px]">{user.email}</span>
-          </span>
-        </div>
+        <>
+          <div className="col-start-2 row-start-1">
+            <GlobalSearch viewerKey={user.email} />
+          </div>
+          <div className="col-start-3 row-start-1 min-w-0">
+            <UserMenu user={user} />
+          </div>
+        </>
       )}
     </header>
   )

@@ -13,7 +13,7 @@ export default async function SummaryPage() {
   if (!can(session.user.role, "summary", "read")) return <AccessDenied />
   return (
     <>
-      <AppTopbar crumbs={[{ label: "General" }, { label: "Resumen", current: true }]} user={session.user} />
+      <AppTopbar crumbs={[]} user={session.user} />
       <SummaryView
         initialYear={currentSummaryYear()}
         viewerKey={`${session.user.id}:${normalizeRole(session.user.role)}`}

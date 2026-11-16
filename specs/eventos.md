@@ -44,4 +44,4 @@ Pruebas de validaciones (fecha, cantidades, opcionales), folios concurrentes y p
 
 Integración: `RUN_EVENTS_INTEGRATION=1 node --import tsx --test src/features/events/service.integration.test.ts`, únicamente con DATABASE_URL de una base temporal aislada.
 
-Revisión manual: crear un tipo en Configuración; crear y editar eventos; probar filtros y apertura lateral; crear una solicitud desde evento; crear evento desde solicitud sin evento (con y sin entrega); comprobar la advertencia de borrado y que los registros relacionados permanezcan. Repetir formularios y panel en móvil. Pendiente revisión visual del usuario antes de commit/PR.
+Revisión manual: crear un tipo en Configuración; crear y editar eventos; probar filtros y apertura lateral; crear una solicitud desde evento; crear evento desde solicitud sin evento (con y sin entrega); comprobar la advertencia de borrado y que los registros relacionados permanezcan. Repetir formularios y panel en móvil. La revisión integral integrada está documentada en [Revisión integral](./revision-integral.md).

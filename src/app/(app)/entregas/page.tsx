@@ -7,10 +7,7 @@ export default async function EntregasPage() {
   const session = await getSession()
   return (
     <>
-      <AppTopbar
-        crumbs={[{ label: "Ayudas primera respuesta" }, { label: "Entregas", current: true }]}
-        user={session?.user}
-      />
+      <AppTopbar crumbs={[]} user={session?.user} />
       <DeliveriesView />
     </>
   )

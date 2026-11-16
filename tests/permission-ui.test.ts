@@ -13,6 +13,9 @@ import { PermissionsProvider } from "../src/providers/permissions"
 
 const file = (path: string) => pathToFileURL(resolve(path)).href
 mock.module(file("src/components/auth/sign-out-button.tsx"), { namedExports: { SignOutButton: () => null } })
+mock.module(file("src/features/summary/queries.ts"), {
+  namedExports: { useNavigationCounts: () => ({ data: { deliveries: 10, requests: 4, events: 2 }, isError: false }) },
+})
 mock.module(file("src/features/deliveries/components/deliveries.css"), { namedExports: {} })
 mock.module(file("src/components/layout/app-sidebar.css"), { namedExports: {} })
 mock.module(file("src/features/activities/components/plan-tabs.tsx"), { namedExports: { PlanTabs: () => null } })
@@ -97,7 +100,7 @@ mock.module(file("src/features/events/components/events-view.tsx"), {
 })
 
 mock.module(file("src/features/events/components/event-detail-view.tsx"), {
-  namedExports: { EventDetailView: () => createElement("div", null, "RESTRICTED_CONTENT") },
+  namedExports: { EventDetailPage: () => createElement("div", null, "RESTRICTED_CONTENT") },
 })
 
 mock.module(file("src/features/audit/components/audit-view.tsx"), {
@@ -127,7 +130,7 @@ test("navegación, estados vacíos y diálogos respetan ambos roles", async () =
           createElement(TooltipProvider, null, createElement(component)),
         ),
       )
-    const nav = render(AppSidebar)
+    const nav = render(() => createElement(AppSidebar, { viewerKey: `qa:${current}` }))
     assert.equal(nav.includes('href="/solicitudes"'), current === "admin")
     assert.equal(nav.includes('href="/eventos"'), current === "admin")
     assert.equal(nav.includes('href="/admin/usuarios"'), current === "admin")

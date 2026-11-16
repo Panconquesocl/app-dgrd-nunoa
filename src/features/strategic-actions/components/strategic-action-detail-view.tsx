@@ -46,7 +46,11 @@ export function StrategicActionDetailView({ id, user }: Props) {
   return (
     <>
       <AppTopbar
-        crumbs={[{ label: "Plan RRD" }, { label: "Acciones estratégicas" }, { label: crumbLabel, current: true }]}
+        crumbs={[
+          { label: "Plan RRD" },
+          { label: "Acciones estratégicas", href: "/plan/acciones" },
+          { label: crumbLabel, current: true },
+        ]}
         user={user}
       />
 

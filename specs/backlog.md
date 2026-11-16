@@ -1,11 +1,12 @@
 # Estado y backlog del proyecto DGRD Ñuñoa
 
-Actualizado el 16 de noviembre de 2026. Estado contrastado con `main` después del PR #40. La referencia funcional y visual es `spike/test-mockup`; no se usan otras ramas históricas para definir el producto. Las correcciones de la revisión integral están en revisión en una rama independiente.
+Actualizado el 16 de noviembre de 2026. Estado contrastado con `main` después del PR #41. La referencia funcional y visual es `spike/test-mockup`; no se usan otras ramas históricas para definir el producto. La revisión integral ya está integrada. Los ajustes de navegación y contadores están en `feat/navegacion-contadores`, pendientes de integración.
 
 ## Alcance vigente
 
 - Archivos: evidencia de actividades y fotografías de entregas siguen pendientes por decisión del usuario.
 - Visualización y georreferenciación quedan fuera del alcance, incluyendo gráficos/mapas adicionales del backlog original.
+- No se implementarán importación ni mapeo de datos históricos.
 - Identificación, alerta por RUT, búsqueda por campos, búsqueda global y auditoría ya están integradas.
 - Se trabaja una feature por rama desde main, con revisión local antes de commit/PR. El usuario realiza el merge.
 
@@ -33,17 +34,23 @@ El catálogo de insumos y sus historiales están implementados sin stock ni inve
 
 ## Pendientes y exclusiones
 
-| IDs      | Estado                             | Alcance                                                                                                                                                                                       |
-| -------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| B06      | Pendiente por decisión             | Evidencia de actividades. El toggle sigue desactivado. Falta acordar almacenamiento, carga, consulta y borrado.                                                                               |
-| B26, B27 | Pendiente por decisión             | Fotografías de entregas y almacenamiento, distintas de la evidencia de actividades.                                                                                                           |
-| B28, B29 | Revisión base; archivos pendientes | Uso móvil sin archivos dentro de la revisión integral. Captura/carga de fotos no forma parte de esta etapa.                                                                                   |
-| B12      | Por definir con datos concretos    | Importaciones o mapeos de planillas históricas requieren fuentes y correspondencias revisadas; no se inventan juntas o identidades. La migración del catálogo existente ya está implementada. |
-| B13–B16  | Revisión integral actual           | Verificar flujos, permisos, escritorio/móvil, scripts reproducibles y documentación. [Informe](./revision-integral.md).                                                                       |
-| B30, B31 | Fuera del alcance                  | Visualizaciones adicionales y gráficos. Se mantiene el resumen anual ya implementado.                                                                                                         |
-| B32, B33 | Fuera del alcance                  | Georreferenciación, mapas y ubicaciones geográficas adicionales.                                                                                                                              |
+| IDs      | Estado                             | Alcance                                                                                                                     |
+| -------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| B06      | Pendiente por decisión             | Evidencia de actividades. El toggle sigue desactivado. Falta acordar almacenamiento, carga, consulta y borrado.             |
+| B26, B27 | Pendiente por decisión             | Fotografías de entregas y almacenamiento, distintas de la evidencia de actividades.                                         |
+| B28, B29 | Revisión base; archivos pendientes | Uso móvil sin archivos dentro de la revisión integral. Captura/carga de fotos no forma parte de esta etapa.                 |
+| B12      | Fuera del alcance por decisión     | No se implementarán importación ni mapeo de planillas históricas. La migración del catálogo existente ya está implementada. |
+| B13–B16  | Integrado en PR #41                | Revisión de flujos, permisos, escritorio/móvil, scripts reproducibles y documentación. [Informe](./revision-integral.md).   |
+| B30, B31 | Fuera del alcance                  | Visualizaciones adicionales y gráficos. Se mantiene el resumen anual ya implementado.                                       |
+| B32, B33 | Fuera del alcance                  | Georreferenciación, mapas y ubicaciones geográficas adicionales.                                                            |
 
-Exportaciones, importación genérica de planillas, recordatorios e inventario no están aprobados para implementación. Después de revisar esta etapa se vuelve a acordar qué sigue.
+Exportaciones, recordatorios e inventario fueron ideas por validar; no son requisitos aprobados ni funciones pendientes del spike. La importación de datos históricos está descartada.
+
+## Ajustes de paridad en revisión
+
+En `feat/navegacion-contadores` se implementan breadcrumbs navegables en detalles, contadores globales en la sidebar, topbar sticky con búsqueda centrada y cierre de sesión en el popover del usuario, eyebrows de sección y círculos de autor en registros de entrega/evento. Se unifican las acciones de tabla y el acceso por fila en juntas; el selector de solicitud en el formulario de entrega se oculta a usuarios normales. Ver [Navegación](./navegacion.md).
+
+Se conserva la confirmación actual al eliminar usuarios, sin exigir escribir el correo, y la identidad actual de la barra superior. Son decisiones de producto, no pendientes de paridad. Después de estos ajustes no hay otra funcionalidad del alcance actual identificada como pendiente aparte de los archivos pospuestos.
 
 ## Verificación reproducible
 

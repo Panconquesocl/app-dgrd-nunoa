@@ -4,15 +4,15 @@ Implementación de B20–B21 en `feat/permisos-por-rol`.
 
 ## Matriz acordada
 
-| Recurso                                  | Usuario normal                                                               | Administrador                 |
-| ---------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------- |
-| Entregas e insumos                       | Consultar, crear, editar y eliminar registros de cualquier autor             | Gestión completa              |
-| Juntas vecinales y acciones estratégicas | Consultar listados, detalles e historiales                                   | Gestión completa              |
-| Solicitudes y eventos                    | Sin acceso al módulo; datos mínimos y selector de solicitudes desde entregas | Acceso completo               |
-| Búsqueda global                          | Consultar entregas, juntas, insumos, acciones y actividades                  | Incluye solicitudes y eventos |
-| Resumen actual                           | Consultar entregas, insumos, acciones y actividades del año                  | Acceso completo               |
-| Actividades y evidencia                  | Actividades: CRUD de cualquier autor; evidencia pendiente                    | Gestión completa              |
-| Usuarios y tipos de evento               | Sin administración                                                           | Gestión completa              |
+| Recurso                                  | Usuario normal                                                                             | Administrador                 |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------- |
+| Entregas e insumos                       | Consultar, crear, editar y eliminar registros de cualquier autor                           | Gestión completa              |
+| Juntas vecinales y acciones estratégicas | Consultar listados, detalles e historiales                                                 | Gestión completa              |
+| Solicitudes y eventos                    | Sin acceso al módulo; datos mínimos relacionados desde entregas, sin selector de solicitud | Acceso completo               |
+| Búsqueda global                          | Consultar entregas, juntas, insumos, acciones y actividades                                | Incluye solicitudes y eventos |
+| Resumen actual                           | Consultar entregas, insumos, acciones y actividades del año                                | Acceso completo               |
+| Actividades y evidencia                  | Actividades: CRUD de cualquier autor; evidencia pendiente                                  | Gestión completa              |
+| Usuarios y tipos de evento               | Sin administración                                                                         | Gestión completa              |
 
 La auditoría (`audit:read`) es exclusiva de administradores. La página `/admin/auditoria` y sus rutas GET aplican guard propio; no se exponen operaciones de edición o borrado del historial. Los servicios de escritura reciben la identidad de sesión para registrar quién realizó cada cambio, incluyendo los de registros ajenos. Ver [Auditoría](./auditoria.md).
 
@@ -57,6 +57,8 @@ creación, edición, borrado o activación de juntas y acciones, incluidos los e
 vacíos. Sus formularios y diálogos de gestión no se montan. Los enlaces de consulta
 y los historiales continúan disponibles.
 
+En el formulario de entrega, el selector de solicitud y sus ayudas aparecen solo con permiso de lectura de Solicitudes (administrador). Para usuarios normales se oculta en alta y edición; el formulario omite `requestId` al guardar, conservando cualquier vínculo ya existente. No se modifican los permisos ni contratos actuales de la API de entregas.
+
 El rol de la interfaz corresponde al render del layout; el servidor vuelve a
 validarlo en cada petición. Si se retira el rol administrador con una pantalla
 abierta, la siguiente mutación restringida falla con 403 y los formularios usan
@@ -82,7 +84,7 @@ También verifican el HTML renderizado por ambos roles y el acceso directo a las
 páginas restringidas. No sustituyen la validación en navegador ni las integraciones
 PostgreSQL de cada módulo, que requieren sus flags de activación existentes.
 
-### Resultado de esta implementación
+### Resultado histórico de B20–B21
 
 - Ocho pruebas de permisos aprobadas, incluidas APIs reales con servicios
   simulados, sesión y renderizado de interfaz para ambos roles.
@@ -95,15 +97,15 @@ PostgreSQL de cada módulo, que requieren sus flags de activación existentes.
 - Las copias duplicadas de tipos generados `* 3.ts` en `.next/types` se
   preservaron fuera de `.next` para resolver el conflicto local previo de tipos;
   no se modificaron archivos versionados para esta corrección.
-- Pendiente comprobación manual en navegador con cuentas de ambos roles.
+- En esa etapa quedó pendiente la comprobación en navegador; posteriormente se verificaron ambos roles en la revisión integral del PR #41.
 
-## Trabajo posterior
+## Estado actual tras la revisión integral
 
-- Aplicar estos guards a Solicitudes, Eventos, Actividades, Evidencia y
-  administración cuando se implementen sus APIs y pantallas reales.
-- Los logs de auditoría se implementarán en B34.
+- Los guards ya protegen Solicitudes, Eventos, Actividades y administración. Evidencia sigue pospuesta, sin API de archivos implementada.
+- La auditoría B34 ya está integrada y restringida a administradores. Ver [Auditoría](./auditoria.md).
 - El resumen anual excluye solicitudes y eventos para usuarios normales, incluidas cifras y años disponibles. Ver [Resumen](./resumen.md).
-- El menú móvil y la nueva administración de cuentas no forman parte de B20–B21.
+- La administración de cuentas y la sidebar plegable ya están integradas. La revisión integral incluyó accesos por rol y anchos móviles; el bloque de validación anterior es evidencia histórica de B20–B21. Ver [Revisión integral](./revision-integral.md).
+- Los breadcrumbs y contadores de navegación respetan los permisos del módulo; no exponen enlaces ni totales de Solicitudes/Eventos a usuarios normales. Ver [Navegación](./navegacion.md).
 
 ## Búsqueda global
 

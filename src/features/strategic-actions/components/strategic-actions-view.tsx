@@ -1,6 +1,6 @@
 "use client"
 
-import { PlanTabs } from "@/features/activities/components/plan-tabs"
+import { SectionEyebrow } from "@/components/layout/section-eyebrow"
 import { usePermission } from "@/providers/permissions"
 import { useState } from "react"
 import Link from "next/link"
@@ -51,10 +51,9 @@ export function StrategicActionsView() {
 
   return (
     <div className="delivery-page flex flex-col">
-      <PlanTabs active="actions" />
-
-      <div className="mt-7 flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
+          <SectionEyebrow>Plan RRD</SectionEyebrow>
           <h1 className="text-[26px] font-semibold tracking-tight">Acciones estratégicas</h1>
           <p className="text-muted-foreground mt-1 text-[13.5px]">
             Objetivos del Plan de Reducción del Riesgo de Desastres y las actividades que derivan de ellos.

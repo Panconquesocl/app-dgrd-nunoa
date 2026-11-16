@@ -12,7 +12,7 @@ export default async function Page() {
   if (!can(session.user.role, "activities", "read")) return <AccessDenied />
   return (
     <>
-      <AppTopbar crumbs={[{ label: "Plan RRD" }, { label: "Cronograma", current: true }]} user={session.user} />
+      <AppTopbar crumbs={[]} user={session.user} />
       <ScheduleView />
     </>
   )

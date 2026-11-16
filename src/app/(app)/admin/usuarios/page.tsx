@@ -13,7 +13,7 @@ export default async function UsersPage() {
   if (!can(session.user.role, "users", "read")) return <AccessDenied />
   return (
     <>
-      <AppTopbar crumbs={[{ label: "Administración" }, { label: "Usuarios", current: true }]} user={session.user} />
+      <AppTopbar crumbs={[]} user={session.user} />
       <UsersView meId={session.user.id} domain={allowedUserDomain()} />
     </>
   )

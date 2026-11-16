@@ -209,20 +209,6 @@
   min-width: 120px;
   overflow-wrap: anywhere;
 }
-.requests-row-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 2px;
-}
-@media (hover: hover) and (pointer: fine) {
-  .requests-row-actions {
-    opacity: 0;
-  }
-  .requests-table tr:hover .requests-row-actions,
-  .requests-table tr:focus-within .requests-row-actions {
-    opacity: 1;
-  }
-}
 .requests-status,
 .requests-event {
   display: inline-flex;

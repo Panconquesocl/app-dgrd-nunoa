@@ -3,7 +3,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Box, Eye, Pencil, Plus, Search, Trash2 } from "lucide-react"
-import { AidTabs } from "@/components/layout/aid-tabs"
+import { SectionEyebrow } from "@/components/layout/section-eyebrow"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -22,9 +22,9 @@ export function SuppliesView() {
   const router = useRouter()
   return (
     <div className="deliveries delivery-page">
-      <AidTabs active="supplies" />
       <div className="delivery-page-head">
         <div>
+          <SectionEyebrow>Ayudas primera respuesta</SectionEyebrow>
           <h1>Insumos</h1>
           <p>Catálogo de insumos disponibles para registrar en las entregas. No maneja stock.</p>
         </div>
@@ -109,7 +109,7 @@ export function SuppliesView() {
                       {supply._count.items ? <span className="delivery-count">{supply._count.items}</span> : "—"}
                     </td>
                     <td onClick={(event) => event.stopPropagation()}>
-                      <div className="flex justify-end gap-1">
+                      <div className="delivery-row-actions">
                         <Button variant="ghost" size="icon" asChild>
                           <Link
                             href={`/insumos/${supply.id}`}

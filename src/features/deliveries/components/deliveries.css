@@ -207,6 +207,20 @@
 .delivery-table tbody tr:hover {
   background: color-mix(in srgb, var(--background) 55%, transparent);
 }
+.delivery-row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .delivery-table .delivery-row-actions {
+    opacity: 0;
+  }
+  .delivery-table tr:hover .delivery-row-actions,
+  .delivery-table tr:focus-within .delivery-row-actions {
+    opacity: 1;
+  }
+}
 .delivery-badge {
   display: inline-flex;
   align-items: center;

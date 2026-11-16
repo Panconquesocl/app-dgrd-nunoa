@@ -94,6 +94,7 @@ herencia del evento, sustitución de ítems y altas concurrentes.
 
 ## Integraciones implementadas
 
+- El selector de solicitud en el formulario se muestra solo a administradores. Usuarios normales crean sin selector y editan sin enviar cambios de solicitud, conservando las relaciones existentes.
 - CRUD de solicitudes, eventos e insumos.
 - Crear entregas desde las páginas de solicitud y evento, con contexto precargado.
 - Mostrar entregas en los detalles de solicitudes y eventos y en el resumen.
@@ -125,7 +126,7 @@ El popover de filtros mantiene el estilo existente e incorpora beneficiario (nom
 
 Las opciones de evento incluyen únicamente id, folio y sector de eventos con entregas, también cuando la entrega no tiene solicitud; usuarios normales usan los permisos de lectura de entregas sin acceder al módulo administrativo de eventos. Las opciones no dependen de la búsqueda actual, de modo que un resultado vacío no impide cambiar de evento.
 
-Los campos de texto consultan con el debounce existente; el botón de filtros cuenta los filtros avanzados activos. «Limpiar todo», disponible en la toolbar y el popover, restablece búsqueda, periodo, campos independientes, selecciones y orden. El menú conserva desplazamiento limitado al espacio disponible en móvil. No hay nueva migración. La búsqueda global se implementará en otra rama tras revisar esta feature.
+Los campos de texto consultan con el debounce existente; el botón de filtros cuenta los filtros avanzados activos. «Limpiar todo», disponible en la toolbar y el popover, restablece búsqueda, periodo, campos independientes, selecciones y orden. El menú conserva desplazamiento limitado al espacio disponible en móvil. No hay nueva migración. La búsqueda global ya está implementada; ver [Búsqueda global](./busqueda-global.md).
 
 ## Revisión integral
 

@@ -14,7 +14,7 @@ export default async function SolicitudesPage() {
   if (!can(session.user.role, "requests", "read")) return <AccessDenied />
   return (
     <>
-      <AppTopbar crumbs={[{ label: "Emergencias" }, { label: "Solicitudes", current: true }]} user={session.user} />
+      <AppTopbar crumbs={[]} user={session.user} />
       <RequestsView />
     </>
   )

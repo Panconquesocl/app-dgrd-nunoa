@@ -12,10 +12,7 @@ export default async function ConfigurationPage() {
   if (!can(session.user.role, "event-types", "read")) return <AccessDenied />
   return (
     <>
-      <AppTopbar
-        crumbs={[{ label: "Administración" }, { label: "Configuración", current: true }]}
-        user={session.user}
-      />
+      <AppTopbar crumbs={[]} user={session.user} />
       <ConfigurationView />
     </>
   )

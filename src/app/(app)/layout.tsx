@@ -22,7 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <PermissionsProvider role={normalizeRole(session.user.role)}>
       <TooltipProvider delayDuration={200}>
         <div className="flex min-h-svh flex-1">
-          <AppSidebar />
+          <AppSidebar viewerKey={`${session.user.id}:${normalizeRole(session.user.role)}`} />
           <div className="flex min-w-0 flex-1 flex-col">{children}</div>
           <Toaster position="bottom-right" />
         </div>

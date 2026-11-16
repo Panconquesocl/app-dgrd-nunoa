@@ -6,7 +6,7 @@ import { SpikeFilterIcon } from "@/components/layout/spike-filter-icon"
 import "@/components/layout/filter-controls.css"
 import { CalendarDays, Check, Eye, Pencil, Plus, Search, Trash2, Truck, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { AidTabs } from "@/components/layout/aid-tabs"
+import { SectionEyebrow } from "@/components/layout/section-eyebrow"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -98,9 +98,9 @@ export function DeliveriesView() {
   }
   return (
     <div className="deliveries delivery-page">
-      <AidTabs active="deliveries" />
       <div className="delivery-page-head">
         <div>
+          <SectionEyebrow>Ayudas primera respuesta</SectionEyebrow>
           <h1>Entregas</h1>
           <p>Todas las entregas de insumos registradas. Acota por periodo y afina con filtros avanzados.</p>
         </div>
@@ -476,7 +476,7 @@ export function DeliveriesView() {
                       </span>
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
-                      <div className="flex justify-end gap-1">
+                      <div className="delivery-row-actions">
                         <Button
                           variant="ghost"
                           size="icon"

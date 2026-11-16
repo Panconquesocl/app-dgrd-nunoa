@@ -55,7 +55,8 @@ neighborhoodAssociation NeighborhoodAssociation @relation(
   creación, edición y borrado.
 - `/juntas-vecinales/[id]`: historial con filtros por periodo e insumo, orden por
   fecha, desglose por insumo/unidad y enlaces a las entregas. Ver B24–B25 abajo.
-- Navegación en barra lateral y pestañas de Ayudas primera respuesta.
+- Navegación desde la barra lateral; eyebrow «Ayudas primera respuesta» sobre el título, sin pestañas entre módulos.
+- El clic en cualquier celda de la fila abre el detalle de la junta. El nombre y el ojo conservan sus enlaces; Editar y Eliminar detienen la propagación y abren únicamente sus diálogos.
 - Enlaces desde el listado y el detalle de entregas hacia la junta.
 
 ```text

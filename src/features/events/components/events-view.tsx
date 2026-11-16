@@ -189,7 +189,7 @@ export function EventsView() {
                       <span className="delivery-count">{event._count.deliveries}</span>
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
-                      <div className="requests-row-actions">
+                      <div className="delivery-row-actions">
                         <Button
                           variant="ghost"
                           size="icon"

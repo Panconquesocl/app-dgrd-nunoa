@@ -16,4 +16,4 @@ Aplicar en la base de revisión con `pnpm exec prisma migrate deploy`. No requie
 
 Validación: pruebas de nombres, unicidad concurrente, renombrado visible desde evento, conteo, borrado permitido y bloqueado; rutas reales con 401/403 antes de consultar o parsear. Integración solo contra una base aislada con `RUN_EVENT_TYPE_INTEGRATION=1` y `DATABASE_URL` de pruebas.
 
-Revisión manual: abrir Configuración como administrador, crear un tipo, buscarlo, renombrarlo y borrarlo. Comprobar duplicados con mayúsculas/espacios y el bloqueo de un tipo en uso. Verificar formulario, tabla y diálogos en móvil. La gestión de eventos se implementará en la siguiente feature; el contador ya consulta los eventos existentes.
+Revisión manual: abrir Configuración como administrador, crear un tipo, buscarlo, renombrarlo y borrarlo. Comprobar duplicados con mayúsculas/espacios y el bloqueo de un tipo en uso. Verificar formulario, tabla y diálogos en móvil. La gestión de eventos ya está implementada; ver [Eventos](./eventos.md).

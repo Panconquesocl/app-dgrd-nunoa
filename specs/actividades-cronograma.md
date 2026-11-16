@@ -14,7 +14,7 @@ No se corrigen ni borran datos históricos fuera de periodo. Una actividad hist�
 
 ## Interfaz
 
-- Acciones estratégicas y Cronograma tienen accesos separados y pestañas en Plan RRD.
+- Acciones estratégicas y Cronograma tienen accesos separados en la sidebar y eyebrow «Plan RRD», sin pestañas de navegación entre módulos.
 - Nueva actividad desde el detalle de la acción o desde el cronograma. Edición, detalle y eliminación desde `/plan/actividades/[id]`.
 - Formulario con encabezado y botones fijos, solo los campos desplazan; fecha con límites visibles según acción seleccionada.
 - `/plan/cronograma`: selector de año, barras amarillas del periodo de acción, puntos y agrupaciones de actividades cercanas, leyenda, marca Hoy y enlaces a acciones/actividades. Vista alternativa de agenda agrupada por mes. Se conserva la estructura visual del spike, sin controles de evidencia.

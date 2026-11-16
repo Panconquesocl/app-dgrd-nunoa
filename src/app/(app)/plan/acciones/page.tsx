@@ -13,10 +13,7 @@ export default async function StrategicActionsPage() {
 
   return (
     <>
-      <AppTopbar
-        crumbs={[{ label: "Plan RRD" }, { label: "Acciones estratégicas", current: true }]}
-        user={session?.user}
-      />
+      <AppTopbar crumbs={[]} user={session?.user} />
       <StrategicActionsView />
     </>
   )

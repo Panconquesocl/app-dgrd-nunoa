@@ -10,7 +10,7 @@ export default async function AuditPage() {
   if (!can(session.user.role, "audit", "read")) return <AccessDenied />
   return (
     <>
-      <AppTopbar crumbs={[{ label: "Administración" }, { label: "Auditoría", current: true }]} user={session.user} />
+      <AppTopbar crumbs={[]} user={session.user} />
       <AuditView viewerKey={`${session.user.id}:${session.user.role}`} />
     </>
   )
