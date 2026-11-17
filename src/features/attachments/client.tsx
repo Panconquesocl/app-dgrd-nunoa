@@ -16,6 +16,8 @@ import {
   AlertDialogAction,
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog"
+import { CameraCapture } from "./camera-capture"
+import { LocalPhotoPreview } from "./local-photo-preview"
 import { usePermission } from "@/providers/permissions"
 import {
   type UploadTicket,
@@ -103,11 +105,13 @@ export function FilePicker({
   onChange,
   existing = 0,
   disabled = false,
+  camera = false,
 }: {
   kind: Kind
   files: File[]
   onChange: (files: File[]) => void
   existing?: number
+  camera?: boolean
   disabled?: boolean
 }) {
   const id = useId()
@@ -213,6 +217,9 @@ export function FilePicker({
           · 25 MB por archivo
         </span>
       </button>
+      {kind === "photo" && camera && (
+        <CameraCapture key={String(blocked)} disabled={blocked} onCapture={(file) => ingest([file])} />
+      )}
       <p role="status" className="sr-only">
         {files.length
           ? `${files.length} ${files.length === 1 ? "archivo seleccionado" : "archivos seleccionados"}`
@@ -222,7 +229,11 @@ export function FilePicker({
         <ul className="space-y-1">
           {files.map((file, index) => (
             <li className="flex items-center gap-2 rounded-lg border p-2 text-sm" key={`${file.name}-${index}`}>
-              <Paperclip size={14} />
+              {kind === "photo" && previewableImage(file.type) ? (
+                <LocalPhotoPreview file={file} />
+              ) : (
+                <Paperclip size={14} />
+              )}
               <span className="min-w-0 flex-1 truncate">
                 {file.name} · {sizeLabel(file.size)}
               </span>
@@ -533,6 +544,7 @@ export function useAttachmentDraft(resource: Owner["resource"], originalId?: str
         <FilePicker
           key={group}
           kind={group as Kind}
+          camera={resource === "deliveries" && group === "photo"}
           files={files[group as Kind] ?? []}
           existing={existing.data?.filter((f) => f.kind === group).length ?? 0}
           disabled={busy || (!!savedId && !existing.data)}
@@ -541,5 +553,11 @@ export function useAttachmentDraft(resource: Owner["resource"], originalId?: str
       ))}
     </div>
   )
-  return { savedId, finish, pickers, busy }
+  return {
+    savedId,
+    finish,
+    pickers,
+    busy,
+    hasPendingFiles: Object.values(files).some((items) => Boolean(items?.length)),
+  }
 }
