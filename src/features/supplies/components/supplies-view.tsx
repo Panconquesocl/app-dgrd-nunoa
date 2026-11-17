@@ -24,7 +24,7 @@ export function SuppliesView() {
     <div className="deliveries delivery-page">
       <div className="delivery-page-head">
         <div>
-          <SectionEyebrow>Configuración</SectionEyebrow>
+          <SectionEyebrow>Catálogo</SectionEyebrow>
           <h1>Insumos</h1>
           <p>Catálogo de insumos disponibles para registrar en las entregas. No maneja stock.</p>
         </div>

@@ -19,7 +19,7 @@ export function SupplyDetailPage({ id, user }: { id: string; user?: TopbarUser }
       <AppTopbar
         user={user}
         crumbs={[
-          { label: "Configuración", href: "/admin/configuracion" },
+          { label: "Catálogo", href: "/catalogo" },
           { label: "Insumos", href: "/insumos" },
           { label: query.data?.type ?? "Insumo", current: true },
         ]}
@@ -62,7 +62,7 @@ export function SupplyDetailView({ id }: { id: string }) {
       </Link>
       <div className="delivery-page-head">
         <div>
-          <span className="delivery-eyebrow">Configuración · Insumo</span>
+          <span className="delivery-eyebrow">Catálogo · Insumo</span>
           <h1 className="break-words">{supply.type}</h1>
           <p>
             Unidad: <span className="delivery-badge">{supply.unit}</span>

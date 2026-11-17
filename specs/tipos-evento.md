@@ -2,7 +2,7 @@
 
 Rama creada desde main. Referencia funcional y visual: Configuración de `spike/test-mockup`.
 
-Solo administradores pueden consultar y gestionar `/api/event-types` (GET/POST) y `/api/event-types/[id]` (PATCH/DELETE). Configuración (`/admin/configuracion`) también sirve de entrada a Insumos y Juntas vecinales para usuarios normales, según sus permisos previos; para ellos no se monta ni consulta Tipos de evento.
+Solo administradores pueden consultar y gestionar `/api/event-types` (GET/POST) y `/api/event-types/[id]` (PATCH/DELETE). Catálogo (`/catalogo`) también sirve de entrada a Insumos y Juntas vecinales para usuarios normales, según sus permisos previos; para ellos no se monta ni consulta Tipos de evento.
 
 El nombre es obligatorio, de hasta 200 caracteres. Se recortan espacios al inicio/final y se conserva la escritura elegida. Un índice funcional `lower(btrim(name))` garantiza unicidad incluso en altas o ediciones concurrentes. Renombrar conserva el id y actualiza el nombre mostrado por los eventos relacionados. La pantalla incluye búsqueda local y conteo de eventos por tipo.
 
@@ -16,4 +16,6 @@ Aplicar en la base de revisión con `pnpm exec prisma migrate deploy`. No requie
 
 Validación: pruebas de nombres, unicidad concurrente, renombrado visible desde evento, conteo, borrado permitido y bloqueado; rutas reales con 401/403 antes de consultar o parsear. Integración solo contra una base aislada con `RUN_EVENT_TYPE_INTEGRATION=1` y `DATABASE_URL` de pruebas.
 
-Revisión manual: abrir Configuración como administrador, crear un tipo, buscarlo, renombrarlo y borrarlo. Comprobar duplicados con mayúsculas/espacios y el bloqueo de un tipo en uso. Verificar formulario, tabla y diálogos en móvil. La gestión de eventos ya está implementada; ver [Eventos](./eventos.md).
+Revisión manual: abrir Catálogo y entrar a Tipos de evento como administrador, crear un tipo, buscarlo, renombrarlo y borrarlo. Comprobar duplicados con mayúsculas/espacios y el bloqueo de un tipo en uso. Verificar formulario, tabla y diálogos en móvil. La gestión de eventos ya está implementada; ver [Eventos](./eventos.md).
+
+La gestión tiene una vista propia en `/tipos-evento`, accesible desde la tarjeta de Catálogo. La portada `/catalogo` no monta ni consulta este listado.
