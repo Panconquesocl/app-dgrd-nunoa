@@ -18,11 +18,24 @@ mock.module(file("src/features/summary/queries.ts"), {
 })
 mock.module(file("src/features/deliveries/components/deliveries.css"), { namedExports: {} })
 mock.module(file("src/components/layout/app-sidebar.css"), { namedExports: {} })
+mock.module(file("src/features/event-types/components/configuration.css"), { namedExports: {} })
+mock.module(file("src/features/event-types/queries.ts"), {
+  namedExports: {
+    useEventTypes: () => {
+      eventTypeReads++
+      return { data: { data: [] }, isPending: false, isFetching: false, isError: false }
+    },
+    useSaveEventType: () => ({}),
+    useDeleteEventType: () => ({}),
+  },
+})
+
 mock.module(file("src/features/activities/components/plan-tabs.tsx"), { namedExports: { PlanTabs: () => null } })
 mock.module(file("src/features/activities/components/activity-form-dialog.tsx"), {
   namedExports: { ActivityFormDialog: () => createElement("div", null, "ACTIVITY_DIALOG") },
 })
 let role: string | null = "user"
+let eventTypeReads = 0
 let populated = false
 const association = {
   id: "junta",
@@ -135,12 +148,42 @@ test("navegación, estados vacíos y diálogos respetan ambos roles", async () =
     assert.equal(nav.includes('href="/eventos"'), current === "admin")
     assert.equal(nav.includes('href="/admin/usuarios"'), current === "admin")
     assert.equal(nav.includes('href="/admin/auditoria"'), current === "admin")
-    assert.ok(nav.includes('href="/juntas-vecinales"'))
+    assert.equal(nav.includes('href="/insumos"'), false)
+    assert.equal(nav.includes('href="/juntas-vecinales"'), false)
+    assert.ok(nav.includes('href="/admin/configuracion"'))
     assert.equal(render(AssociationsView).includes("Nueva junta"), current === "admin")
     const strategic = render(StrategicActionsView)
     assert.equal(strategic.includes("Nueva acción"), current === "admin")
     assert.equal(strategic.includes("ADMIN_DIALOG"), current === "admin")
   }
+})
+
+test("Configuración conserva catálogos por rol y no consulta tipos de evento para usuarios normales", async () => {
+  const { ConfigurationView } = await import("../src/features/event-types/components/configuration-view")
+  const { default: Page } = await import("../src/app/(app)/admin/configuracion/page")
+  for (const current of ["user", "admin", "unknown"]) {
+    role = current
+    eventTypeReads = 0
+    const html = renderToStaticMarkup(createElement(PermissionsProvider, { role: current }, await Page()))
+    if (current === "unknown") {
+      assert.ok(html.includes("Sin permisos"))
+      assert.equal(eventTypeReads, 0)
+      continue
+    }
+    assert.ok(html.includes('href="/insumos"'))
+    assert.ok(html.includes('href="/juntas-vecinales"'))
+    assert.equal(html.includes("Tipos de evento"), current === "admin")
+    assert.equal(eventTypeReads, current === "admin" ? 1 : 0)
+  }
+  role = null
+  await assert.rejects(Page(), /redirect/)
+  eventTypeReads = 0
+  const closed = renderToStaticMarkup(
+    createElement(PermissionsProvider, { role: "unknown" }, createElement(ConfigurationView)),
+  )
+  assert.equal(closed.includes('href="/insumos"'), false)
+  assert.equal(closed.includes('href="/juntas-vecinales"'), false)
+  assert.equal(eventTypeReads, 0)
 })
 
 test("acceso directo a solicitudes/eventos no monta contenido restringido", async () => {

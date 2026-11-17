@@ -178,6 +178,7 @@
   color: var(--muted-foreground);
   font-size: 11px;
   white-space: nowrap;
+  font-weight: 700;
 }
 .summary-badge-upcoming {
   background: var(--brand-soft);

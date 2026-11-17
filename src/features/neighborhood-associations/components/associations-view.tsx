@@ -28,7 +28,7 @@ export function AssociationsView() {
     <div className="deliveries delivery-page">
       <div className="delivery-page-head">
         <div>
-          <SectionEyebrow>Ayudas primera respuesta</SectionEyebrow>
+          <SectionEyebrow>Configuración</SectionEyebrow>
           <h1>Juntas vecinales</h1>
           <p>Catálogo de juntas vecinales y sus entregas asociadas.</p>
         </div>

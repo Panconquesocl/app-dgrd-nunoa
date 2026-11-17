@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { actions, can, resources } from "../src/lib/permissions"
+import { actions, can, canAccessConfiguration, resources } from "../src/lib/permissions"
 import { authorizeUser } from "../src/lib/authorization"
 import { AppError } from "../src/lib/api-error"
 
@@ -47,4 +47,12 @@ test("no restringe por autor y aplica el rol de cada petición", () => {
   for (const resource of ["deliveries", "supplies"] as const) {
     for (const action of actions) assert.equal(authorizeUser(user, resource, action), user)
   }
+})
+
+test("Configuración permite consultar los catálogos existentes sin ampliar permisos de administración", () => {
+  for (const role of ["admin", "regular", "user", null, undefined, ""]) assert.equal(canAccessConfiguration(role), true)
+  for (const role of ["unknown", "viewer", "ADMIN"]) assert.equal(canAccessConfiguration(role), false)
+  assert.equal(can("regular", "event-types", "read"), false)
+  assert.equal(can("regular", "neighborhood-associations", "update"), false)
+  assert.equal(can("regular", "supplies", "update"), true)
 })
