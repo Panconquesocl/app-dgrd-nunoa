@@ -4,7 +4,7 @@ Ajustes desde `main` después del PR #41, con referencia exclusiva a `spike/test
 
 ## Breadcrumbs
 
-- Resumen y todas las vistas base de los módulos (Solicitudes, Eventos, Entregas, Insumos, Juntas vecinales, Cronograma, Acciones estratégicas, Usuarios, Configuración y Auditoría) no muestran breadcrumbs. Las vistas de detalle mantienen sus breadcrumbs.
+- Resumen y todas las vistas base de los módulos (Solicitudes, Eventos, Entregas, Insumos, Juntas vecinales, Cronograma, Acciones estratégicas, Usuarios, Catálogo y Auditoría) no muestran breadcrumbs. Las vistas de detalle mantienen sus breadcrumbs.
 - La barra superior es sticky con fondo sólido; permanece visible al desplazar la página. La búsqueda queda centrada dentro del área principal, los breadcrumbs a la izquierda y la identidad a la derecha. Las columnas laterales tienen el mismo ancho para conservar el centro aunque el nombre, correo o ruta sean largos. Nombre y correo se truncan cuando no caben; en móvil se conserva el avatar y el botón de búsqueda con icono.
 - Los niveles con pantalla propia son enlaces. Las agrupaciones Plan RRD, Emergencias y Ayudas primera respuesta son texto; el último nivel también es texto con `aria-current="page"`.
 - Solicitudes, eventos y entregas muestran el folio real. Insumos y juntas muestran su nombre. Durante la carga se usa el nombre genérico del recurso, sin enlaces a entidades aún desconocidas.
@@ -17,7 +17,7 @@ Ajustes desde `main` después del PR #41, con referencia exclusiva a `spike/test
 
 ## Sidebar
 
-La navegación principal se realiza desde la sidebar. Insumos y Juntas vecinales se abren desde Configuración y muestran «Configuración» como eyebrow; Entregas conserva «Ayudas primera respuesta» y Acciones estratégicas/Cronograma muestran «Plan RRD». Se eliminan las pestañas de navegación entre esas vistas. Cronograma conserva el selector de año y las vistas de línea temporal/actividades.
+La navegación principal se realiza desde la sidebar. Insumos y Juntas vecinales se abren desde Catálogo y muestran «Catálogo» como eyebrow; Entregas conserva «Ayudas primera respuesta» y Acciones estratégicas/Cronograma muestran «Plan RRD». Se eliminan las pestañas de navegación entre esas vistas. Cronograma conserva el selector de año y las vistas de línea temporal/actividades.
 
 Solicitudes, Eventos y Entregas muestran el total global de registros, como en el spike. No dependen del año del resumen, los filtros de listados ni el estado de la solicitud. No cuentan personas ni cantidades de insumos. En cero se muestra 0; durante la carga o ante error se muestra un guion, sin inventar un cero.
 
@@ -48,8 +48,16 @@ En los listados de Solicitudes, Eventos, Entregas, Insumos y Juntas vecinales, l
 
 No se ejecutaron pruebas sobre la base operativa. La publicación del PR se realiza a solicitud del usuario; el merge queda a su cargo.
 
-## Catálogos desde Configuración (17 de noviembre de 2026)
+## Accesos a los catálogos (17 de noviembre de 2026)
 
-En `fix/resumen-iconos-sidebar`, Insumos y Juntas vecinales se retiran de la sidebar. Sus accesos están en `/admin/configuracion`, mediante tarjetas visibles según lectura del catálogo. Se conservan `/insumos`, `/juntas-vecinales`, detalles y enlaces existentes. Configuración queda activa en la sidebar también al visitar esos catálogos y sus detalles; los eyebrows y breadcrumbs de detalle reflejan Configuración. No se agregan breadcrumbs a sus rutas base.
+En `fix/resumen-iconos-sidebar`, Insumos y Juntas vecinales se retiran de la sidebar. Sus accesos están en `/catalogo`, mediante tarjetas visibles según lectura del catálogo. Se conservan `/insumos`, `/juntas-vecinales`, detalles y enlaces existentes. Catálogo queda activo en la sidebar también al visitar esos catálogos y sus detalles; los eyebrows y breadcrumbs de detalle reflejan Catálogo. No se agregan breadcrumbs a sus rutas base.
 
-Configuración queda accesible a ambos roles con permisos previos de catálogo: el usuario normal sigue gestionando insumos y consultando juntas, sin acceso a Tipos de evento, Usuarios ni Auditoría. La vista de Tipos solo se monta y consulta para quienes pueden leer ese catálogo. No se modifican los permisos de sus APIs ni las restricciones de edición de juntas. No requiere migración.
+Catálogo queda accesible a ambos roles con permisos previos de catálogo: el usuario normal sigue gestionando insumos y consultando juntas, sin acceso a Tipos de evento, Usuarios ni Auditoría. La vista de Tipos solo se monta y consulta para quienes pueden leer ese catálogo. No se modifican los permisos de sus APIs ni las restricciones de edición de juntas. No requiere migración.
+
+## Catálogo y vista de Tipos de evento
+
+En revisión local en `feat/catalogo-vistas`: `/catalogo` reúne las tarjetas de Insumos, Juntas vecinales y Tipos de evento. La tercera solo aparece para administradores. El listado y los diálogos de Tipos se trasladan a `/tipos-evento`, protegido por `event-types.read`; la portada no consulta tipos para ningún rol. La ruta anterior `/admin/configuracion` redirige a `/catalogo`.
+
+La sidebar muestra Catálogo con el icono LibraryBig (biblioteca) y permanece activa dentro de los tres catálogos. Insumos, Juntas y Tipos muestran Catálogo como eyebrow; los detalles conservan sus breadcrumbs con enlace a Catálogo. Las rutas base continúan sin breadcrumbs. No se modifican permisos de APIs ni datos, ni se requieren migraciones.
+
+Validación: 72 pruebas generales, TypeScript, ESLint, formato y build aprobados. En navegador se comprobaron ambos roles, las tarjetas y la redirección anterior, breadcrumbs y estado activo de sidebar, CRUD de tipos para administrador y bloqueo de acceso directo para usuario normal. Revisado a 1440, 390 y 320 px sin desbordamiento ni errores JavaScript.

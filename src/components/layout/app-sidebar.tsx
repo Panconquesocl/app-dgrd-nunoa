@@ -13,7 +13,7 @@ import {
   Home,
   History,
   Truck,
-  Settings,
+  LibraryBig,
   Siren,
   Target,
   Users,
@@ -80,7 +80,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Administración",
     items: [
       { href: "/admin/usuarios", label: "Usuarios", icon: Users },
-      { href: "/admin/configuracion", label: "Configuración", icon: Settings },
+      { href: "/catalogo", label: "Catálogo", icon: LibraryBig },
       { href: "/admin/auditoria", label: "Auditoría", icon: History },
     ],
   },
@@ -147,7 +147,7 @@ export function AppSidebar({ viewerKey }: { viewerKey: string }) {
                     ? canReadUsers
                     : item.href === "/admin/auditoria"
                       ? canReadAudit
-                      : item.href === "/admin/configuracion"
+                      : item.href === "/catalogo"
                         ? canConfigure
                         : true,
                 )
@@ -155,8 +155,8 @@ export function AppSidebar({ viewerKey }: { viewerKey: string }) {
                   const isActive =
                     pathname === href ||
                     pathname.startsWith(`${href}/`) ||
-                    (href === "/admin/configuracion" &&
-                      ["/insumos", "/juntas-vecinales"].some(
+                    (href === "/catalogo" &&
+                      ["/insumos", "/juntas-vecinales", "/tipos-evento"].some(
                         (path) => pathname === path || pathname.startsWith(`${path}/`),
                       ))
                   const count = countKey && !counts.isError ? counts.data?.[countKey] : undefined

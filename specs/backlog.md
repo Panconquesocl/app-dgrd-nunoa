@@ -95,3 +95,5 @@ Se implementan en ramas separadas para revisión antes de commit/PR:
 4. **Resumen y sidebar** — en revisión local en `fix/resumen-iconos-sidebar`: clases de iconos corregidas para restaurar fondos y esquinas redondeadas; badges en negrita y camión en el acceso Entregas. Incluye el traslado de Insumos y Juntas a tarjetas de Configuración, accesibles según permisos existentes para ambos roles.
 
 La limpieza periódica continúa pospuesta.
+
+En revisión local en `feat/catalogo-vistas`: Configuración pasa a Catálogo; Tipos de evento se separa en una vista propia con acceso desde una tarjeta, como Insumos y Juntas. Se actualizan navegación, breadcrumbs y eyebrows.

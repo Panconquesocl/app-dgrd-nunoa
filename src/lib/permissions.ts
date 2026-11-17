@@ -45,7 +45,7 @@ export function can(role: string | null | undefined, resource: Resource, action:
   }
 }
 
-/** Configuración es la entrada a los catálogos que cada rol ya puede consultar. */
+/** Catálogo es la entrada a los catálogos que cada rol ya puede consultar. */
 export function canAccessConfiguration(role: string | null | undefined): boolean {
   return (["supplies", "neighborhood-associations", "event-types"] as const).some((resource) =>
     can(role, resource, "read"),

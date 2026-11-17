@@ -166,8 +166,8 @@ export function EventFormDialog({
                               No se pudieron cargar los tipos. Reintentar
                             </button>
                           ) : types.data?.data.length === 0 ? (
-                            <Link href="/admin/configuracion" className="underline">
-                              Registra primero un tipo en Configuración.
+                            <Link href="/tipos-evento" className="underline">
+                              Registra primero un tipo en Tipos de evento.
                             </Link>
                           ) : (
                             "Selecciona el tipo de emergencia."

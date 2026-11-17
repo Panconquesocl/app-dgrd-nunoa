@@ -1,9 +1,8 @@
 "use client"
-import Link from "next/link"
 import { useId, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertTriangle, ArrowRight, Box, Pencil, Plus, Search, Siren, Trash2, Users } from "lucide-react"
+import { AlertTriangle, Pencil, Plus, Search, Siren, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,56 +26,7 @@ import { useDeleteEventType, useEventTypes, useSaveEventType } from "../queries"
 import "@/features/deliveries/components/deliveries.css"
 import "./configuration.css"
 
-export function ConfigurationView() {
-  const canReadSupplies = usePermission("supplies", "read")
-  const canReadAssociations = usePermission("neighborhood-associations", "read")
-  const canReadTypes = usePermission("event-types", "read")
-  const canManageAssociations = usePermission("neighborhood-associations", "update")
-  return (
-    <div className="configuration deliveries delivery-page">
-      <div className="delivery-page-head">
-        <div>
-          <span className="configuration-eyebrow">Administración</span>
-          <h1>Configuración</h1>
-          <p>Accede a los catálogos del sistema.</p>
-        </div>
-      </div>
-      <section className="configuration-catalogs" aria-label="Catálogos">
-        {canReadSupplies && (
-          <Link href="/insumos" className="configuration-catalog">
-            <span className="configuration-icon">
-              <Box size={22} aria-hidden="true" />
-            </span>
-            <span className="configuration-catalog-main">
-              <strong>Insumos</strong>
-              <span>Gestiona los insumos y sus unidades de medida.</span>
-            </span>
-            <ArrowRight size={17} aria-hidden="true" />
-          </Link>
-        )}
-        {canReadAssociations && (
-          <Link href="/juntas-vecinales" className="configuration-catalog">
-            <span className="configuration-icon">
-              <Users size={22} aria-hidden="true" />
-            </span>
-            <span className="configuration-catalog-main">
-              <strong>Juntas vecinales</strong>
-              <span>
-                {canManageAssociations
-                  ? "Gestiona las juntas vecinales y consulta sus entregas."
-                  : "Consulta las juntas vecinales y sus entregas."}
-              </span>
-            </span>
-            <ArrowRight size={17} aria-hidden="true" />
-          </Link>
-        )}
-      </section>
-      {canReadTypes && <EventTypesCatalog />}
-    </div>
-  )
-}
-
-function EventTypesCatalog() {
+export function EventTypesView() {
   const query = useEventTypes()
   const [search, setSearch] = useState("")
   const [form, setForm] = useState<{ item?: EventTypeItem } | null>(null)
@@ -88,7 +38,14 @@ function EventTypesCatalog() {
     item.name.toLocaleLowerCase("es").includes(search.trim().toLocaleLowerCase("es")),
   )
   return (
-    <div className="configuration-types">
+    <div className="configuration deliveries delivery-page">
+      <div className="delivery-page-head">
+        <div>
+          <span className="configuration-eyebrow">Catálogo</span>
+          <h1>Tipos de evento</h1>
+          <p>Gestiona la clasificación de los eventos.</p>
+        </div>
+      </div>
       <div className="configuration-toolbar">
         <div className="configuration-search">
           <Search size={16} aria-hidden="true" />

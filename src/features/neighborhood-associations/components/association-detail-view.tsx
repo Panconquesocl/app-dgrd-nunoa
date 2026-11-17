@@ -25,7 +25,7 @@ export function AssociationDetailPage({ id, user }: { id: string; user?: TopbarU
       <AppTopbar
         user={user}
         crumbs={[
-          { label: "Configuración", href: "/admin/configuracion" },
+          { label: "Catálogo", href: "/catalogo" },
           { label: "Juntas vecinales", href: "/juntas-vecinales" },
           { label: query.data?.name ?? "Junta vecinal", current: true },
         ]}
