@@ -435,10 +435,12 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
                             aria-describedby={`${id}-item-${index}-error`}
                             value={value?.type ?? ""}
                             onChange={(event) => {
-                              const variants = supplies.filter((supply) => supply.type === event.target.value)
+                              const firstAvailable = supplies.find(
+                                (supply) => supply.type === event.target.value && available(supply.id),
+                              )
                               update(index, {
                                 type: event.target.value,
-                                supplyId: variants.length === 1 ? variants[0].id : "",
+                                supplyId: firstAvailable?.id ?? "",
                                 quantity: value?.quantity ?? "",
                               })
                             }}
@@ -447,6 +449,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
                             {types.map((type) => (
                               <option
                                 key={type}
+                                value={type}
                                 disabled={!supplies.some((supply) => supply.type === type && available(supply.id))}
                               >
                                 {type}
@@ -470,8 +473,18 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
                             aria-invalid={Boolean(itemErrors?.supplyId)}
                             aria-describedby={`${id}-item-${index}-error`}
                             {...form.register(`items.${index}.supplyId`)}
+                            value={value?.supplyId ?? ""}
+                            disabled={!value?.type || variants.length === 0}
                           >
-                            <option value="">Unidad…</option>
+                            {variants.length === 0 && (
+                              <option value={value?.supplyId ?? ""}>
+                                {!value?.type
+                                  ? "Selecciona un insumo"
+                                  : options.isPending
+                                    ? "Cargando unidades…"
+                                    : "Sin unidades disponibles"}
+                              </option>
+                            )}
                             {variants.map((supply) => (
                               <option key={supply.id} value={supply.id} disabled={!available(supply.id)}>
                                 {supply.unit}

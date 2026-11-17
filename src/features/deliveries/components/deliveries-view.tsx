@@ -528,13 +528,13 @@ export function DeliveriesView() {
         }}
       >
         <DialogContent
-          className="top-0 right-0 left-auto block h-svh max-w-full translate-x-0 translate-y-0 gap-0 overflow-y-auto rounded-none p-0 sm:max-w-[900px]"
+          className="bg-background top-0 right-0 left-auto block h-svh max-w-full translate-x-0 translate-y-0 gap-0 overflow-y-auto rounded-none p-0 sm:max-w-[900px]"
           onCloseAutoFocus={(e) => {
             e.preventDefault()
             focusReturn.current?.focus()
           }}
         >
-          <DialogHeader className="border-b px-6 py-5 text-left">
+          <DialogHeader className="bg-surface border-b px-6 py-5 text-left">
             <DialogTitle>Entrega</DialogTitle>
             <DialogDescription>Datos del beneficiario, insumos y registro de la entrega.</DialogDescription>
           </DialogHeader>

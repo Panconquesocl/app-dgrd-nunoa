@@ -90,8 +90,8 @@ pnpm build
 Se implementan en ramas separadas para revisión antes de commit/PR:
 
 1. **Plan RRD** — integrado en PR #48: título truncado y columnas visibles en tabla de acciones; contador de adjuntos por actividad; participantes opcionales; línea roja de Hoy más gruesa en cronograma.
-2. **Adjuntos** — en revisión local en `fix/adjuntos-selector-espanol`: selector compartido en español, borde discontinuo e icono de carga como el spike, con selección por clic/teclado y arrastre.
-3. **Entregas** — pendiente: recuperar los fondos del panel del spike y filtrar unidades según el insumo, sin placeholder «Unidad…» al seleccionarlo.
+2. **Adjuntos** — integrado en PR #49: selector compartido en español, borde discontinuo e icono de carga como el spike, con selección por clic/teclado y arrastre.
+3. **Entregas** — en revisión local en `fix/entregas-panel-unidades`: fondo gris del panel lateral con encabezado y tarjetas blancos; unidades asociadas al insumo, primera disponible seleccionada y sin placeholder «Unidad…».
 4. **Resumen y sidebar** — pendiente: fondo con esquinas redondeadas en indicador de entregas, badges con texto en negrita y camión en el acceso Entregas de la sidebar.
 
 La limpieza periódica continúa pospuesta.
