@@ -56,7 +56,7 @@ Catálogo queda accesible a ambos roles con permisos previos de catálogo: el us
 
 ## Catálogo y vista de Tipos de evento
 
-En revisión local en `feat/catalogo-vistas`: `/catalogo` reúne las tarjetas de Insumos, Juntas vecinales y Tipos de evento. La tercera solo aparece para administradores. El listado y los diálogos de Tipos se trasladan a `/tipos-evento`, protegido por `event-types.read`; la portada no consulta tipos para ningún rol. La ruta anterior `/admin/configuracion` redirige a `/catalogo`.
+Integrado en PR #53: `/catalogo` reúne las tarjetas de Insumos, Juntas vecinales y Tipos de evento. La tercera solo aparece para administradores. El listado y los diálogos de Tipos se trasladan a `/tipos-evento`, protegido por `event-types.read`; la portada no consulta tipos para ningún rol. La ruta anterior `/admin/configuracion` redirige a `/catalogo`.
 
 La sidebar muestra Catálogo con el icono LibraryBig (biblioteca) y permanece activa dentro de los tres catálogos. Insumos, Juntas y Tipos muestran Catálogo como eyebrow; los detalles conservan sus breadcrumbs con enlace a Catálogo. Las rutas base continúan sin breadcrumbs. No se modifican permisos de APIs ni datos, ni se requieren migraciones.
 

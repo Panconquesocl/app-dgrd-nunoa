@@ -56,6 +56,6 @@ El runner de integración exige una URL explícita, rechaza el mismo destino dec
 
 Los recorridos de navegador se ejecutaron con scripts temporales de QA; no se incorporan como suite permanente del repositorio. La comprobación de anchos no sustituye la revisión visual del usuario ni una prueba en dispositivos físicos.
 
-## Alcance pendiente
+## Alcance posterior a esta revisión
 
-Archivos y evidencia continúan pendientes. Visualización, georreferenciación e importación de datos históricos quedan fuera del alcance por decisión del usuario. Exportaciones, inventario y recordatorios son ideas sin implementación aprobada. La publicación de cada rama y PR se realiza únicamente a solicitud del usuario; el merge queda a su cargo.
+En el momento de esta revisión, archivos y evidencia estaban pendientes. Se integraron posteriormente en el PR #45 con R2 privado, y la carga directa en el PR #47. El estado vigente se mantiene en [Backlog](./backlog.md); la limpieza periódica sigue pospuesta. Visualización, georreferenciación e importación de datos históricos quedan fuera del alcance por decisión del usuario. Exportaciones, inventario y recordatorios son ideas sin implementación aprobada. La publicación de cada rama y PR se realiza únicamente a solicitud del usuario; el merge queda a su cargo.

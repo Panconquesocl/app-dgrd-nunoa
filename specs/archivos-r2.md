@@ -85,7 +85,7 @@ La compilación final con Turbopack pasó. Un intento intermedio reprodujo el fa
 
 ## Adaptación a Vercel y estado operativo
 
-La carga directa se implementa en esta etapa. La programación de limpieza en Vercel sigue pospuesta por decisión del usuario; el endpoint POST existente permanece disponible para un programador externo o el futuro VPS. Mientras no se programe, los temporales y los borrados fallidos permanecerán en la cola hasta ejecutar la limpieza. No se añade un cron de Vercel ni se asume un plan Hobby o Pro.
+La carga directa está integrada en PR #47. La programación de limpieza en Vercel sigue pospuesta por decisión del usuario; el endpoint POST existente permanece disponible para un programador externo o el futuro VPS. Mientras no se programe, los temporales y los borrados fallidos permanecerán en la cola hasta ejecutar la limpieza. No se añade un cron de Vercel ni se asume un plan Hobby o Pro.
 
 Referencias de la adaptación: [URLs firmadas R2](https://developers.cloudflare.com/r2/api/s3/presigned-urls/), [CORS de R2](https://developers.cloudflare.com/r2/buckets/cors/) y [límites de Vercel Functions](https://vercel.com/docs/functions/limitations).
 
@@ -95,7 +95,7 @@ La recuperación de un PUT fallido también se probó en navegador: libera la re
 
 ## Selector de archivos en español
 
-En revisión local en `fix/adjuntos-selector-espanol`. Los controles compartidos de entregas, eventos y evidencia de actividades usan el área de carga del spike: borde discontinuo, fondo suave, icono de carga, hover amarillo y mensajes en español. El input nativo queda oculto para evitar «Choose Files» y «No file chosen», que dependen del idioma del navegador.
+Integrado en PR #49. Los controles compartidos de entregas, eventos y evidencia de actividades usan el área de carga del spike: borde discontinuo, fondo suave, icono de carga, hover amarillo y mensajes en español. El input nativo queda oculto para evitar «Choose Files» y «No file chosen», que dependen del idioma del navegador.
 
 Se pueden elegir archivos por clic o teclado y arrastrarlos al área. Selección y arrastre aplican el mismo límite de 25 MB, hasta 20 por grupo y un solo PDF ALFA. Los grupos de imágenes/PDF filtran formatos en el selector como ayuda de interfaz; el servidor sigue comprobando el contenido real. El área queda desactivada mientras se guarda o al alcanzar el límite. Se conserva la lista de seleccionados, quitar archivos y la posibilidad de volver a seleccionar el mismo archivo. No cambia el flujo de R2, permisos, API ni base de datos.
 

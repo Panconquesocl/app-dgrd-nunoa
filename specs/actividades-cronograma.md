@@ -37,7 +37,7 @@ Crear una acción con periodo; registrar actividades en inicio, término y fecha
 
 ## Ajustes de paridad del Plan RRD (17 de noviembre de 2026)
 
-En revisión local en `fix/plan-rrd-tabla-actividades`: tabla de acciones con título truncado y columnas acotadas para evitar que un texto largo fuerce scroll en escritorio; en pantallas estrechas se conserva el desplazamiento dentro de la tabla. El enlace conserva el título completo y lo muestra al pasar el cursor. El detalle de acción incluye, a la derecha de cada actividad, un badge con clip y cantidad de adjuntos confirmados; sin adjuntos muestra «Sin evidencia», como el spike. Los pendientes de carga no se cuentan. Al completar o borrar archivos se refresca el contador de acciones.
+Integrado en PR #48: tabla de acciones con título truncado y columnas acotadas para evitar que un texto largo fuerce scroll en escritorio; en pantallas estrechas se conserva el desplazamiento dentro de la tabla. El enlace conserva el título completo y lo muestra al pasar el cursor. El detalle de acción incluye, a la derecha de cada actividad, un badge con clip y cantidad de adjuntos confirmados; sin adjuntos muestra «Sin evidencia», como el spike. Los pendientes de carga no se cuentan. Al completar o borrar archivos se refresca el contador de acciones.
 
 El formulario indica Participantes como opcional; la API acepta omisión y blanco, mantiene el límite de 2000 caracteres y las demás validaciones. El detalle muestra «Sin participantes registrados» cuando no se informó. La línea Hoy del cronograma usa el borde rojo discontinuo de 1,5 px sin la opacidad reducida, siguiendo el spike.
 
