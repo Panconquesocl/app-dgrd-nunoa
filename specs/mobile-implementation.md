@@ -47,3 +47,17 @@ La captura de cámara se implementará en el siguiente bloque. Los selectores y 
 Comprobación adicional a 320 × 640 px: formulario sin desbordamiento, acciones visibles y confirmación de descarte verificada tanto al conservar como al descartar lo escrito. Se corrigió la suscripción a isDirty para activar esa protección.
 
 La ocultación de barra inferior y botón flotante se limita a los Dialog/AlertDialog abiertos identificados por data-slot. Un Popover de Radix también usa role=dialog, por lo que ese rol por sí solo no distingue una capa modal: abrir acciones de tarjeta o el usuario debe mantener la navegación visible.
+
+## Bloque 3: cámara y adjuntos
+
+En revisión local en `feat/mobile-camara-adjuntos`, desde dev-mobile con PR #56 integrado. Crear y editar una entrega permiten Tomar foto desde el navegador, con cámara trasera preferida, vista previa sin audio, captura JPEG y cancelación. La solicitud de cámara se hace al pulsar el botón. Se liberan las pistas al capturar, cancelar, desmontar el formulario, ocultar o abandonar la página; una autorización tardía tras cancelar también libera su stream.
+
+Las fotografías capturadas entran en el selector existente y usan la misma validación, límites de 25 MiB/20 por grupo y carga directa R2. Se mantienen la selección de archivos como alternativa y los mensajes de permiso denegado, cámara no encontrada o no disponible. La cámara requiere HTTPS o localhost.
+
+Las imágenes locales compatibles muestran miniatura antes de guardar. Sus URLs blob se revocan al quitar o desmontar la selección; formatos que no se pueden mostrar conservan nombre, tamaño y opción de quitar. La confirmación de descarte del formulario usa los archivos pendientes reales del draft, incluyendo las capturas, en lugar de depender del evento de un input de archivos.
+
+### Validación del bloque 3
+
+73 pruebas generales, TypeScript, ESLint y build aprobados. En Brave con cámara simulada se probaron administrador y usuario normal: crear/editar, captura JPEG, miniatura, quitar, permiso denegado, alternativa de selección y cancelación. Se cargaron y descargaron fotografías reales en R2 privado. Un fallo de carga simulado conservó registro y foto; el reintento usó PATCH sobre el mismo id y completó el adjunto. Los archivos temporales se eliminaron mediante la API autorizada.
+
+Comprobación adicional a 320 px: autorización tardía tras cancelar no mantiene la cámara activa; una foto capturada sin guardar activa la confirmación de descarte y permite conservar o descartar la selección. Sin errores JavaScript en los recorridos principales. Pendiente validar cámara, permisos y teclado en dispositivos físicos Safari/iOS y Chrome/Android con HTTPS; la cámara simulada no sustituye esa comprobación.

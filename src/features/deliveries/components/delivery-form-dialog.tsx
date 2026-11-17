@@ -3,7 +3,7 @@ import "./delivery-mobile.css"
 import { useAttachmentDraft } from "@/features/attachments/client"
 
 import Link from "next/link"
-import { useId, useState } from "react"
+import { useId } from "react"
 import { useForm, useFieldArray, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertTriangle, Plus, Trash2, Truck, X } from "lucide-react"
@@ -135,8 +135,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
       toast.error(error instanceof Error ? error.message : "No se pudo guardar la entrega.")
     }
   })
-  const [filesChanged, setFilesChanged] = useState(false)
-  const hasUnsavedChanges = form.formState.isDirty || filesChanged
+  const hasUnsavedChanges = form.formState.isDirty || attachments.hasPendingFiles
   function requestClose() {
     if (pending) return
     if (
@@ -182,14 +181,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
                   : ""}
           </DialogDescription>
         </DialogHeader>
-        <form
-          onChangeCapture={(event) => {
-            if (event.target instanceof HTMLInputElement && event.target.type === "file") setFilesChanged(true)
-          }}
-          onSubmit={submit}
-          noValidate
-          className="flex min-h-0 flex-1 flex-col overflow-hidden"
-        >
+        <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain" data-slot="delivery-form-fields">
             <fieldset disabled={pending} className="min-w-0 space-y-5 px-4 py-4 disabled:opacity-70 sm:px-6 sm:py-5">
               {options.isPending && (
