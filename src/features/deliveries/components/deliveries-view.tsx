@@ -1,5 +1,5 @@
 "use client"
-import { useState, useRef } from "react"
+import { Fragment, useState, useRef } from "react"
 import Link from "next/link"
 import { Popover } from "radix-ui"
 import { SpikeFilterIcon } from "@/components/layout/spike-filter-icon"
@@ -18,7 +18,10 @@ import type { Delivery, ListDeliveriesQuery } from "../schemas"
 import { DeliveryDetailView } from "./delivery-detail-view"
 import { DeliveryFormDialog } from "./delivery-form-dialog"
 import { DeleteDeliveryDialog } from "./delete-delivery-dialog"
+import { DeliveryCards } from "./delivery-cards"
+import { DeliveryMobileFilters, type MobileDeliveryFilters } from "./delivery-mobile-filters"
 import "./deliveries.css"
+import "./delivery-mobile.css"
 
 function day(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
@@ -45,6 +48,7 @@ export function DeliveriesView() {
   const [supplyId, setSupplyId] = useState("")
   const [neighborhoodAssociationId, setNeighborhoodAssociationId] = useState("")
   const [order, setOrder] = useState<"asc" | "desc">("desc")
+  const [mobileFilters, setMobileFilters] = useState(false)
   const [advanced, setAdvanced] = useState(false)
   const [form, setForm] = useState<{ delivery?: Delivery } | null>(null)
   const [deleting, setDeleting] = useState<Delivery | null>(null)
@@ -80,6 +84,29 @@ export function DeliveriesView() {
     Number(order !== "desc")
   const hasFilters = Boolean(search || from || to || advancedCount)
   const rows = validPeriod ? (query.data?.data ?? []) : []
+  const appliedMobileFilters: MobileDeliveryFilters = {
+    beneficiary,
+    beneficiaryRut,
+    eventId,
+    from,
+    to,
+    event,
+    supplyId,
+    neighborhoodAssociationId,
+    order,
+  }
+  function applyMobileFilters(value: MobileDeliveryFilters) {
+    setBeneficiary(value.beneficiary)
+    setBeneficiaryRut(value.beneficiaryRut)
+    setEventId(value.eventId)
+    setFrom(value.from)
+    setTo(value.to)
+    setEvent(value.event)
+    setSupplyId(value.supplyId)
+    setNeighborhoodAssociationId(value.neighborhoodAssociationId)
+    setOrder(value.order)
+    setMobileFilters(false)
+  }
   function clear() {
     setSearch("")
     setBeneficiary("")
@@ -97,7 +124,7 @@ export function DeliveriesView() {
     setDetailId(id)
   }
   return (
-    <div className="deliveries delivery-page">
+    <div className="deliveries delivery-page delivery-list-view">
       <div className="delivery-page-head">
         <div>
           <SectionEyebrow>Ayudas primera respuesta</SectionEyebrow>
@@ -109,7 +136,17 @@ export function DeliveriesView() {
           Registrar entrega
         </Button>
       </div>
+      <Button className="delivery-register-fab" aria-label="Registrar entrega" onClick={() => setForm({})}>
+        <Plus size={28} aria-hidden="true" />
+      </Button>
       <div className="delivery-toolbar">
+        <Button className="delivery-mobile-filter-trigger" variant="outline" onClick={() => setMobileFilters(true)}>
+          <SpikeFilterIcon />
+          Filtros
+          {advancedCount + Number(Boolean(from)) + Number(Boolean(to)) > 0 && (
+            <span>{advancedCount + Number(Boolean(from)) + Number(Boolean(to))}</span>
+          )}
+        </Button>
         <div className="delivery-period">
           <CalendarDays aria-hidden="true" size={15} />
           <input
@@ -169,7 +206,7 @@ export function DeliveriesView() {
             )
           })}
         </div>
-        <div className="ml-auto">
+        <div className="delivery-desktop-filter ml-auto">
           <Popover.Root open={advanced} onOpenChange={setAdvanced}>
             <Popover.Trigger asChild>
               <button
@@ -351,6 +388,24 @@ export function DeliveriesView() {
           </Button>
         )}
       </div>
+      {hasFilters && (
+        <p className="delivery-mobile-filter-summary text-muted-foreground text-xs" aria-live="polite">
+          Filtros aplicados:{" "}
+          {[
+            beneficiary && `Beneficiario: ${beneficiary}`,
+            beneficiaryRut && `RUT: ${beneficiaryRut}`,
+            eventId && "Evento seleccionado",
+            from && `Desde ${from}`,
+            to && `Hasta ${to}`,
+            supplyId && "Insumo seleccionado",
+            neighborhoodAssociationId && "Junta seleccionada",
+            event !== "all" && (event === "with" ? "Con evento" : "Sin evento"),
+            order === "asc" && "Más antiguas primero",
+          ]
+            .filter(Boolean)
+            .join(" · ") || "Búsqueda por texto"}
+        </p>
+      )}
       {!validPeriod && (
         <p id="delivery-period-error" role="alert" className="text-destructive mb-3 text-sm">
           La fecha hasta no puede ser anterior a desde.
@@ -403,114 +458,134 @@ export function DeliveriesView() {
             </Button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="delivery-table">
-              <thead>
-                <tr>
-                  <th>Folio</th>
-                  <th>Fecha</th>
-                  <th>Beneficiario</th>
-                  <th>Junta vecinal</th>
-                  <th>Evento</th>
-                  <th className="text-right">Insumos</th>
-                  <th>
-                    <span className="sr-only">Acciones</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((delivery) => (
-                  <tr
-                    key={delivery.id}
-                    className="cursor-pointer"
-                    onClick={(e) => {
-                      const button = e.currentTarget.querySelector<HTMLButtonElement>("button")
-                      if (button) openDetail(delivery.id, button)
-                    }}
-                  >
-                    <td>
-                      <Link
-                        href={`/entregas/${delivery.id}`}
-                        onClick={(e) => {
-                          if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            openDetail(delivery.id, e.currentTarget)
-                          }
-                        }}
-                        className="font-mono font-semibold hover:underline"
-                      >
-                        {delivery.folio}
-                      </Link>
-                    </td>
-                    <td className="font-mono text-xs whitespace-nowrap">{formatDate(delivery.date)}</td>
-                    <td className="font-semibold">
-                      {delivery.beneficiary}
-                      <span className="text-muted-foreground block font-mono text-xs font-normal">
-                        {delivery.beneficiaryRut ? formatRut(delivery.beneficiaryRut) : "Sin RUT registrado"}
-                      </span>
-                    </td>
-                    <td>
-                      {delivery.neighborhoodAssociation ? (
-                        <Link
-                          href={`/juntas-vecinales/${delivery.neighborhoodAssociationId}`}
-                          onClick={(event) => event.stopPropagation()}
-                          className="hover:underline"
-                        >
-                          N°{delivery.neighborhoodAssociation.number} · {delivery.neighborhoodAssociation.name}
-                        </Link>
-                      ) : (
-                        <span className="text-muted-foreground">Sin junta vecinal</span>
-                      )}
-                    </td>
-                    <td>
-                      <span className={`delivery-badge ${delivery.event ? "delivery-badge-event" : ""}`}>
-                        {delivery.event?.folio ?? "Sin evento"}
-                      </span>
-                    </td>
-                    <td className="text-right whitespace-nowrap">
-                      <span className="delivery-count mr-2">{delivery.items.length}</span>
-                      <span className="font-mono">
-                        {delivery.items.reduce((sum, item) => sum + item.quantity, 0)}{" "}
-                        <span className="text-muted-foreground text-xs">uds</span>
-                      </span>
-                    </td>
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <div className="delivery-row-actions">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Ver ${delivery.folio}`}
-                          onClick={(e) => openDetail(delivery.id, e.currentTarget)}
-                        >
-                          <Eye size={16} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Editar ${delivery.folio}`}
-                          onClick={() => setForm({ delivery })}
-                        >
-                          <Pencil size={16} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive"
-                          aria-label={`Eliminar ${delivery.folio}`}
-                          onClick={() => setDeleting(delivery)}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    </td>
+          <Fragment>
+            <DeliveryCards
+              rows={rows}
+              onView={openDetail}
+              onEdit={(delivery) => setForm({ delivery })}
+              onDelete={setDeleting}
+            />
+            <div className="delivery-desktop-table overflow-x-auto">
+              <table className="delivery-table">
+                <thead>
+                  <tr>
+                    <th>Folio</th>
+                    <th>Fecha</th>
+                    <th>Beneficiario</th>
+                    <th>Junta vecinal</th>
+                    <th>Evento</th>
+                    <th className="text-right">Insumos</th>
+                    <th>
+                      <span className="sr-only">Acciones</span>
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {rows.map((delivery) => (
+                    <tr
+                      key={delivery.id}
+                      className="cursor-pointer"
+                      onClick={(e) => {
+                        const button = e.currentTarget.querySelector<HTMLButtonElement>("button")
+                        if (button) openDetail(delivery.id, button)
+                      }}
+                    >
+                      <td>
+                        <Link
+                          href={`/entregas/${delivery.id}`}
+                          onClick={(e) => {
+                            if (!e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              openDetail(delivery.id, e.currentTarget)
+                            }
+                          }}
+                          className="font-mono font-semibold hover:underline"
+                        >
+                          {delivery.folio}
+                        </Link>
+                      </td>
+                      <td className="font-mono text-xs whitespace-nowrap">{formatDate(delivery.date)}</td>
+                      <td className="font-semibold">
+                        {delivery.beneficiary}
+                        <span className="text-muted-foreground block font-mono text-xs font-normal">
+                          {delivery.beneficiaryRut ? formatRut(delivery.beneficiaryRut) : "Sin RUT registrado"}
+                        </span>
+                      </td>
+                      <td>
+                        {delivery.neighborhoodAssociation ? (
+                          <Link
+                            href={`/juntas-vecinales/${delivery.neighborhoodAssociationId}`}
+                            onClick={(event) => event.stopPropagation()}
+                            className="hover:underline"
+                          >
+                            N°{delivery.neighborhoodAssociation.number} · {delivery.neighborhoodAssociation.name}
+                          </Link>
+                        ) : (
+                          <span className="text-muted-foreground">Sin junta vecinal</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className={`delivery-badge ${delivery.event ? "delivery-badge-event" : ""}`}>
+                          {delivery.event?.folio ?? "Sin evento"}
+                        </span>
+                      </td>
+                      <td className="text-right whitespace-nowrap">
+                        <span className="delivery-count mr-2">{delivery.items.length}</span>
+                        <span className="font-mono">
+                          {delivery.items.reduce((sum, item) => sum + item.quantity, 0)}{" "}
+                          <span className="text-muted-foreground text-xs">uds</span>
+                        </span>
+                      </td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <div className="delivery-row-actions">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Ver ${delivery.folio}`}
+                            onClick={(e) => openDetail(delivery.id, e.currentTarget)}
+                          >
+                            <Eye size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Editar ${delivery.folio}`}
+                            onClick={() => setForm({ delivery })}
+                          >
+                            <Pencil size={16} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive"
+                            aria-label={`Eliminar ${delivery.folio}`}
+                            onClick={() => setDeleting(delivery)}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Fragment>
         )}
       </div>
+      {mobileFilters && (
+        <DeliveryMobileFilters
+          initial={appliedMobileFilters}
+          options={options.data}
+          error={options.isError ? options.error.message : undefined}
+          retry={() => {
+            void options.refetch()
+          }}
+          onApply={applyMobileFilters}
+          onClose={() => setMobileFilters(false)}
+        />
+      )}
       {form && (
         <DeliveryFormDialog
           open

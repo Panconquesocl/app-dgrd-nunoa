@@ -43,7 +43,8 @@
     outline: 2px solid var(--brand);
     outline-offset: -2px;
   }
-  body:has([role="dialog"], [role="alertdialog"]) .app-mobile-navigation {
+  body:has([data-slot="dialog-content"][data-state="open"], [data-slot="alert-dialog-content"][data-state="open"])
+    .app-mobile-navigation {
     visibility: hidden;
   }
   .app-topbar {
