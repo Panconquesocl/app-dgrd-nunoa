@@ -18,14 +18,30 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog"
 import { usePermission } from "@/providers/permissions"
-import { type Attachment, type Owner, type Kind, MAX_FILE_SIZE, MAX_GROUP_FILES, groupLabels } from "./schemas"
+import {
+  type UploadTicket,
+  type Attachment,
+  type Owner,
+  type Kind,
+  MAX_FILE_SIZE,
+  MAX_GROUP_FILES,
+  groupLabels,
+} from "./schemas"
 const url = (owner: Owner) => `/api/attachments?${new URLSearchParams(owner)}`
 export const contentUrl = (file: Attachment, download = false) =>
   `/api/attachments/${encodeURIComponent(file.id)}/content${download ? "?download=1" : ""}`
+class AttachmentApiError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message)
+  }
+}
 async function checked(response: Response) {
   if (!response.ok) {
     const data = await response.json().catch(() => null)
-    throw new Error(data?.message || "No se pudo completar la operación de archivos.")
+    throw new AttachmentApiError(response.status, data?.message || "No se pudo completar la operación de archivos.")
   }
   return response
 }
@@ -39,9 +55,42 @@ export function useAttachments(owner: Owner, enabled = true) {
   })
 }
 export async function uploadFile(owner: Owner, kind: Kind, file: File) {
-  const body = new FormData()
-  body.set("file", file)
-  await checked(await fetch(`${url(owner)}&kind=${kind}`, { method: "POST", body }))
+  const ticket: UploadTicket = await (
+    await checked(
+      await fetch(`${url(owner)}&kind=${kind}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: file.name, size: file.size }),
+      }),
+    )
+  ).json()
+  try {
+    const response = await fetch(ticket.uploadUrl, {
+      method: "PUT",
+      headers: ticket.headers,
+      body: file,
+      credentials: "omit",
+      signal: AbortSignal.timeout(10 * 60_000),
+    })
+    if (!response.ok) throw new Error("No se pudo enviar el archivo al almacenamiento. Puedes reintentar la carga.")
+    // Reintentar una confirmación es seguro: el mismo id ya confirmado devuelve éxito.
+    let lastError: unknown
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        await checked(await fetch(`/api/attachments/${encodeURIComponent(ticket.id)}/complete`, { method: "POST" }))
+        return
+      } catch (error) {
+        if (error instanceof AttachmentApiError && ![502, 504].includes(error.status)) throw error
+        lastError ??= error
+      }
+    }
+    throw lastError
+  } catch (error) {
+    await fetch(`/api/attachments/${encodeURIComponent(ticket.id)}/upload`, { method: "DELETE" }).catch(() => undefined)
+    if (error instanceof TypeError)
+      throw new Error("No se pudo conectar con el almacenamiento. El registro está guardado; reintenta la carga.")
+    throw error
+  }
 }
 const previewableImage = (type: string) =>
   ["image/png", "image/jpeg", "image/webp", "image/gif", "image/avif"].includes(type)

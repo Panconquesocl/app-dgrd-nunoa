@@ -1,10 +1,10 @@
 # Estado y backlog del proyecto DGRD Ñuñoa
 
-Actualizado el 16 de noviembre de 2026. Estado de `main` después del PR #44 y cambios de archivos en revisión local. La referencia funcional y visual es `spike/test-mockup`; no se usan otras ramas históricas para definir el producto. La revisión integral y los ajustes de navegación ya están integrados.
+Actualizado el 17 de noviembre de 2026. Estado de `main` después de los PR #45 (archivos R2) y #46 (build), con carga directa R2 en revisión local. La referencia funcional y visual es `spike/test-mockup`; no se usan otras ramas históricas para definir el producto. La revisión integral y los ajustes de navegación ya están integrados.
 
 ## Alcance vigente
 
-- Manejo de archivos aprobado y en revisión local: bucket privado Cloudflare R2, 25 MB por archivo, hasta 20 por grupo, ALFA único PDF, permisos, previsualización y borrado asociado con advertencia. [Spec](./archivos-r2.md).
+- Manejo de archivos integrado mediante PR #45: bucket privado Cloudflare R2, 25 MB por archivo, hasta 20 por grupo, ALFA único PDF, permisos, previsualización y borrado asociado con advertencia. [Spec](./archivos-r2.md).
 - Visualización y georreferenciación quedan fuera del alcance, incluyendo gráficos/mapas adicionales del backlog original.
 - No se implementarán importación ni mapeo de datos históricos.
 - Identificación, alerta por RUT, búsqueda por campos, búsqueda global y auditoría ya están integradas.
@@ -18,7 +18,7 @@ Actualizado el 16 de noviembre de 2026. Estado de `main` después del PR #44 y c
 | B02      | Eventos                  | CRUD, folios anuales persistentes, filtros, relaciones y advertencia de borrado sin eliminar solicitudes/entregas. [Spec](./eventos.md).                              |
 | B03, B11 | Solicitudes e integridad | Descripción opcional; no se borran con entrega; Atendida requiere respuesta o entrega; folio persistente y sin cambio automático de estado. [Spec](./solicitudes.md). |
 | B04      | Flujos contextuales      | Evento → solicitud, solicitud → evento y entregas desde ambos detalles. Se admite entrega directa al evento sin solicitud. Propagación transaccional de vínculos.     |
-| B05, B07 | Actividades y cronograma | CRUD dentro del período de la acción, cronograma y agenda anual. Evidencia R2 en revisión local. [Spec](./actividades-cronograma.md).                                 |
+| B05, B07 | Actividades y cronograma | CRUD dentro del período de la acción, cronograma y agenda anual. Evidencia R2 integrada. [Spec](./actividades-cronograma.md).                                         |
 | B08      | Usuarios                 | Administración de cuentas, roles, estado, contraseña, sesiones y protección de administradores. [Spec](./usuarios.md).                                                |
 | B09, B10 | Resumen y navegación     | Resumen anual según rol, inicio en /resumen, sidebar plegable y accesos por módulo. [Spec](./resumen.md).                                                             |
 | B19      | Identificación           | RUT de beneficiario obligatorio y normalizado; junta opcional; históricos sin inferencias por nombre. [Spec](./entregas.md).                                          |
@@ -36,9 +36,9 @@ El catálogo de insumos y sus historiales están implementados sin stock ni inve
 
 | IDs      | Estado                         | Alcance                                                                                                                     |
 | -------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| B06      | En revisión local              | Evidencia de actividades activa con almacenamiento privado R2. [Spec](./archivos-r2.md).                                    |
-| B26, B27 | En revisión local              | Fotografías y archivos de entregas/eventos en R2, con permisos y borrado fiable.                                            |
-| B28, B29 | En revisión local              | Carga desde selector de archivos del dispositivo y formularios con scroll en móvil.                                         |
+| B06      | Integrado en PR #45            | Evidencia de actividades activa con almacenamiento privado R2. [Spec](./archivos-r2.md).                                    |
+| B26, B27 | Integrado en PR #45            | Fotografías y archivos de entregas/eventos en R2, con permisos y borrado fiable.                                            |
+| B28, B29 | Integrado en PR #45            | Carga desde selector de archivos del dispositivo y formularios con scroll en móvil.                                         |
 | B12      | Fuera del alcance por decisión | No se implementarán importación ni mapeo de planillas históricas. La migración del catálogo existente ya está implementada. |
 | B13–B16  | Integrado en PR #41            | Revisión de flujos, permisos, escritorio/móvil, scripts reproducibles y documentación. [Informe](./revision-integral.md).   |
 | B30, B31 | Fuera del alcance              | Visualizaciones adicionales y gráficos. Se mantiene el resumen anual ya implementado.                                       |
@@ -57,7 +57,7 @@ Se conserva la confirmación actual al eliminar usuarios, sin exigir escribir el
 1. **Entregas**, integrado mediante PR #43: Observaciones opcionales persistidas y auditadas, controles de fotografías y archivos múltiples opcionales desactivados. Ver [Entregas](./entregas.md).
 2. **Eventos**, integrado mediante PR #44: cambiar Sector por Dirección conservando los valores existentes; agregar Informe ALFA (PDF), fotografías y archivos opcionales, todos desactivados hasta implementar el manejo de archivos.
 
-Esos dos bloques no incluían almacenamiento. La etapa actual activa todos los adjuntos con R2 privado en `feat/archivos-cloudflare-r2`; revisión local antes de commit/PR y merge a cargo del usuario.
+Esos dos bloques no incluían almacenamiento. El PR #45 activa todos los adjuntos con R2 privado. La etapa actual `feat/carga-directa-r2` adapta las cargas para soportar 25 MB en Vercel; revisión local antes de commit/PR y merge a cargo del usuario.
 
 ## Verificación reproducible
 
@@ -78,3 +78,9 @@ pnpm build
 - Administrador gestiona los módulos actuales; usuario normal gestiona entregas, insumos y actividades de cualquier autor y consulta juntas/acciones/resumen/búsqueda permitida.
 - No se hace merge automáticamente ni se aplican pruebas sobre la base operativa.
 - No se reconstruye RUT, autoría ni auditoría histórica por coincidencias o suposiciones.
+
+## Pendientes de despliegue
+
+- Carga directa R2 para evitar el límite de peticiones de Vercel: implementada en revisión local, con CORS para el dominio de producción y localhost. Ver [Archivos R2](./archivos-r2.md).
+- Programación de limpieza periódica en Vercel: pospuesta por decisión del usuario. Se conserva el endpoint para el futuro VPS o un programador externo.
+- Verificar migraciones y variables en el entorno de producción tras desplegar.

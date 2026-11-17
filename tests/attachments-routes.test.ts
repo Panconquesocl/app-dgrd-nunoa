@@ -23,11 +23,16 @@ mock.module(file("src/features/attachments/service.ts"), {
       if (!allowed) throw new AppError(403, "Sin permiso")
     },
     listAttachments: async () => [],
-    uploadAttachment: async () => {
+    beginUpload: async () => {
       uploads++
       return { id: "qa" }
     },
     deleteAttachment: async () => {},
+    completeUpload: async () => {
+      uploads++
+      return { id: "qa" }
+    },
+    cancelUpload: async () => {},
     cleanup: async () => {
       cleanups++
       return { deleted: 0 }
@@ -39,14 +44,16 @@ mock.module(file("src/features/attachments/service.ts"), {
 })
 mock.module(file("src/features/attachments/files.ts"), {
   namedExports: {
-    readUpload: async () => {
+    readUploadMetadata: async () => {
       reads++
-      return new File(["QA"], "QA.txt")
+      return { name: "QA.txt", size: 2 }
     },
   },
 })
-test("adjuntos: autoriza antes de leer 25 MB y protege contenido y limpieza", async () => {
+test("adjuntos: autoriza antes de leer los datos de carga y protege contenido y limpieza", async () => {
   const collection = await import(file("src/app/api/attachments/route.ts"))
+  const complete = await import(file("src/app/api/attachments/[id]/complete/route.ts"))
+  const cancel = await import(file("src/app/api/attachments/[id]/upload/route.ts"))
   const content = await import(file("src/app/api/attachments/[id]/content/route.ts"))
   const cleanup = await import(file("src/app/api/attachments/cleanup/route.ts"))
   const request = () =>
@@ -55,6 +62,22 @@ test("adjuntos: autoriza antes de leer 25 MB y protege contenido y limpieza", as
       body: "incorrecto",
     })
   assert.equal((await collection.POST(request())).status, 401)
+  assert.equal(
+    (
+      await complete.POST(new Request("http://localhost", { method: "POST" }), {
+        params: Promise.resolve({ id: "private" }),
+      })
+    ).status,
+    401,
+  )
+  assert.equal(
+    (
+      await cancel.DELETE(new Request("http://localhost", { method: "DELETE" }), {
+        params: Promise.resolve({ id: "private" }),
+      })
+    ).status,
+    401,
+  )
   signedIn = true
   assert.equal((await collection.POST(request())).status, 403)
   assert.equal(reads, 0)
