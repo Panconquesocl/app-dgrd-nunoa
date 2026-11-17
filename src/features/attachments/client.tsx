@@ -1,11 +1,10 @@
 "use client"
 /* eslint-disable @next/next/no-img-element -- Los adjuntos privados requieren cookies y no deben pasar por el optimizador compartido. */
-import { useId, useState } from "react"
+import { useId, useRef, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Download, Eye, Paperclip, Trash2, X } from "lucide-react"
+import { Download, Eye, Paperclip, Trash2, Upload, X } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -112,15 +111,58 @@ export function FilePicker({
   disabled?: boolean
 }) {
   const id = useId()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [over, setOver] = useState(false)
   const limit = kind === "alfa" ? 1 : MAX_GROUP_FILES
+  const blocked = disabled || existing + files.length >= limit
+  const instruction =
+    kind === "photo"
+      ? "Arrastra fotografías aquí o haz clic para seleccionar"
+      : kind === "alfa"
+        ? "Arrastra el PDF aquí o haz clic para seleccionar"
+        : "Arrastra archivos aquí o haz clic para seleccionar"
+  function ingest(selected: File[]) {
+    if (blocked || inputRef.current?.matches(":disabled") || !selected.length) return
+    if (selected.some((f) => !f.size || f.size > MAX_FILE_SIZE)) {
+      toast.error("Cada archivo debe contener datos y pesar como máximo 25 MB.")
+      return
+    }
+    if (existing + files.length + selected.length > limit) {
+      toast.error(`Este grupo admite hasta ${limit} archivo${limit === 1 ? "" : "s"}.`)
+      return
+    }
+    const invalid = selected.some((file) => {
+      if (kind === "alfa") return !/\.pdf$/i.test(file.name) && file.type !== "application/pdf"
+      if (kind === "photo")
+        return (
+          !/\.(jpe?g|png|webp|gif|hei[cf]|avif)$/i.test(file.name) &&
+          !["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif", "image/avif"].includes(
+            file.type,
+          )
+        )
+      return false
+    })
+    if (invalid) {
+      toast.error(
+        kind === "alfa"
+          ? "El Informe ALFA debe ser un PDF."
+          : "Selecciona fotografías JPG, PNG, WebP, GIF, HEIC, HEIF o AVIF.",
+      )
+      return
+    }
+    onChange([...files, ...selected])
+  }
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="text-sm font-medium">
+      <label id={`${id}-label`} htmlFor={id} className="text-sm font-medium">
         {groupLabels[kind]} <span className="text-muted-foreground font-normal">Opcional</span>
       </label>
-      <Input
+      <input
+        ref={inputRef}
         id={id}
         type="file"
+        hidden
+        tabIndex={-1}
         multiple={limit > 1}
         accept={
           kind === "photo"
@@ -129,24 +171,52 @@ export function FilePicker({
               ? "application/pdf"
               : undefined
         }
-        disabled={disabled || existing + files.length >= limit}
+        disabled={blocked}
         aria-describedby={`${id}-hint`}
-        onChange={(e) => {
-          const selected = Array.from(e.target.files ?? [])
-          e.target.value = ""
-          if (selected.some((f) => !f.size || f.size > MAX_FILE_SIZE)) {
-            toast.error("Cada archivo debe contener datos y pesar como máximo 25 MB.")
-            return
-          }
-          if (existing + files.length + selected.length > limit) {
-            toast.error(`Este grupo admite hasta ${limit} archivo${limit === 1 ? "" : "s"}.`)
-            return
-          }
-          onChange([...files, ...selected])
+        onChange={(event) => {
+          ingest(Array.from(event.target.files ?? []))
+          event.target.value = ""
         }}
       />
-      <p id={`${id}-hint`} className="text-muted-foreground text-xs">
-        Hasta {limit} {limit === 1 ? "PDF" : "archivos"}, 25 MB por archivo.
+      <button
+        type="button"
+        disabled={blocked}
+        aria-labelledby={`${id}-label ${id}-action`}
+        aria-describedby={`${id}-hint`}
+        data-dragging={(over && !blocked) || undefined}
+        className="border-input bg-accent hover:border-brand hover:bg-brand-soft data-[dragging=true]:border-brand data-[dragging=true]:bg-brand-soft focus-visible:border-ring focus-visible:ring-ring/50 disabled:hover:border-input disabled:hover:bg-accent w-full min-w-0 cursor-pointer rounded-xl border-[1.5px] border-dashed p-7 text-center transition-colors outline-none focus-visible:ring-3 disabled:cursor-not-allowed disabled:opacity-50"
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(event) => {
+          event.preventDefault()
+          if (!event.currentTarget.matches(":disabled") && event.dataTransfer.types.includes("Files")) {
+            event.dataTransfer.dropEffect = "copy"
+            setOver(true)
+          }
+        }}
+        onDragLeave={() => setOver(false)}
+        onDrop={(event) => {
+          event.preventDefault()
+          setOver(false)
+          if (!event.currentTarget.matches(":disabled")) ingest(Array.from(event.dataTransfer.files))
+        }}
+      >
+        <Upload aria-hidden="true" className="text-muted-foreground pointer-events-none mx-auto mb-2 size-[26px]" />
+        <span id={`${id}-action`} className="pointer-events-none block text-[13.5px] font-semibold">
+          {instruction}
+        </span>
+        <span id={`${id}-hint`} className="text-muted-foreground pointer-events-none mt-1 block text-xs">
+          {kind === "alfa"
+            ? "Un único PDF"
+            : kind === "photo"
+              ? "Hasta 20 fotografías · JPG, PNG, WebP, GIF, HEIC, HEIF o AVIF"
+              : "Hasta 20 archivos"}{" "}
+          · 25 MB por archivo
+        </span>
+      </button>
+      <p role="status" className="sr-only">
+        {files.length
+          ? `${files.length} ${files.length === 1 ? "archivo seleccionado" : "archivos seleccionados"}`
+          : "Ningún archivo seleccionado"}
       </p>
       {files.length > 0 && (
         <ul className="space-y-1">
