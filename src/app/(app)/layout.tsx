@@ -1,6 +1,8 @@
 import { PermissionsProvider } from "@/providers/permissions"
 import { normalizeRole } from "@/lib/permissions"
 import { redirect } from "next/navigation"
+import { AppMobileNavigation } from "@/components/layout/app-mobile-navigation"
+import "@/components/layout/app-mobile.css"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -21,9 +23,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <PermissionsProvider role={normalizeRole(session.user.role)}>
       <TooltipProvider delayDuration={200}>
-        <div className="flex min-h-svh flex-1">
+        <div className="app-shell flex min-h-svh flex-1">
           <AppSidebar viewerKey={`${session.user.id}:${normalizeRole(session.user.role)}`} />
-          <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+          <div className="app-content flex min-w-0 flex-1 flex-col">{children}</div>
+          <AppMobileNavigation />
           <Toaster position="bottom-right" />
         </div>
       </TooltipProvider>
