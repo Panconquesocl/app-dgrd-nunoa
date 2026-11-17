@@ -167,7 +167,7 @@ export function ActivityDetailView({ id, user }: { id: string; user?: { name: st
                 </div>
                 <div className="sm:col-span-2">
                   <dt>Participantes</dt>
-                  <dd className="whitespace-pre-wrap">{activity.participants}</dd>
+                  <dd className="whitespace-pre-wrap">{activity.participants || "Sin participantes registrados"}</dd>
                 </div>
               </dl>
             ) : (

@@ -12,6 +12,7 @@ import {
   Clock,
   MapPin,
   Pencil,
+  Paperclip,
   Plus,
   Target,
   Trash2,
@@ -222,6 +223,20 @@ function ActivitiesCard({ activities, onCreate }: { activities: StrategicActionA
                   </p>
                 </div>
 
+                {activity._count.evidence > 0 ? (
+                  <span
+                    className="bg-brand-soft text-brand-ink inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[11.5px] font-semibold whitespace-nowrap"
+                    title={`${activity._count.evidence} adjuntos`}
+                  >
+                    <Paperclip aria-hidden="true" className="size-3" />
+                    {activity._count.evidence}
+                    <span className="sr-only"> adjuntos</span>
+                  </span>
+                ) : (
+                  <span className="bg-secondary text-secondary-foreground shrink-0 rounded-full px-2 py-0.5 text-[11.5px] font-semibold whitespace-nowrap">
+                    Sin evidencia
+                  </span>
+                )}
                 <ChevronRight aria-hidden="true" className="text-muted-foreground size-4 shrink-0" />
               </Link>
             </li>

@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto"
 import { test } from "node:test"
 import prisma from "@/lib/prisma"
 import { AppError } from "@/lib/api-error"
-import { deleteStrategicAction, updateStrategicAction } from "@/features/strategic-actions/service"
+import { deleteStrategicAction, updateStrategicAction, getStrategicAction } from "@/features/strategic-actions/service"
 import { activitySchema } from "./schemas"
 import { createActivity, deleteActivity, getActivity, getSchedule, updateActivity } from "./service"
 
@@ -17,7 +17,10 @@ test("campos obligatorios y fechas calendario válidas", () => {
     participants: " Vecinos ",
   }
   assert.equal(activitySchema.parse(base).location, "Dirección")
-  for (const field of ["actionId", "date", "location", "objective", "participants"])
+  assert.equal(activitySchema.parse({ ...base, participants: undefined }).participants, "")
+  assert.equal(activitySchema.parse({ ...base, participants: "  " }).participants, "")
+  assert.equal(activitySchema.safeParse({ ...base, participants: "a".repeat(2001) }).success, false)
+  for (const field of ["actionId", "date", "location", "objective"])
     assert.equal(activitySchema.safeParse({ ...base, [field]: " " }).success, false)
   assert.equal(activitySchema.safeParse({ ...base, date: "2026-02-30" }).success, false)
   assert.equal(activitySchema.safeParse({ ...base, date: "2026-02-28T12:00:00Z" }).success, false)
@@ -55,6 +58,37 @@ test(
         participants: "Vecinos",
       }
       const first = await createActivity(input, otherId)
+      const optional = await createActivity(activitySchema.parse({ ...input, participants: undefined }), userId)
+      assert.equal((await getActivity(optional.id)).participants, "")
+      await updateActivity(optional.id, { ...input, participants: "" }, otherId)
+      assert.equal((await getActivity(optional.id)).participants, "")
+      await prisma.evidence.createMany({
+        data: [
+          {
+            activityId: optional.id,
+            name: "Listo",
+            type: "text/plain",
+            size: 1,
+            key: "qa-ready",
+            createdBy: userId,
+            status: "ready",
+          },
+          {
+            activityId: optional.id,
+            name: "Pendiente",
+            type: "text/plain",
+            size: 1,
+            key: "qa-pending",
+            createdBy: userId,
+            status: "pending",
+          },
+        ],
+      })
+      assert.equal(
+        (await getStrategicAction(action.id)).activities.find((row) => row.id === optional.id)?._count.evidence,
+        1,
+      )
+
       await createActivity({ ...input, date: "2026-03-31" }, userId)
       for (const date of ["2026-02-28", "2026-04-01"])
         await assert.rejects(createActivity({ ...input, date }, userId), status(400))

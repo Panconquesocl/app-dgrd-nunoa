@@ -435,7 +435,10 @@ export function useAttachmentDraft(resource: Owner["resource"], originalId?: str
           setFiles((prev) => ({ ...prev, [group]: (prev[group as Kind] ?? []).filter((f) => f !== file) }))
         }
     } finally {
-      await client.invalidateQueries({ queryKey: ["attachments", resource, id] })
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ["attachments", resource, id] }),
+        client.invalidateQueries({ queryKey: ["strategic-actions"] }),
+      ])
       setBusy(false)
     }
   }

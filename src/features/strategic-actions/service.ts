@@ -72,7 +72,7 @@ export async function getStrategicAction(id: string) {
           objective: true,
           location: true,
           participants: true,
-          _count: { select: { evidence: true } },
+          _count: { select: { evidence: { where: { status: "ready" } } } },
         },
         orderBy: { date: "desc" },
       },

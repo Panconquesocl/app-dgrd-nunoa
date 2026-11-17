@@ -84,3 +84,14 @@ pnpm build
 - Carga directa R2 para evitar el límite de peticiones de Vercel: implementada en revisión local, con CORS para el dominio de producción y localhost. Ver [Archivos R2](./archivos-r2.md).
 - Programación de limpieza periódica en Vercel: pospuesta por decisión del usuario. Se conserva el endpoint para el futuro VPS o un programador externo.
 - Verificar migraciones y variables en el entorno de producción tras desplegar.
+
+## Ajustes solicitados de interfaz (17 de noviembre de 2026)
+
+Se implementan en ramas separadas para revisión antes de commit/PR:
+
+1. **Plan RRD** — en revisión local: título truncado y columnas visibles en tabla de acciones; contador de adjuntos por actividad; participantes opcionales; línea roja de Hoy más gruesa en cronograma.
+2. **Adjuntos** — pendiente: reemplazar botones nativos en inglés por selectores en español con estilo del spike.
+3. **Entregas** — pendiente: recuperar los fondos del panel del spike y filtrar unidades según el insumo, sin placeholder «Unidad…» al seleccionarlo.
+4. **Resumen y sidebar** — pendiente: fondo con esquinas redondeadas en indicador de entregas, badges con texto en negrita y camión en el acceso Entregas de la sidebar.
+
+La limpieza periódica continúa pospuesta.
