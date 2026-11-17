@@ -149,3 +149,11 @@ pnpm exec prisma generate
 ```
 
 Verificación de este bloque: 63 pruebas generales y 20 integraciones aprobadas contra base aislada; integración de Entregas repetida tras ajustar la compatibilidad del campo opcional. TypeScript, lint y formato correctos. El build habitual con Turbopack falló al resolver las fuentes de Google; `pnpm exec next build --webpack` compiló correctamente sin cambios de configuración. En navegador se verificaron alta, edición, borrado de observaciones, saltos de línea, auditoría, edición por usuario normal y controles de adjuntos desactivados, incluyendo formularios a 390 y 320 píxeles sin errores de JavaScript.
+
+## Panel y selector de unidades (17 de noviembre de 2026)
+
+En revisión local en `fix/entregas-panel-unidades`. El panel lateral recupera el fondo de página gris suave del spike (`--background`, `#f1f3f5`), con encabezado y tarjetas blancos (`--surface`). El cambio se limita al panel de Entregas; no altera los fondos de los demás módulos ni los formularios.
+
+Antes de seleccionar un insumo, Unidad permanece desactivada con «Selecciona un insumo». Al elegirlo se selecciona la primera variante disponible del catálogo y el selector contiene únicamente sus unidades, sin «Unidad…». Las variantes ya usadas por otras filas siguen desactivadas; si se agrega el mismo tipo de insumo en otra fila se elige su siguiente unidad disponible. Al editar se conserva el id/unidad guardado, también cuando las opciones terminan de cargar. Cambiar el insumo conserva la cantidad y restablece la unidad a una variante válida del nuevo insumo. No cambia el contrato de API ni requiere migración.
+
+Validación del bloque: 69 pruebas generales, TypeScript, ESLint, formato y build con Turbopack aprobados. En navegador con PostgreSQL aislado se comprobó carga tardía del catálogo sin perder la unidad guardada, selección automática para una o varias unidades, prevención de duplicados entre filas, cambio/limpieza de insumo conservando cantidad y alta/edición reales con ids y unidades correctos. Se verificaron administrador y usuario normal, y el panel a 1440, 390 y 320 px con fondo gris, encabezado/tarjetas blancos, alineación derecha y sin desbordamiento ni errores JavaScript. Registros y cuentas QA retirados tras probar.
