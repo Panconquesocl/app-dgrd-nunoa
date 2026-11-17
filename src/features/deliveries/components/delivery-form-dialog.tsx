@@ -1,8 +1,9 @@
 "use client"
+import "./delivery-mobile.css"
 import { useAttachmentDraft } from "@/features/attachments/client"
 
 import Link from "next/link"
-import { useId } from "react"
+import { useId, useState } from "react"
 import { useForm, useFieldArray, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlertTriangle, Plus, Trash2, Truck, X } from "lucide-react"
@@ -134,16 +135,28 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
       toast.error(error instanceof Error ? error.message : "No se pudo guardar la entrega.")
     }
   })
+  const [filesChanged, setFilesChanged] = useState(false)
+  const hasUnsavedChanges = form.formState.isDirty || filesChanged
+  function requestClose() {
+    if (pending) return
+    if (
+      window.matchMedia("(max-width: 767px)").matches &&
+      hasUnsavedChanges &&
+      !window.confirm("¿Descartar los cambios y los archivos seleccionados sin guardar?")
+    )
+      return
+    onOpenChange(false)
+  }
   const pending = mutation.isPending || attachments.busy || form.formState.isSubmitting
   return (
     <Dialog
       open={open}
       onOpenChange={(value) => {
-        if (!pending) onOpenChange(value)
+        if (!value) requestClose()
       }}
     >
       <DialogContent
-        className="delivery-form flex max-h-[90svh] flex-col gap-0 overflow-hidden p-0 sm:max-w-[800px]"
+        className="delivery-form flex max-h-[90svh] flex-col gap-0 overflow-hidden p-0 max-md:translate-x-0 max-md:translate-y-0 sm:max-w-[800px]"
         onEscapeKeyDown={(event) => {
           if (pending) event.preventDefault()
         }}
@@ -169,7 +182,14 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
                   : ""}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <form
+          onChangeCapture={(event) => {
+            if (event.target instanceof HTMLInputElement && event.target.type === "file") setFilesChanged(true)
+          }}
+          onSubmit={submit}
+          noValidate
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+        >
           <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain" data-slot="delivery-form-fields">
             <fieldset disabled={pending} className="min-w-0 space-y-5 px-4 py-4 disabled:opacity-70 sm:px-6 sm:py-5">
               {options.isPending && (
@@ -427,7 +447,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
                     const itemErrors = errors.items?.[index]
                     return (
                       <div key={field.id} className="border-t p-3">
-                        <div className="delivery-item-row">
+                        <div className="delivery-item-row delivery-mobile-item">
                           <select
                             className="delivery-select"
                             aria-label={`Insumo ${index + 1}`}
@@ -456,11 +476,14 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
                               </option>
                             ))}
                           </select>
+                          <span className="delivery-mobile-unit-label">Unidad</span>
+                          <span className="delivery-mobile-quantity-label">Cantidad</span>
                           <Input
                             aria-label={`Cantidad del insumo ${index + 1}`}
                             aria-invalid={Boolean(itemErrors?.quantity)}
                             aria-describedby={`${id}-item-${index}-error`}
                             type="number"
+                            inputMode="numeric"
                             min="1"
                             max="2147483647"
                             step="1"
@@ -533,7 +556,7 @@ function DeliveryFormContent({ open, onOpenChange, delivery, fromRequest, fromEv
             <span className="text-muted-foreground mr-auto text-xs">
               {fields.length} {fields.length === 1 ? "insumo" : "insumos"} en la entrega
             </span>
-            <Button type="button" variant="outline" disabled={pending} onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" disabled={pending} onClick={requestClose}>
               Cancelar
             </Button>
             <Button
