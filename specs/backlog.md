@@ -1,6 +1,6 @@
 # Estado y backlog del proyecto DGRD Ñuñoa
 
-Actualizado el 17 de noviembre de 2026. Estado de `main` después de los PR #45 (archivos R2) y #46 (build), con carga directa R2 en revisión local. La referencia funcional y visual es `spike/test-mockup`; no se usan otras ramas históricas para definir el producto. La revisión integral y los ajustes de navegación ya están integrados.
+Actualizado el 17 de noviembre de 2026. Estado de `main` después del PR #53 (Catálogo y vista propia de Tipos de evento). Archivos R2 y carga directa ya están integrados. La referencia funcional y visual es `spike/test-mockup`; no se usan otras ramas históricas para definir el producto. La revisión integral y los ajustes de navegación ya están integrados.
 
 ## Alcance vigente
 
@@ -57,7 +57,7 @@ Se conserva la confirmación actual al eliminar usuarios, sin exigir escribir el
 1. **Entregas**, integrado mediante PR #43: Observaciones opcionales persistidas y auditadas, controles de fotografías y archivos múltiples opcionales desactivados. Ver [Entregas](./entregas.md).
 2. **Eventos**, integrado mediante PR #44: cambiar Sector por Dirección conservando los valores existentes; agregar Informe ALFA (PDF), fotografías y archivos opcionales, todos desactivados hasta implementar el manejo de archivos.
 
-Esos dos bloques no incluían almacenamiento. El PR #45 activa todos los adjuntos con R2 privado. La etapa actual `feat/carga-directa-r2` adapta las cargas para soportar 25 MB en Vercel; revisión local antes de commit/PR y merge a cargo del usuario.
+Esos dos bloques no incluían almacenamiento. El PR #45 activa todos los adjuntos con R2 privado. El PR #47 integra las cargas directas para soportar 25 MB en Vercel. Los controles de adjuntos están activos.
 
 ## Verificación reproducible
 
@@ -81,7 +81,7 @@ pnpm build
 
 ## Pendientes de despliegue
 
-- Carga directa R2 para evitar el límite de peticiones de Vercel: implementada en revisión local, con CORS para el dominio de producción y localhost. Ver [Archivos R2](./archivos-r2.md).
+- Carga directa R2 para evitar el límite de peticiones de Vercel: integrada en PR #47, con CORS para el dominio de producción y localhost. Ver [Archivos R2](./archivos-r2.md).
 - Programación de limpieza periódica en Vercel: pospuesta por decisión del usuario. Se conserva el endpoint para el futuro VPS o un programador externo.
 - Verificar migraciones y variables en el entorno de producción tras desplegar.
 
@@ -92,8 +92,14 @@ Se implementan en ramas separadas para revisión antes de commit/PR:
 1. **Plan RRD** — integrado en PR #48: título truncado y columnas visibles en tabla de acciones; contador de adjuntos por actividad; participantes opcionales; línea roja de Hoy más gruesa en cronograma.
 2. **Adjuntos** — integrado en PR #49: selector compartido en español, borde discontinuo e icono de carga como el spike, con selección por clic/teclado y arrastre.
 3. **Entregas** — integrado en PR #50: fondo gris del panel lateral con encabezado y tarjetas blancos; unidades asociadas al insumo, primera disponible seleccionada y sin placeholder «Unidad…».
-4. **Resumen y sidebar** — en revisión local en `fix/resumen-iconos-sidebar`: clases de iconos corregidas para restaurar fondos y esquinas redondeadas; badges en negrita y camión en el acceso Entregas. Incluye el traslado de Insumos y Juntas a tarjetas de Configuración, accesibles según permisos existentes para ambos roles.
+4. **Resumen y sidebar** — integrado en PR #51: clases de iconos corregidas para restaurar fondos y esquinas redondeadas; badges en negrita y camión en el acceso Entregas. Incluye el traslado de Insumos y Juntas a tarjetas de Configuración, accesibles según permisos existentes para ambos roles.
 
 La limpieza periódica continúa pospuesta.
 
-En revisión local en `feat/catalogo-vistas`: Configuración pasa a Catálogo; Tipos de evento se separa en una vista propia con acceso desde una tarjeta, como Insumos y Juntas. Se actualizan navegación, breadcrumbs y eyebrows.
+Integrado en PR #53: Configuración pasa a Catálogo; Tipos de evento se separa en una vista propia con acceso desde una tarjeta, como Insumos y Juntas. Se actualizan navegación, breadcrumbs y eyebrows.
+
+## Estado de cierre del alcance aprobado
+
+No quedan funcionalidades aprobadas por implementar en el backlog vigente. Los bloques de interfaz solicitados están integrados en los PR #48–#51 y #53. El PR #52 incorpora la aplicación de migraciones al build de despliegue; esto no sustituye revisar las variables y el resultado del despliegue en el entorno de destino.
+
+La limpieza periódica de R2 es el único trabajo operativo identificado que sigue expresamente pospuesto. No se retoma sin una nueva indicación. Una siguiente etapa funcional requiere acordar requisitos nuevos; las ideas sin aprobar y las exclusiones anteriores no se consideran pendientes.
