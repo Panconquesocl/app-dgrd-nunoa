@@ -5,8 +5,23 @@ import { can } from "@/lib/permissions"
 import { AppError } from "@/lib/api-error"
 import { auditedTransaction } from "@/features/audit/transaction"
 import { inspectFile } from "./files"
-import { storageConfig, putObject, removeObject } from "./storage"
-import { type Owner, type Kind, MAX_GROUP_FILES } from "./schemas"
+import {
+  storageConfig,
+  signUpload,
+  publishObject,
+  stagingKey,
+  getObject,
+  removeObject,
+  UPLOAD_URL_SECONDS,
+} from "./storage"
+import {
+  type Owner,
+  type Kind,
+  type UploadMetadata,
+  MAX_FILE_SIZE,
+  MAX_GROUP_FILES,
+  uploadMetadataSchema,
+} from "./schemas"
 type Actor = { id: string; role?: string | null }
 export const parentWhere = (owner: Owner) =>
   owner.resource === "deliveries"
@@ -64,8 +79,9 @@ export async function listAttachments(owner: Owner, actor: Actor) {
     })
   ).map(({ bucket, ...row }) => ({ ...row, available: !!bucket }))
 }
-export async function uploadAttachment(owner: Owner, kind: Kind, file: File, actor: Actor) {
+export async function beginUpload(owner: Owner, kind: Kind, metadata: UploadMetadata, actor: Actor) {
   await assertOwner(owner, actor, true)
+  const input = uploadMetadataSchema.parse(metadata)
   if (
     (owner.resource === "activities" && kind !== "evidence") ||
     (owner.resource !== "activities" && kind === "evidence") ||
@@ -73,46 +89,121 @@ export async function uploadAttachment(owner: Owner, kind: Kind, file: File, act
   )
     throw new AppError(400, "Este grupo no corresponde al registro.")
   const { bucket } = storageConfig()
-  const content = await inspectFile(file, kind)
   const pending = await prisma.$transaction(async (tx) => {
     const ownerLabel = await assertOwner(owner, actor, true, tx, true)
-    const count = await tx.evidence.count({ where: { ...parentWhere(owner), kind } })
-    if (count >= (kind === "alfa" ? 1 : MAX_GROUP_FILES))
+    if (
+      (await tx.evidence.count({ where: { ...parentWhere(owner), kind } })) >= (kind === "alfa" ? 1 : MAX_GROUP_FILES)
+    )
       throw new AppError(
         409,
         kind === "alfa" ? "Elimina el Informe ALFA anterior antes de reemplazarlo." : "El grupo ya tiene 20 archivos.",
       )
-    return tx.evidence.create({
+    const row = await tx.evidence.create({
       data: {
         ...parentWhere(owner),
         kind,
         status: "pending",
         bucket,
         key: `${owner.resource}/${owner.recordId}/${randomUUID()}`,
-        name: content.name,
-        type: content.type,
-        size: content.size,
+        name: input.name.replace(/[\u0000-\u001f\u007f/\\]/g, "_").trim() || "archivo",
+        type: "application/octet-stream",
+        size: input.size,
         createdBy: actor.id,
         ownerLabel,
         uploadExpiresAt: new Date(Date.now() + 15 * 60_000),
       },
     })
+    // La URL se puede reutilizar hasta vencer. El temporal se limpia después, nunca antes.
+    await tx.r2ObjectDeletion.create({
+      data: {
+        bucket,
+        key: stagingKey(row.key),
+        resource: owner.resource,
+        recordId: owner.recordId,
+        nextAttemptAt: new Date(Date.now() + 20 * 60_000),
+      },
+    })
+    return row
   })
   try {
-    await putObject(bucket, pending.key, content.body, content.type)
+    return {
+      id: pending.id,
+      uploadUrl: await signUpload(bucket, pending.key, pending.size),
+      headers: { "Content-Type": "application/octet-stream" },
+      expiresAt: new Date(Date.now() + UPLOAD_URL_SECONDS * 1000).toISOString(),
+    }
+  } catch {
+    await prisma.evidence.deleteMany({ where: { id: pending.id, status: "pending" } })
+    throw new AppError(503, "No se pudo preparar la carga del archivo. Puedes reintentarlo.")
+  }
+}
+async function ownUpload(id: string, actor: Actor) {
+  const row = await prisma.evidence.findUnique({ where: { id } })
+  if (!row) throw new AppError(404, "La carga ya no existe. Vuelve a subir el archivo.")
+  await assertOwner(fileOwner(row), actor, true)
+  if (row.createdBy !== actor.id) throw new AppError(403, "Solo quien inició la carga puede confirmarla o cancelarla.")
+  return row
+}
+export async function completeUpload(id: string, actor: Actor) {
+  const original = await ownUpload(id, actor)
+  if (original.status === "ready") return { id }
+  const owner = fileOwner(original),
+    token = randomUUID()
+  const pending = await prisma.$transaction(async (tx) => {
+    await assertOwner(owner, actor, true, tx, true)
+    const row = await tx.evidence.findUnique({ where: { id } })
+    if (!row) throw new AppError(404, "La carga ya no existe.")
+    if (row.status === "ready") return null
+    if (!row.bucket || !row.uploadExpiresAt || row.uploadExpiresAt <= new Date())
+      throw new AppError(410, "La carga venció. Vuelve a subir el archivo.")
+    if (row.uploadLeaseUntil && row.uploadLeaseUntil > new Date())
+      throw new AppError(409, "El archivo se está validando. Espera antes de reintentar.")
+    return tx.evidence.update({
+      where: { id },
+      data: { uploadToken: token, uploadLeaseUntil: new Date(Date.now() + 5 * 60_000) },
+    })
+  })
+  if (!pending) return { id }
+  try {
+    const object = await getObject(pending.bucket!, stagingKey(pending.key))
+    if (!object.Body || !object.ETag || object.ContentLength !== pending.size || object.ContentLength > MAX_FILE_SIZE) {
+      if (object.Body && "destroy" in object.Body) object.Body.destroy()
+      throw new AppError(400, "El tamaño del archivo recibido no coincide con la carga autorizada.")
+    }
+    const chunks: Uint8Array[] = []
+    let size = 0
+    for await (const chunk of object.Body as AsyncIterable<Uint8Array>) {
+      size += chunk.length
+      if (size > MAX_FILE_SIZE || size > pending.size) {
+        if ("destroy" in object.Body) object.Body.destroy()
+        throw new AppError(400, "El archivo supera el tamaño autorizado.")
+      }
+      chunks.push(chunk)
+    }
+    if (size !== pending.size) throw new AppError(400, "El archivo recibido está incompleto.")
+    const content = await inspectFile(new File([Buffer.concat(chunks)], pending.name), pending.kind)
+    await publishObject(pending.bucket!, pending.key, object.ETag, content.type)
     await auditedTransaction(actor.id, async (tx) => {
       await assertOwner(owner, actor, true, tx, true)
       await tx.evidence.update({
-        where: { id: pending.id, status: "pending" },
-        data: { status: "ready", uploadExpiresAt: null },
+        where: { id, status: "pending", uploadToken: token },
+        data: { status: "ready", type: content.type, uploadExpiresAt: null, uploadToken: null, uploadLeaseUntil: null },
       })
     })
-    return { id: pending.id }
+    return { id }
   } catch (error) {
-    await prisma.evidence.deleteMany({ where: { id: pending.id, status: "pending" } })
+    await prisma.evidence.deleteMany({ where: { id, status: "pending", uploadToken: token } })
     if (error instanceof AppError) throw error
-    throw new AppError(503, "No se pudo subir el archivo. El registro está guardado; puedes reintentar la carga.")
+    throw new AppError(503, "No se pudo validar el archivo. El registro está guardado; puedes reintentar la carga.")
   }
+}
+export async function cancelUpload(id: string, actor: Actor) {
+  const row = await ownUpload(id, actor)
+  if (row.status === "ready") return // Nunca eliminar un archivo confirmado al perderse una respuesta de confirmación.
+  await prisma.$transaction(async (tx) => {
+    await assertOwner(fileOwner(row), actor, true, tx, true)
+    await tx.evidence.deleteMany({ where: { id, status: "pending", createdBy: actor.id } })
+  })
 }
 export async function findAttachment(id: string, actor: Actor, write = false) {
   const row = await prisma.evidence.findUnique({ where: { id } })

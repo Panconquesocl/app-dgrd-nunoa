@@ -1,4 +1,11 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3"
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  CopyObjectCommand,
+} from "@aws-sdk/client-s3"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { AppError } from "@/lib/api-error"
 let client: S3Client | undefined
 export function storageConfig() {
@@ -15,14 +22,37 @@ export function storageConfig() {
     endpoint: process.env.R2_ENDPOINT || `https://${account}.r2.cloudflarestorage.com`,
     credentials: { accessKeyId, secretAccessKey },
     maxAttempts: 3,
+    requestChecksumCalculation: "WHEN_REQUIRED",
   })
   return { client, bucket }
 }
-export async function putObject(bucket: string, key: string, body: Uint8Array, type: string) {
-  const { client } = storageConfig()
-  await client.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: type }), {
-    abortSignal: AbortSignal.timeout(90_000),
-  })
+export const stagingKey = (key: string) => `staging/${key}`
+export const UPLOAD_URL_SECONDS = 300
+export async function signUpload(bucket: string, key: string, size: number) {
+  return getSignedUrl(
+    storageConfig().client,
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: stagingKey(key),
+      ContentType: "application/octet-stream",
+      ContentLength: size,
+    }),
+    { expiresIn: UPLOAD_URL_SECONDS, signableHeaders: new Set(["content-type", "content-length"]) },
+  )
+}
+export async function publishObject(bucket: string, key: string, etag: string, type: string) {
+  const source = `${bucket}/${stagingKey(key)}`.split("/").map(encodeURIComponent).join("/")
+  await storageConfig().client.send(
+    new CopyObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      CopySource: source,
+      CopySourceIfMatch: etag,
+      MetadataDirective: "REPLACE",
+      ContentType: type,
+    }),
+    { abortSignal: AbortSignal.timeout(90_000) },
+  )
 }
 export async function getObject(bucket: string, key: string) {
   return storageConfig().client.send(new GetObjectCommand({ Bucket: bucket, Key: key }), {

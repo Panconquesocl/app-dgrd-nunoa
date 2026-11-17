@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { inspectFile, readUpload } from "./files"
-import { MAX_FILE_SIZE } from "./schemas"
+import { inspectFile, readUploadMetadata } from "./files"
+import { MAX_FILE_SIZE, uploadMetadataSchema } from "./schemas"
 import { AppError } from "@/lib/api-error"
 const bad = (status: number) => (error: unknown) => error instanceof AppError && error.status === status
 const png = Buffer.from(
@@ -26,20 +26,27 @@ test("límites inclusivos de 25 MB y rechazo de archivos vacíos", async () => {
   assert.equal((await inspectFile(new File([new Uint8Array(MAX_FILE_SIZE)], "limite.bin"), "file")).size, MAX_FILE_SIZE)
   await assert.rejects(inspectFile(new File([new Uint8Array(MAX_FILE_SIZE + 1)], "grande.bin"), "file"), bad(400))
 })
-test("multipart acotado: archivo único, cuerpo real y Content-Length falso", async () => {
-  const data = new FormData()
-  data.set("file", new File([png], "foto.png"))
-  assert.equal((await readUpload(new Request("http://localhost", { method: "POST", body: data }))).name, "foto.png")
-  data.append("file", new File([png], "otra.png"))
-  await assert.rejects(readUpload(new Request("http://localhost", { method: "POST", body: data })), bad(400))
+test("control JSON acotado incluso con Content-Length falso; no recibe binarios", async () => {
+  const body = JSON.stringify({ name: "foto.png", size: png.length })
+  assert.deepEqual(await readUploadMetadata(new Request("http://localhost", { method: "POST", body })), {
+    name: "foto.png",
+    size: png.length,
+  })
+  await assert.rejects(readUploadMetadata(new Request("http://localhost", { method: "POST", body: "{" })), bad(400))
   await assert.rejects(
-    readUpload(
+    readUploadMetadata(
       new Request("http://localhost", {
         method: "POST",
-        headers: { "Content-Type": "multipart/form-data; boundary=test", "Content-Length": "1" },
-        body: new Uint8Array(MAX_FILE_SIZE + 65537),
+        headers: { "Content-Length": "1" },
+        body: new Uint8Array(4097),
       }),
     ),
     bad(413),
   )
+})
+
+test("reserva: permite 25 MB exactos y rechaza tamaño mayor, vacío o fraccionario", () => {
+  assert.equal(uploadMetadataSchema.safeParse({ name: "archivo", size: MAX_FILE_SIZE }).success, true)
+  for (const size of [0, -1, 0.5, MAX_FILE_SIZE + 1])
+    assert.equal(uploadMetadataSchema.safeParse({ name: "archivo", size }).success, false)
 })

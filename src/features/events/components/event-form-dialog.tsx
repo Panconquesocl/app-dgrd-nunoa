@@ -1,7 +1,7 @@
 "use client"
 import { useAttachmentDraft } from "@/features/attachments/client"
 import { useId } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Info, Siren } from "lucide-react"
 import Link from "next/link"
@@ -51,6 +51,7 @@ export function EventFormDialog({
       actions: event?.actions ?? fromRequest?.response ?? "",
     },
   })
+  const selectedTypeId = useWatch({ control: form.control, name: "typeId" })
   const save = form.handleSubmit(async (values) => {
     try {
       const saved = await mutation.mutateAsync({
@@ -143,6 +144,7 @@ export function EventFormDialog({
                           id={`${id}-${field}`}
                           className="delivery-select"
                           {...form.register(field)}
+                          value={selectedTypeId}
                           aria-invalid={Boolean(form.formState.errors[field])}
                           aria-describedby={`${id}-${field}-error ${id}-types-hint`}
                         >

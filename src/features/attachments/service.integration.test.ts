@@ -1,12 +1,14 @@
 import "dotenv/config"
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { randomUUID } from "node:crypto"
+import { randomUUID, createHash } from "node:crypto"
 import { createServer } from "node:http"
 import prisma from "@/lib/prisma"
 import { AppError } from "@/lib/api-error"
 import {
-  uploadAttachment,
+  beginUpload,
+  completeUpload,
+  cancelUpload,
   listAttachments,
   findAttachment,
   deleteAttachment,
@@ -17,7 +19,19 @@ import {
 import { deleteDelivery } from "@/features/deliveries/service"
 import { deleteEvent, getEventDeletionImpact } from "@/features/events/service"
 import { deleteActivity } from "@/features/activities/service"
+import { type Owner, type Kind } from "./schemas"
 import { getObject } from "./storage"
+async function uploadAttachment(owner: Owner, kind: Kind, file: File, actor: { id: string; role: string }) {
+  const ticket = await beginUpload(owner, kind, { name: file.name, size: file.size }, actor)
+  try {
+    const response = await fetch(ticket.uploadUrl, { method: "PUT", headers: ticket.headers, body: file })
+    if (!response.ok) throw new AppError(503, "Carga fallida")
+    return await completeUpload(ticket.id, actor)
+  } catch (error) {
+    await cancelUpload(ticket.id, actor).catch(() => undefined)
+    throw error
+  }
+}
 const bad = (status: number) => (error: unknown) => error instanceof AppError && error.status === status
 const png = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ8sAAAAASUVORK5CYII=",
@@ -30,6 +44,7 @@ test(
     const objects = new Map<string, Buffer>()
     let failPut = false,
       failDelete = false
+    const etag = (body: Buffer) => `"${createHash("md5").update(body).digest("hex")}"`
     const server = createServer(async (req, res) => {
       const key = new URL(req.url!, "http://localhost").pathname
       if (req.method === "PUT") {
@@ -40,9 +55,25 @@ test(
           res.end("<Error><Code>ServiceUnavailable</Code></Error>")
           return
         }
-        objects.set(key, Buffer.concat(chunks))
-        res.writeHead(200, { ETag: '"test"' })
-        res.end()
+        if (req.headers["x-amz-copy-source"]) {
+          const source = "/" + decodeURIComponent(String(req.headers["x-amz-copy-source"]).replace(/^\//, ""))
+          const data = objects.get(source)
+          if (!data || req.headers["x-amz-copy-source-if-match"] !== etag(data)) {
+            res.writeHead(412)
+            res.end("<Error><Code>PreconditionFailed</Code></Error>")
+            return
+          }
+          objects.set(key, Buffer.from(data))
+          res.writeHead(200, { "Content-Type": "application/xml" })
+          res.end(
+            `<CopyObjectResult><ETag>${etag(data)}</ETag><LastModified>2026-11-17T00:00:00Z</LastModified></CopyObjectResult>`,
+          )
+        } else {
+          const data = Buffer.concat(chunks)
+          objects.set(key, data)
+          res.writeHead(200, { ETag: etag(data) })
+          res.end()
+        }
       } else if (req.method === "DELETE") {
         if (failDelete) {
           res.writeHead(503)
@@ -54,7 +85,7 @@ test(
         res.end()
       } else {
         const body = objects.get(key)
-        res.writeHead(body ? 200 : 404, body ? { "Content-Length": String(body.length) } : {})
+        res.writeHead(body ? 200 : 404, body ? { "Content-Length": String(body.length), ETag: etag(body) } : {})
         res.end(body)
       }
     })
@@ -112,6 +143,32 @@ test(
         true,
       )
       assert.equal(JSON.stringify(await listAttachments(owner, actor)).includes(row.key), false)
+      const replay = await beginUpload(owner, "photo", { name: "replay.png", size: png.length }, actor)
+      assert.equal(new URL(replay.uploadUrl).searchParams.get("X-Amz-Expires"), "300")
+      assert.ok(new URL(replay.uploadUrl).searchParams.get("X-Amz-SignedHeaders")?.includes("content-length"))
+      assert.equal((await fetch(replay.uploadUrl, { method: "PUT", headers: replay.headers, body: png })).status, 200)
+      await assert.rejects(completeUpload(replay.id, { id: "otro-usuario", role: "regular" }), bad(403))
+      const confirmations = await Promise.allSettled([
+        completeUpload(replay.id, actor),
+        completeUpload(replay.id, actor),
+      ])
+      assert.ok(confirmations.some((result) => result.status === "fulfilled"))
+      for (const result of confirmations) if (result.status === "rejected") assert.ok(bad(409)(result.reason))
+      assert.deepEqual(await completeUpload(replay.id, actor), { id: replay.id })
+      await cancelUpload(replay.id, actor)
+      assert.ok(await prisma.evidence.findUnique({ where: { id: replay.id } }))
+      await fetch(replay.uploadUrl, { method: "PUT", headers: replay.headers, body: new Uint8Array(png.length) })
+      const final = await findAttachment(replay.id, actor)
+      assert.ok(Buffer.from(await (await getObject(final.bucket!, final.key)).Body!.transformToByteArray()).equals(png))
+      await deleteAttachment(replay.id, actor)
+      const invalid = await beginUpload(owner, "photo", { name: "fake.png", size: 4 }, actor)
+      await fetch(invalid.uploadUrl, { method: "PUT", headers: invalid.headers, body: "fake" })
+      await assert.rejects(completeUpload(invalid.id, actor), bad(400))
+      assert.equal(await prisma.evidence.findUnique({ where: { id: invalid.id } }), null)
+      const wrongSize = await beginUpload(owner, "file", { name: "size.txt", size: 1 }, actor)
+      await fetch(wrongSize.uploadUrl, { method: "PUT", headers: wrongSize.headers, body: "dos" })
+      await assert.rejects(completeUpload(wrongSize.id, actor), bad(400))
+
       await assert.rejects(
         prisma.$transaction(async (tx) => {
           await tx.evidence.delete({ where: { id: file.id } })
@@ -208,7 +265,11 @@ test(
         where: { recordId: { in: ownerIds } },
         data: { nextAttemptAt: new Date(0) },
       })
-      await processDeletions(eventOwner)
+      for (const recordId of ownerIds)
+        await processDeletions({
+          resource: recordId === delivery.id ? "deliveries" : recordId === event.id ? "events" : "activities",
+          recordId,
+        })
       assert.equal(await prisma.r2ObjectDeletion.count({ where: { recordId: { in: ownerIds } } }), 0)
       assert.equal(objects.size, 0)
       // Expiración de una carga interrumpida: la cola sobrevive al borrado de sus metadatos.

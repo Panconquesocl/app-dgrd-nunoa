@@ -317,17 +317,19 @@ enum AttachmentStatus {
 // Metadatos de adjuntos privados. bucket null identifica evidencia previa aún
 // no migrada a R2; nunca se infiere ni se borra su objeto original.
 model Evidence {
-  id              String           @id @default(cuid())
-  name            String
-  type            String
-  size            Int
-  key             String
-  createdAt       DateTime         @default(now())
-  kind            AttachmentKind   @default(evidence)
-  status          AttachmentStatus @default(ready)
-  bucket          String?
-  ownerLabel      String?
-  uploadExpiresAt DateTime?
+  id               String           @id @default(cuid())
+  name             String
+  type             String
+  size             Int
+  key              String
+  createdAt        DateTime         @default(now())
+  kind             AttachmentKind   @default(evidence)
+  status           AttachmentStatus @default(ready)
+  bucket           String?
+  ownerLabel       String?
+  uploadExpiresAt  DateTime?
+  uploadToken      String?
+  uploadLeaseUntil DateTime?
 
   // Exactamente un padre; las cascadas encolan el borrado del objeto en SQL.
   activityId String?

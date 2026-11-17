@@ -17,14 +17,10 @@ export async function inspectFile(file: File, kind: Kind) {
       .slice(0, 240) || "archivo"
   return { body, type: detected?.mime || "application/octet-stream", name, size: body.length }
 }
-/** Acota el cuerpo incluso si Content-Length falta o es falso. */
-export async function readUpload(request: Request) {
-  const limit = MAX_FILE_SIZE + 64 * 1024
-  if (Number(request.headers.get("content-length")) > limit) throw new AppError(413, "El archivo supera los 25 MB.")
-  if (!request.headers.get("content-type")?.startsWith("multipart/form-data;"))
-    throw new AppError(400, "La carga debe usar multipart/form-data.")
+/** Las rutas de control solo reciben JSON pequeño; el binario viaja directamente a R2. */
+export async function readUploadMetadata(request: Request) {
   const reader = request.body?.getReader()
-  if (!reader) throw new AppError(400, "Falta el archivo.")
+  if (!reader) throw new AppError(400, "Faltan los datos del archivo.")
   const chunks: Uint8Array[] = []
   let size = 0
   try {
@@ -32,24 +28,18 @@ export async function readUpload(request: Request) {
       const { done, value } = await reader.read()
       if (done) break
       size += value.length
-      if (size > limit) {
+      if (size > 4096) {
         await reader.cancel()
-        throw new AppError(413, "El archivo supera los 25 MB.")
+        throw new AppError(413, "Los datos del archivo son demasiado grandes.")
       }
       chunks.push(value)
     }
   } finally {
     reader.releaseLock()
   }
-  const data = await new Response(Buffer.concat(chunks), {
-    headers: { "Content-Type": request.headers.get("content-type")! },
-  })
-    .formData()
-    .catch(() => {
-      throw new AppError(400, "El formulario de archivos no es válido.")
-    })
-  const files = data.getAll("file")
-  if (files.length !== 1 || !(files[0] instanceof File) || [...data.keys()].some((key) => key !== "file"))
-    throw new AppError(400, "Carga un archivo a la vez.")
-  return files[0]
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown
+  } catch {
+    throw new AppError(400, "Los datos del archivo no son válidos.")
+  }
 }
