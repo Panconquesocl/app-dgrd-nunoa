@@ -1,19 +1,18 @@
 "use client"
 
-import { usePermission } from "@/providers/permissions"
+import { usePermission, useConfigurationAccess } from "@/providers/permissions"
 import { useState, useSyncExternalStore } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-  Box,
   CalendarRange,
   ChevronRight,
   ChevronsLeft,
   FileText,
   Home,
   History,
-  Package,
+  Truck,
   Settings,
   Siren,
   Target,
@@ -68,11 +67,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Ayudas primera respuesta",
-    items: [
-      { href: "/entregas", label: "Entregas", icon: Package, countKey: "deliveries" },
-      { href: "/insumos", label: "Insumos", icon: Box },
-      { href: "/juntas-vecinales", label: "Juntas vecinales", icon: Users },
-    ],
+    items: [{ href: "/entregas", label: "Entregas", icon: Truck, countKey: "deliveries" }],
   },
   {
     label: "Plan RRD",
@@ -104,7 +99,9 @@ export function AppSidebar({ viewerKey }: { viewerKey: string }) {
       window.dispatchEvent(new Event("sidebar-preference"))
     } catch {}
   }
-  const canConfigure = usePermission("event-types", "read")
+  const canConfigure = useConfigurationAccess()
+  const canReadUsers = usePermission("users", "read")
+  const canReadAudit = usePermission("audit", "read")
   const canReadEmergencies = usePermission("requests", "read")
 
   return (
@@ -136,46 +133,63 @@ export function AppSidebar({ viewerKey }: { viewerKey: string }) {
       >
         {NAV_GROUPS.filter(
           (group) =>
-            (group.label !== "Emergencias" || canReadEmergencies) && (group.label !== "Administración" || canConfigure),
+            (group.label !== "Emergencias" || canReadEmergencies) &&
+            (group.label !== "Administración" || canConfigure || canReadUsers || canReadAudit),
         ).map((group) => (
           <div key={group.label} className="app-sidebar-group">
             <p className="app-sidebar-group-label text-ink-muted px-2 pb-2 text-[10px] font-semibold tracking-[0.09em] uppercase">
               {group.label}
             </p>
             <ul className="flex flex-col gap-0.5">
-              {group.items.map(({ href, label, icon: Icon, countKey }) => {
-                const isActive = pathname === href || pathname.startsWith(`${href}/`)
-                const count = countKey && !counts.isError ? counts.data?.[countKey] : undefined
-
-                return (
-                  <li key={href}>
-                    <Link
-                      href={href}
-                      title={isCollapsed ? label : undefined}
-                      aria-label={count !== undefined ? `${label}: ${count}` : label}
-                      aria-current={isActive ? "page" : undefined}
-                      className={cn(
-                        "app-sidebar-link focus-visible:ring-brand/60 relative flex items-center gap-2.5 rounded-md px-2 py-2 text-[13.5px] font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
-                        isActive ? "bg-ink-soft text-white" : "text-ink-muted hover:bg-ink-soft/60 hover:text-white",
-                      )}
-                    >
-                      {isActive && (
-                        <span
-                          aria-hidden="true"
-                          className="bg-brand absolute inset-y-1.5 left-0 w-[3px] rounded-full"
-                        />
-                      )}
-                      <Icon className={cn("size-4 shrink-0", isActive && "text-brand")} />
-                      <span className="app-sidebar-label">{label}</span>
-                      {countKey && (
-                        <span className="app-sidebar-count" aria-hidden="true">
-                          {count !== undefined ? count.toLocaleString("es-CL") : "—"}
-                        </span>
-                      )}
-                    </Link>
-                  </li>
+              {group.items
+                .filter((item) =>
+                  item.href === "/admin/usuarios"
+                    ? canReadUsers
+                    : item.href === "/admin/auditoria"
+                      ? canReadAudit
+                      : item.href === "/admin/configuracion"
+                        ? canConfigure
+                        : true,
                 )
-              })}
+                .map(({ href, label, icon: Icon, countKey }) => {
+                  const isActive =
+                    pathname === href ||
+                    pathname.startsWith(`${href}/`) ||
+                    (href === "/admin/configuracion" &&
+                      ["/insumos", "/juntas-vecinales"].some(
+                        (path) => pathname === path || pathname.startsWith(`${path}/`),
+                      ))
+                  const count = countKey && !counts.isError ? counts.data?.[countKey] : undefined
+
+                  return (
+                    <li key={href}>
+                      <Link
+                        href={href}
+                        title={isCollapsed ? label : undefined}
+                        aria-label={count !== undefined ? `${label}: ${count}` : label}
+                        aria-current={isActive ? "page" : undefined}
+                        className={cn(
+                          "app-sidebar-link focus-visible:ring-brand/60 relative flex items-center gap-2.5 rounded-md px-2 py-2 text-[13.5px] font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
+                          isActive ? "bg-ink-soft text-white" : "text-ink-muted hover:bg-ink-soft/60 hover:text-white",
+                        )}
+                      >
+                        {isActive && (
+                          <span
+                            aria-hidden="true"
+                            className="bg-brand absolute inset-y-1.5 left-0 w-[3px] rounded-full"
+                          />
+                        )}
+                        <Icon className={cn("size-4 shrink-0", isActive && "text-brand")} />
+                        <span className="app-sidebar-label">{label}</span>
+                        {countKey && (
+                          <span className="app-sidebar-count" aria-hidden="true">
+                            {count !== undefined ? count.toLocaleString("es-CL") : "—"}
+                          </span>
+                        )}
+                      </Link>
+                    </li>
+                  )
+                })}
             </ul>
           </div>
         ))}

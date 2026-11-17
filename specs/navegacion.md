@@ -17,7 +17,7 @@ Ajustes desde `main` después del PR #41, con referencia exclusiva a `spike/test
 
 ## Sidebar
 
-La navegación entre módulos se realiza desde la sidebar. Entregas, Insumos y Juntas vecinales muestran «Ayudas primera respuesta» como eyebrow encima del título; Acciones estratégicas y Cronograma muestran «Plan RRD». Se eliminan las pestañas de navegación entre esas vistas. Cronograma conserva el selector de año y las vistas de línea temporal/actividades.
+La navegación principal se realiza desde la sidebar. Insumos y Juntas vecinales se abren desde Configuración y muestran «Configuración» como eyebrow; Entregas conserva «Ayudas primera respuesta» y Acciones estratégicas/Cronograma muestran «Plan RRD». Se eliminan las pestañas de navegación entre esas vistas. Cronograma conserva el selector de año y las vistas de línea temporal/actividades.
 
 Solicitudes, Eventos y Entregas muestran el total global de registros, como en el spike. No dependen del año del resumen, los filtros de listados ni el estado de la solicitud. No cuentan personas ni cantidades de insumos. En cero se muestra 0; durante la carga o ante error se muestra un guion, sin inventar un cero.
 
@@ -47,3 +47,9 @@ En los listados de Solicitudes, Eventos, Entregas, Insumos y Juntas vecinales, l
 - Formulario de entregas verificado con servicios simulados para altas y ediciones de ambos roles: administrador conserva el selector de solicitud; usuario normal no lo ve ni envía cambios de solicitud al guardar. Las filas de juntas abren el detalle sin propagar el clic de sus acciones de edición/borrado.
 
 No se ejecutaron pruebas sobre la base operativa. La publicación del PR se realiza a solicitud del usuario; el merge queda a su cargo.
+
+## Catálogos desde Configuración (17 de noviembre de 2026)
+
+En `fix/resumen-iconos-sidebar`, Insumos y Juntas vecinales se retiran de la sidebar. Sus accesos están en `/admin/configuracion`, mediante tarjetas visibles según lectura del catálogo. Se conservan `/insumos`, `/juntas-vecinales`, detalles y enlaces existentes. Configuración queda activa en la sidebar también al visitar esos catálogos y sus detalles; los eyebrows y breadcrumbs de detalle reflejan Configuración. No se agregan breadcrumbs a sus rutas base.
+
+Configuración queda accesible a ambos roles con permisos previos de catálogo: el usuario normal sigue gestionando insumos y consultando juntas, sin acceso a Tipos de evento, Usuarios ni Auditoría. La vista de Tipos solo se monta y consulta para quienes pueden leer ese catálogo. No se modifican los permisos de sus APIs ni las restricciones de edición de juntas. No requiere migración.

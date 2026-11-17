@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 import { formatDate } from "@/lib/format"
 import { RequestStatusBadge } from "@/features/requests/components/request-status-badge"
 import { EventTypeBadge } from "@/features/events/components/event-type-badge"
@@ -47,7 +48,7 @@ function Kpi({
   return (
     <Link href={href} className="summary-kpi">
       <div className="summary-kpi-top">
-        <span className={`summary-kpi-icon${accent ? "summary-kpi-icon-accent" : ""}`}>{icon}</span>
+        <span className={cn("summary-kpi-icon", accent && "summary-kpi-icon-accent")}>{icon}</span>
         <ArrowRight size={15} />
       </div>
       <div>
@@ -120,7 +121,7 @@ function Row({
 }) {
   return (
     <Link className="summary-row" href={href}>
-      <span className={`summary-row-icon${accent ? "summary-row-icon-accent" : green ? "summary-row-icon-green" : ""}`}>
+      <span className={cn("summary-row-icon", accent ? "summary-row-icon-accent" : green && "summary-row-icon-green")}>
         {icon}
       </span>
       <span className="summary-row-main">

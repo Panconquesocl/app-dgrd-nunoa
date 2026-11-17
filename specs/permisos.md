@@ -110,3 +110,7 @@ PostgreSQL de cada módulo, que requieren sus flags de activación existentes.
 ## Búsqueda global
 
 `search:read` está permitido para usuarios normales y administradores. GET `/api/search` autoriza antes de validar y usa el rol de la sesión. El servicio comprueba además la lectura de cada módulo antes de ejecutar su consulta; los módulos restringidos se omiten por completo de la respuesta. No se buscan cuentas de usuario ni tipos de evento como recursos independientes. No hay endpoints de escritura de búsqueda. Ver [Búsqueda global](./busqueda-global.md).
+
+## Acceso a Configuración como entrada a catálogos
+
+La página `/admin/configuracion` requiere sesión y lectura de al menos uno de los catálogos `supplies`, `neighborhood-associations` o `event-types` mediante `canAccessConfiguration`. No concede permisos nuevos sobre esos recursos. El usuario normal ve accesos a Insumos (gestión) y Juntas vecinales (consulta); no se monta ni consulta Tipos de evento. Los accesos de Usuarios y Auditoría siguen restringidos por sus permisos individuales. Los roles desconocidos no acceden a la página ni a las tarjetas.

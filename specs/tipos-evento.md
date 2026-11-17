@@ -2,7 +2,7 @@
 
 Rama creada desde main. Referencia funcional y visual: Configuración de `spike/test-mockup`.
 
-Solo administradores pueden abrir `/admin/configuracion` y gestionar `/api/event-types` (GET/POST) y `/api/event-types/[id]` (PATCH/DELETE). La navegación muestra Configuración según el permiso `event-types.read`.
+Solo administradores pueden consultar y gestionar `/api/event-types` (GET/POST) y `/api/event-types/[id]` (PATCH/DELETE). Configuración (`/admin/configuracion`) también sirve de entrada a Insumos y Juntas vecinales para usuarios normales, según sus permisos previos; para ellos no se monta ni consulta Tipos de evento.
 
 El nombre es obligatorio, de hasta 200 caracteres. Se recortan espacios al inicio/final y se conserva la escritura elegida. Un índice funcional `lower(btrim(name))` garantiza unicidad incluso en altas o ediciones concurrentes. Renombrar conserva el id y actualiza el nombre mostrado por los eventos relacionados. La pantalla incluye búsqueda local y conteo de eventos por tipo.
 

@@ -36,3 +36,13 @@ Pruebas con PostgreSQL temporal: límites anuales de fechas y de solicitudes en 
 Integración solo con DATABASE_URL aislada: `RUN_SUMMARY_INTEGRATION=1 node --import tsx --test src/features/summary/service.integration.test.ts`.
 
 Revisión manual: abrir Resumen como administrador y usuario normal, cambiar año y contrastar cantidades con entregas; abrir registros desde cada tarjeta; crear/editar un registro y volver a Resumen para comprobar actualización; verificar escritorio y móvil. No requiere migración ni regeneración de Prisma. La revisión integral integrada está documentada en [Revisión integral](./revision-integral.md).
+
+## Coherencia visual de iconos y badges (17 de noviembre de 2026)
+
+En revisión local en `fix/resumen-iconos-sidebar`. Se corrige la composición de clases de los iconos del Resumen: las variantes de acento/verde conservan también la clase base. El indicador de Entregas recupera el contenedor amarillo suave de 32×32 px y radio de 8 px del spike. Las filas de entregas y otras filas acentuadas recuperan su fondo y geometría por el mismo arreglo. Los textos `.summary-badge` usan peso 700, incluidos los de estado de agenda. La sidebar usa el mismo icono Truck para Entregas, desplegada o colapsada, y las tarjetas de Configuración conservan el icono Box para Insumos. El ajuste visual no cambia datos ni consultas; no requiere migración.
+
+Validación del bloque: 69 pruebas generales, TypeScript, ESLint, formato y build con Turbopack aprobados. En navegador con administrador y usuario normal se comprobaron fondos de acento/verde, contenedores de 32×32 px con radio de 8 px, badges neutros y Próxima con peso 700, misma geometría Truck en sidebar/Resumen, sidebar desplegada/colapsada y conservación del icono Box de Insumos. Revisado a 1440, 390 y 320 px, con navegación y estado activo de Entregas correctos, sin desbordamiento ni errores JavaScript. Fixtures retirados después de revisar.
+
+Se incorpora en esta misma rama el traslado de los accesos de Insumos y Juntas vecinales desde la sidebar a Configuración, preservando rutas y permisos existentes. Ver [Navegación](./navegacion.md).
+
+Validación del traslado a Configuración: 71 pruebas generales, TypeScript, ESLint, formato y build aprobados. Se comprobó con ambos roles la navegación por tarjetas y breadcrumbs, y a 1440, 390 y 320 px sin desbordamiento. El usuario normal conserva sus permisos y no consulta Tipos de evento; el administrador puede crear, editar y eliminar tipos.
