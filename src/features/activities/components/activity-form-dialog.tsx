@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { formatDate } from "@/lib/format"
-import { activitySchema, type ActivityInput, type ActivityItem } from "../schemas"
+import { activityFormSchema, type ActivityInput, type ActivityItem } from "../schemas"
 import { ActivityApiError } from "../api"
 import { useSaveActivity, useSchedule } from "../queries"
 import "@/features/deliveries/components/deliveries.css"
@@ -33,7 +33,7 @@ export function ActivityFormDialog({
   const attachments = useAttachmentDraft("activities", activity?.id)
   const mutation = useSaveActivity(attachments.savedId)
   const form = useForm<ActivityInput>({
-    resolver: zodResolver(activitySchema),
+    resolver: zodResolver(activityFormSchema),
     defaultValues: {
       actionId: activity?.actionId ?? actionId ?? "",
       date: activity?.date.slice(0, 10) ?? "",
@@ -145,7 +145,12 @@ export function ActivityFormDialog({
               ).map(([field, label]) => (
                 <Field key={field} data-invalid={Boolean(form.formState.errors[field])}>
                   <FieldLabel htmlFor={`${id}-${field}`}>
-                    {label} <span className="text-destructive">*</span>
+                    {label}{" "}
+                    {field === "participants" ? (
+                      <span className="text-muted-foreground font-normal">Opcional</span>
+                    ) : (
+                      <span className="text-destructive">*</span>
+                    )}
                   </FieldLabel>
                   {field === "objective" || field === "participants" ? (
                     <Textarea

@@ -143,16 +143,16 @@ export function StrategicActionsView() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="min-w-[640px] table-fixed">
               <TableHeader>
                 <TableRow className="bg-muted/40 hover:bg-muted/40 [&>th]:text-muted-foreground [&>th]:h-11 [&>th]:text-[11px] [&>th]:font-semibold [&>th]:tracking-[0.08em] [&>th]:uppercase">
-                  <TableHead className="w-[64px] pl-5">N°</TableHead>
-                  <TableHead className="min-w-[320px]">Título</TableHead>
-                  <TableHead className="w-[88px]">Año</TableHead>
-                  <TableHead className="w-[130px]">Inicio</TableHead>
-                  <TableHead className="w-[130px]">Término</TableHead>
-                  <TableHead className="w-[120px]">Actividades</TableHead>
-                  <TableHead className="w-[110px] pr-5">
+                  <TableHead className="w-[56px] pl-5">N°</TableHead>
+                  <TableHead>Título</TableHead>
+                  <TableHead className="w-[64px]">Año</TableHead>
+                  <TableHead className="w-[104px]">Inicio</TableHead>
+                  <TableHead className="w-[104px]">Término</TableHead>
+                  <TableHead className="w-[104px]">Actividades</TableHead>
+                  <TableHead className="w-[96px] pr-5">
                     <span className="sr-only">Acciones</span>
                   </TableHead>
                 </TableRow>
@@ -166,11 +166,12 @@ export function StrategicActionsView() {
                     className="group cursor-pointer [&>td]:py-4"
                   >
                     <TableCell className="pl-5 font-semibold">{action.number}</TableCell>
-                    <TableCell className="font-semibold">
+                    <TableCell className="min-w-0 font-semibold">
                       <Link
                         href={`/plan/acciones/${action.id}`}
                         onClick={(event) => event.stopPropagation()}
-                        className="focus-visible:ring-ring rounded-sm hover:underline focus-visible:ring-2 focus-visible:outline-none"
+                        title={action.title}
+                        className="focus-visible:ring-ring block truncate rounded-sm hover:underline focus-visible:ring-2 focus-visible:outline-none"
                       >
                         {action.title}
                       </Link>
