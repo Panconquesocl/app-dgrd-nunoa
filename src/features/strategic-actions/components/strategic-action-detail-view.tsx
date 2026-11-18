@@ -49,7 +49,12 @@ export function StrategicActionDetailView({ id, user }: Props) {
       <AppTopbar
         crumbs={[
           { label: "Plan RRD" },
-          { label: "Acciones estratégicas", href: "/plan/acciones" },
+          {
+            label: "Acciones estratégicas",
+            href: "/plan/acciones",
+            mobileLabel: "Actividades",
+            mobileHref: "/plan/actividades",
+          },
           { label: crumbLabel, current: true },
         ]}
         user={user}
@@ -57,10 +62,17 @@ export function StrategicActionDetailView({ id, user }: Props) {
 
       <div className="delivery-page flex flex-col">
         <Link
-          href="/plan/acciones"
-          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex w-fit items-center gap-1.5 rounded-sm text-[13px] focus-visible:ring-2 focus-visible:outline-none"
+          href="/plan/actividades"
+          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex w-fit items-center gap-1.5 rounded-sm text-[13px] focus-visible:ring-2 focus-visible:outline-none lg:hidden"
         >
-          <ArrowLeft aria-hidden="true" className="size-4" />
+          <ArrowLeft aria-hidden="true" className="size-4 lg:hidden" />
+          Actividades
+        </Link>
+        <Link
+          href="/plan/acciones"
+          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex w-fit items-center gap-1.5 rounded-sm text-[13px] focus-visible:ring-2 focus-visible:outline-none max-lg:hidden"
+        >
+          <ArrowLeft aria-hidden="true" className="size-4 max-lg:hidden" />
           Acciones estratégicas
         </Link>
 

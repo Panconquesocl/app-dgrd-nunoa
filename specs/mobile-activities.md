@@ -25,3 +25,9 @@ Ajuste de revisión: la agenda única, la ocultación del selector de año/líne
 El acceso Actividades de la barra inferior y del logo abre `/plan/actividades`, una vista de agenda única para el año consultado. No se monta schedule-panel-head, el selector anual ni el contenido Gantt en esa ruta. `/plan/cronograma` sigue disponible para la navegación de escritorio. Ambas rutas usan la consulta y operaciones compartidas y el mismo permiso de lectura.
 
 Verificación de la ruta exclusiva: ambos roles a 320/390/768/1023/1440 px, sin schedule-panel-head, selector de año ni Gantt en el DOM. Se comprobó que el botón inferior navega a /plan/actividades, el botón + aparece con la navegación móvil y /plan/cronograma mantiene sus controles de escritorio.
+
+## Corrección de navegación desde una acción
+
+Bajo 1024 px, tanto el enlace de regreso como el breadcrumb del detalle de una acción muestran Actividades y llevan a `/plan/actividades`. En escritorio mantienen Acciones estratégicas y `/plan/acciones`. Esto evita que el recorrido agenda → acción → volver termine en la tabla de escritorio.
+
+Verificado con ambos roles a 320/390/768/1023/1440 px: regreso por enlace y breadcrumb a la agenda en móvil, listado de acciones conservado en escritorio. 73 pruebas generales, TypeScript, ESLint y build aprobados; registros temporales retirados.

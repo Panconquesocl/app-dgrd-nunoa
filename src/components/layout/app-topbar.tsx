@@ -4,7 +4,13 @@ import Image from "next/image"
 import { GlobalSearch } from "@/features/search/components/global-search"
 import { UserMenu } from "@/components/auth/user-menu"
 
-export type Crumb = { label: string; href?: string; current?: boolean }
+export type Crumb = {
+  label: string
+  href?: string
+  current?: boolean
+  mobileLabel?: string
+  mobileHref?: string
+}
 export type TopbarUser = { name: string; email: string; lastName?: string | null } | null
 
 /**
@@ -27,12 +33,22 @@ export function AppTopbar({ crumbs, user }: { crumbs: Crumb[]; user?: TopbarUser
               <li key={`${index}:${crumb.label}`} className="flex items-center gap-1.5">
                 {index > 0 && <ChevronRight aria-hidden="true" className="text-muted-foreground size-3.5" />}
                 {crumb.href && index < crumbs.length - 1 && !crumb.current ? (
-                  <Link
-                    href={crumb.href}
-                    className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-sm hover:underline focus-visible:ring-2 focus-visible:outline-none"
-                  >
-                    {crumb.label}
-                  </Link>
+                  <>
+                    {crumb.mobileHref && (
+                      <Link
+                        href={crumb.mobileHref}
+                        className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-sm hover:underline focus-visible:ring-2 focus-visible:outline-none lg:hidden"
+                      >
+                        {crumb.mobileLabel ?? crumb.label}
+                      </Link>
+                    )}
+                    <Link
+                      href={crumb.href}
+                      className={`text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-sm hover:underline focus-visible:ring-2 focus-visible:outline-none ${crumb.mobileHref ? "max-lg:hidden" : ""}`}
+                    >
+                      {crumb.label}
+                    </Link>
+                  </>
                 ) : (
                   <span
                     aria-current={index === crumbs.length - 1 ? "page" : undefined}
