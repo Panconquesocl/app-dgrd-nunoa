@@ -79,3 +79,7 @@ Formulario a 320 × 640 px con campos desplazables, alta sin descripción, confi
 ## Ajustes de revisión conjunta
 
 Entregas elimina la franja de estadísticas y usa el estilo del buscador de Solicitudes. Los estilos de pantalla completa del formulario de Solicitudes se limitan a su clase específica, para que el modal de Evento abierto desde una solicitud conserve el centrado y el scroll interno.
+
+## Animación de formularios móviles
+
+Bajo 768 px, los formularios de Entregas, Solicitudes y Actividades aparecen con un desplazamiento vertical de 24 px y entrada de opacidad durante 350 ms. La animación se aplica al abrir y respeta `prefers-reduced-motion`, que la desactiva. Se mantienen la posición final a pantalla completa y el scroll interno; escritorio conserva su animación existente.
