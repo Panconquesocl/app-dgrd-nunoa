@@ -18,7 +18,7 @@ export function AppMobileNavigation() {
     // El destino móvil se decide por el espacio disponible, sin clasificar el dispositivo.
     const media = window.matchMedia("(max-width: 1023px)")
     const redirectSummary = () => {
-      if (media.matches && pathname === "/resumen") router.replace("/plan/cronograma")
+      if (media.matches && pathname === "/resumen") router.replace("/plan/actividades")
     }
     redirectSummary()
     media.addEventListener("change", redirectSummary)
@@ -31,7 +31,7 @@ export function AppMobileNavigation() {
       ? [{ href: "/solicitudes", label: "Solicitudes", icon: FileText, active: pathname.startsWith("/solicitudes") }]
       : []),
     {
-      href: "/plan/cronograma",
+      href: "/plan/actividades",
       label: "Actividades",
       icon: CalendarDays,
       active: pathname.startsWith("/plan/"),
@@ -42,7 +42,7 @@ export function AppMobileNavigation() {
     <nav className="app-mobile-navigation" aria-label="Navegación principal móvil">
       {items
         .filter((item) =>
-          item.href === "/entregas" ? canReadDeliveries : item.href === "/plan/cronograma" ? canReadActivities : true,
+          item.href === "/entregas" ? canReadDeliveries : item.href === "/plan/actividades" ? canReadActivities : true,
         )
         .map(({ href, label, icon: Icon, active }) => (
           <Link

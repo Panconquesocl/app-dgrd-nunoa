@@ -20,6 +20,7 @@ import { DeliveryFormDialog } from "./delivery-form-dialog"
 import { DeleteDeliveryDialog } from "./delete-delivery-dialog"
 import { DeliveryCards } from "./delivery-cards"
 import { DeliveryMobileFilters, type MobileDeliveryFilters } from "./delivery-mobile-filters"
+import "@/features/requests/components/requests.css"
 import "./deliveries.css"
 import "./delivery-mobile.css"
 
@@ -367,14 +368,9 @@ export function DeliveriesView() {
             </Popover.Portal>
           </Popover.Root>
         </div>
-        <div className="relative">
-          <Search
-            size={15}
-            aria-hidden="true"
-            className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2"
-          />
+        <div className="requests-search">
+          <Search size={16} aria-hidden="true" />
           <Input
-            className="w-full pl-9 sm:w-[280px]"
             placeholder="Buscar por folio, beneficiario, RUT o J.V.…"
             maxLength={500}
             aria-label="Buscar entregas"
@@ -411,24 +407,12 @@ export function DeliveriesView() {
           La fecha hasta no puede ser anterior a desde.
         </p>
       )}
-      <div className="delivery-stats" aria-busy={validPeriod && query.isFetching}>
-        {[
-          [query.data?.stats.deliveries, `Entregas${from || to ? " en el periodo" : ""}`],
-          [query.data?.stats.units, "Unidades distribuidas"],
-          [query.data?.stats.neighborhoods, "Juntas vecinales"],
-        ].map(([value, label]) => (
-          <div key={String(label)}>
-            <strong>{!validPeriod || query.isError ? "—" : (value ?? "—")}</strong>
-            <span>{label}</span>
-          </div>
-        ))}
-      </div>
       <div className="delivery-panel" aria-busy={validPeriod && query.isFetching}>
         {!validPeriod ? (
           <div className="delivery-empty">
             <CalendarDays size={28} aria-hidden="true" />
             <h2>Corrige el rango de fechas</h2>
-            <p>El listado y los indicadores se mostrarán cuando el periodo sea válido.</p>
+            <p>El listado se mostrará cuando el periodo sea válido.</p>
           </div>
         ) : query.isError ? (
           <div className="delivery-empty" role="alert">
