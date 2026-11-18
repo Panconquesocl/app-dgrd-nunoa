@@ -1,0 +1,168 @@
+.schedule-mobile-title,
+.schedule-mobile-content,
+.activity-register-fab {
+  display: none;
+}
+@media (max-width: 1023px) {
+  .schedule-view {
+    padding-bottom: 100px !important;
+  }
+  .schedule-view .schedule-years,
+  .schedule-view .schedule-panel-head,
+  .schedule-desktop-title,
+  .schedule-desktop-content {
+    display: none;
+  }
+  .schedule-mobile-title,
+  .schedule-mobile-content {
+    display: block;
+  }
+  .schedule-view > .delivery-panel {
+    background: transparent;
+    border: 0;
+    overflow: visible;
+  }
+  .activity-register-fab {
+    display: flex;
+    position: fixed;
+    z-index: 35;
+    right: 16px;
+    bottom: calc(94px + env(safe-area-inset-bottom));
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    background: var(--ink);
+    color: var(--brand);
+    box-shadow: 0 5px 18px #20293430;
+  }
+  body:has([data-slot="dialog-content"][data-state="open"], [data-slot="alert-dialog-content"][data-state="open"])
+    .activity-register-fab {
+    visibility: hidden;
+  }
+}
+@media (max-width: 767px) {
+  .activity-mobile-form {
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    animation: none;
+    padding-top: env(safe-area-inset-top);
+  }
+  .activity-mobile-form input,
+  .activity-mobile-form select,
+  .activity-mobile-form textarea {
+    font-size: 16px;
+  }
+  .activity-mobile-form fieldset {
+    padding: 20px 16px;
+  }
+  .activity-mobile-form form > div:last-child {
+    padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+  }
+  .activity-mobile-detail-head > .flex {
+    width: 100%;
+  }
+  .activity-mobile-detail-head button {
+    min-height: 44px;
+  }
+}
+
+.schedule-agenda-only .schedule-desktop-title {
+  display: none;
+}
+.schedule-agenda-only .schedule-mobile-title,
+.schedule-agenda-only .schedule-mobile-content {
+  display: block;
+}
+.schedule-agenda-only > .delivery-panel {
+  background: transparent;
+  border: 0;
+  overflow: visible;
+}
+@media (max-width: 1023px) {
+  .agenda-desktop-create {
+    display: none;
+  }
+}
+
+.mobile-agenda-month {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 20px 0 12px;
+}
+.mobile-agenda-card {
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.mobile-agenda-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  margin-bottom: 12px;
+}
+.mobile-agenda-card h3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+  font-size: 15px;
+}
+.mobile-agenda-location {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 12px 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.mobile-agenda-location svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.mobile-agenda-location span {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.mobile-agenda-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 16px;
+}
+.mobile-agenda-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 12px;
+  background: var(--surface);
+}
+.mobile-agenda-actions a:last-child {
+  margin-left: auto;
+}
+.mobile-agenda-actions a:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}

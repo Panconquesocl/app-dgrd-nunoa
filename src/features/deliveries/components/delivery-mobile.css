@@ -126,13 +126,13 @@
     display: flex;
     flex-wrap: wrap;
   }
-  .delivery-list-view .delivery-toolbar > .relative {
+  .delivery-list-view .delivery-toolbar > .requests-search {
     flex: 1;
     min-width: 180px;
     width: auto;
     order: 1;
   }
-  .delivery-list-view .delivery-toolbar > .relative input {
+  .delivery-list-view .delivery-toolbar > .requests-search input {
     width: 100%;
     min-height: 44px;
     font-size: 16px;

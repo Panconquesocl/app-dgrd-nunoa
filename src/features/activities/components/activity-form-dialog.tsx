@@ -1,4 +1,5 @@
 "use client"
+import "./activity-mobile.css"
 import { useAttachmentDraft } from "@/features/attachments/client"
 import { useId } from "react"
 import { useForm, useWatch } from "react-hook-form"
@@ -66,15 +67,27 @@ export function ActivityFormDialog({
       toast.error(error instanceof Error ? error.message : "No se pudo guardar la actividad.")
     }
   })
+  const pending = mutation.isPending || attachments.busy || form.formState.isSubmitting
+  const hasUnsavedChanges = form.formState.isDirty || attachments.hasPendingFiles
+  function requestClose() {
+    if (pending) return
+    if (
+      window.matchMedia("(max-width: 767px)").matches &&
+      hasUnsavedChanges &&
+      !window.confirm("¿Descartar los cambios y los archivos seleccionados sin guardar?")
+    )
+      return
+    onClose()
+  }
   return (
     <Dialog
       open
       onOpenChange={(open) => {
-        if (!open && !(mutation.isPending || attachments.busy || form.formState.isSubmitting)) onClose()
+        if (!open) requestClose()
       }}
     >
       <DialogContent
-        className="requests-form flex h-[min(90svh,800px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[680px]"
+        className="activity-mobile-form requests-form flex h-[min(90svh,800px)] flex-col gap-0 overflow-hidden p-0 max-md:translate-x-0 max-md:translate-y-0 sm:max-w-[680px]"
         onEscapeKeyDown={(e) => {
           if (mutation.isPending || attachments.busy || form.formState.isSubmitting) e.preventDefault()
         }}
@@ -191,7 +204,7 @@ export function ActivityFormDialog({
               type="button"
               variant="outline"
               disabled={mutation.isPending || attachments.busy || form.formState.isSubmitting}
-              onClick={onClose}
+              onClick={requestClose}
             >
               Cancelar
             </Button>

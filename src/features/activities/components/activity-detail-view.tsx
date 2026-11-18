@@ -1,4 +1,5 @@
 "use client"
+import "./activity-mobile.css"
 import { AttachmentPanel, useAttachments, DeletionFiles, deletionReady } from "@/features/attachments/client"
 import { useState } from "react"
 import Link from "next/link"
@@ -82,7 +83,7 @@ export function ActivityDetailView({ id, user }: { id: string; user?: { name: st
           <ArrowLeft size={16} />
           Acción N°{activity.action.number} · {activity.action.year}
         </Link>
-        <div className="delivery-page-head">
+        <div className="delivery-page-head activity-mobile-detail-head">
           <div className="min-w-0 flex-1">
             <h1 className="max-w-[760px] break-words">{activity.objective}</h1>
             <p className="flex items-center gap-1.5">

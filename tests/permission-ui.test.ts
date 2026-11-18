@@ -166,7 +166,7 @@ test("barra móvil conserva destinos autorizados y omite Resumen", async () => {
     )
     assert.equal(html.includes('href="/solicitudes"'), current === "admin")
     assert.equal(html.includes('href="/resumen"'), false)
-    assert.equal(html.includes('href="/plan/cronograma"'), current !== "unknown")
+    assert.equal(html.includes('href="/plan/actividades"'), current !== "unknown")
     assert.equal(html.includes('href="/entregas"'), current !== "unknown")
   }
 })
