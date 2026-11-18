@@ -21,6 +21,7 @@ import {
 } from "../schemas"
 
 import "./requests.css"
+import "./request-mobile.css"
 
 const FIELDS = ["channel", "description", "response", "status", "eventId"] as const
 
@@ -51,6 +52,17 @@ export function RequestFormDialog({
   const update = useUpdateRequest(request?.id ?? "")
   const mutation = request ? update : create
   const errors = form.formState.errors
+  const hasUnsavedChanges = form.formState.isDirty
+  function requestClose() {
+    if (mutation.isPending) return
+    if (
+      window.matchMedia("(max-width: 767px)").matches &&
+      hasUnsavedChanges &&
+      !window.confirm("¿Descartar los cambios sin guardar?")
+    )
+      return
+    onClose()
+  }
   const events = options.data?.events ?? []
   // Si el evento actual ya no aparece en las opciones, se conserva para no perderlo al guardar.
   const currentEventMissing = Boolean(
@@ -89,11 +101,11 @@ export function RequestFormDialog({
     <Dialog
       open
       onOpenChange={(open) => {
-        if (!open && !mutation.isPending) onClose()
+        if (!open) requestClose()
       }}
     >
       <DialogContent
-        className="requests-form flex h-[min(90svh,850px)] max-h-[90svh] flex-col gap-0 overflow-hidden p-0 sm:max-w-[680px]"
+        className="request-mobile-form requests-form flex h-[min(90svh,850px)] max-h-[90svh] flex-col gap-0 overflow-hidden p-0 max-md:translate-x-0 max-md:translate-y-0 sm:max-w-[680px]"
         onEscapeKeyDown={(event) => {
           if (mutation.isPending) event.preventDefault()
         }}
@@ -227,7 +239,7 @@ export function RequestFormDialog({
             </fieldset>
           </div>
           <div className="bg-surface flex shrink-0 justify-end gap-3 border-t px-6 py-4">
-            <Button type="button" variant="outline" disabled={mutation.isPending} onClick={onClose}>
+            <Button type="button" variant="outline" disabled={mutation.isPending} onClick={requestClose}>
               Cancelar
             </Button>
             <Button type="submit" disabled={mutation.isPending}>

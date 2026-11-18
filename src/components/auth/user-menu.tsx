@@ -46,9 +46,9 @@ export function UserMenu({ user }: { user: NonNullable<TopbarUser> }) {
           align="end"
           sideOffset={8}
           collisionPadding={12}
-          className="bg-popover text-popover-foreground z-50 w-72 max-w-[calc(100vw-24px)] overflow-hidden rounded-lg border shadow-lg"
+          className="app-user-popover bg-popover text-popover-foreground z-50 w-72 max-w-[calc(100vw-24px)] overflow-hidden rounded-lg border shadow-lg"
         >
-          <div className="border-b px-4 py-3">
+          <div className="app-user-identity border-b px-4 py-3">
             <p className="text-sm font-semibold break-words">{fullName}</p>
             <p className="text-muted-foreground mt-1 text-xs break-all">{user.email}</p>
           </div>

@@ -1,5 +1,5 @@
 "use client"
-import { useRef, useState, useSyncExternalStore } from "react"
+import { Fragment, useRef, useState, useSyncExternalStore } from "react"
 import { Popover } from "radix-ui"
 import { Check, Eye, FileText, Pencil, Plus, Rows3, Search, Table2, Trash2 } from "lucide-react"
 import { SpikeFilterIcon } from "@/components/layout/spike-filter-icon"
@@ -15,7 +15,10 @@ import { DeleteRequestDialog } from "./delete-request-dialog"
 import { RequestStatusBadge } from "./request-status-badge"
 import { RequestDetailView } from "./request-detail-view"
 import "@/features/deliveries/components/deliveries.css"
+import { RequestCards } from "./request-cards"
+import { RequestMobileFilters, type RequestMobileFilterValues } from "./request-mobile-filters"
 import "./requests.css"
+import "./request-mobile.css"
 
 const VIEW_KEY = "dgrd_sol_vista"
 function subscribeView(callback: () => void) {
@@ -48,6 +51,7 @@ const displayDate = new Intl.DateTimeFormat("es-CL", {
 })
 
 export function RequestsView() {
+  const [mobileFilters, setMobileFilters] = useState(false)
   const [search, setSearch] = useState("")
   const [event, setEvent] = useState<"all" | "with" | "without">("all")
   const [status, setStatus] = useState<RequestStatus | "">("")
@@ -97,6 +101,16 @@ export function RequestsView() {
     Number(Boolean(from || to)) +
     Number(order !== "desc")
   const hasFilters = Boolean(search || event !== "all" || status || from || to || order !== "desc")
+  function applyMobileFilters(value: RequestMobileFilterValues) {
+    setEvent(value.event)
+    setStatus(value.status)
+    setFrom(value.from)
+    setTo(value.to)
+    setOrder(value.order)
+    setMobileFilters(false)
+  }
+  const mobileCount =
+    Number(Boolean(status)) + Number(event !== "all") + Number(Boolean(from || to)) + Number(order !== "desc")
   function clear() {
     setSearch("")
     setEvent("all")
@@ -110,7 +124,7 @@ export function RequestsView() {
     setSelected(request)
   }
   return (
-    <div className="requests deliveries delivery-page">
+    <div className="requests deliveries delivery-page request-list-view">
       <div className="delivery-page-head">
         <div>
           <span className="requests-eyebrow">Emergencias</span>
@@ -124,7 +138,16 @@ export function RequestsView() {
           </Button>
         )}
       </div>
+      {canCreate && (
+        <Button className="request-register-fab" aria-label="Nueva solicitud" onClick={() => setForm({})}>
+          <Plus size={28} aria-hidden="true" />
+        </Button>
+      )}
       <div className="requests-toolbar">
+        <Button className="request-mobile-filter-trigger" variant="outline" onClick={() => setMobileFilters(true)}>
+          <SpikeFilterIcon />
+          Filtros{mobileCount > 0 && <span>{mobileCount}</span>}
+        </Button>
         <div className="requests-segment" aria-label="Estado de solicitudes">
           <button aria-pressed={!status} onClick={() => setStatus("")}>
             Todas <span>{query.isPending ? "—" : data.length}</span>
@@ -267,115 +290,130 @@ export function RequestsView() {
             )}
           </div>
         ) : (
-          <div className="requests-table-scroll">
-            <table className={`delivery-table requests-table ${isCompact ? "requests-table-compact" : ""}`}>
-              <thead>
-                <tr>
-                  <th>Folio</th>
-                  {!isCompact && <th>Medio / fuente</th>}
-                  <th>Lo solicitado</th>
-                  {!isCompact && <th>Respuesta</th>}
-                  <th>Estado</th>
-                  {!isCompact && (
-                    <>
-                      <th>Evento</th>
-                      <th>Creada</th>
-                    </>
-                  )}
-                  <th>
-                    <span className="sr-only">Acciones</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((request) => (
-                  <tr
-                    key={request.id}
-                    onClick={(e) => {
-                      const button = e.currentTarget.querySelector<HTMLButtonElement>("button")
-                      if (button) openDetail(request, button)
-                    }}
-                  >
-                    <td>
-                      <button
-                        className="requests-folio"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          openDetail(request, e.currentTarget)
-                        }}
-                      >
-                        {request.folio}
-                      </button>
-                    </td>
-                    {!isCompact && (
-                      <td className="font-semibold">
-                        <span className="requests-clamp">{request.channel}</span>
-                      </td>
-                    )}
-                    <td className={isCompact ? "font-semibold" : "text-muted-foreground"}>
-                      <span className="requests-clamp">{request.description || "—"}</span>
-                    </td>
-                    {!isCompact && (
-                      <td className="text-muted-foreground">
-                        <span className="requests-clamp">{request.response || "—"}</span>
-                      </td>
-                    )}
-                    <td>
-                      <RequestStatusBadge status={request.status} />
-                    </td>
+          <Fragment>
+            <RequestCards
+              rows={rows}
+              onView={openDetail}
+              onEdit={(request) => setForm({ request })}
+              onDelete={setDeleting}
+            />
+            <div className="requests-table-scroll">
+              <table className={`delivery-table requests-table ${isCompact ? "requests-table-compact" : ""}`}>
+                <thead>
+                  <tr>
+                    <th>Folio</th>
+                    {!isCompact && <th>Medio / fuente</th>}
+                    <th>Lo solicitado</th>
+                    {!isCompact && <th>Respuesta</th>}
+                    <th>Estado</th>
                     {!isCompact && (
                       <>
-                        <td>
-                          <span className={`requests-event ${request.event ? "requests-event-linked" : ""}`}>
-                            {request.event && <span aria-hidden="true">●</span>}
-                            {request.event?.folio ?? "Sin evento"}
-                          </span>
-                        </td>
-                        <td className="text-muted-foreground font-mono text-xs whitespace-nowrap">
-                          {displayDate.format(new Date(request.createdAt))}
-                        </td>
+                        <th>Evento</th>
+                        <th>Creada</th>
                       </>
                     )}
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <div className="delivery-row-actions">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Ver solicitud ${request.folio}`}
-                          onClick={(e) => openDetail(request, e.currentTarget)}
-                        >
-                          <Eye size={16} />
-                        </Button>
-                        {canUpdate && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Editar solicitud ${request.folio}`}
-                            onClick={() => setForm({ request })}
-                          >
-                            <Pencil size={16} />
-                          </Button>
-                        )}
-                        {canDelete && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive"
-                            aria-label={`Eliminar solicitud ${request.folio}`}
-                            onClick={() => setDeleting(request)}
-                          >
-                            <Trash2 size={16} />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
+                    <th>
+                      <span className="sr-only">Acciones</span>
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {rows.map((request) => (
+                    <tr
+                      key={request.id}
+                      onClick={(e) => {
+                        const button = e.currentTarget.querySelector<HTMLButtonElement>("button")
+                        if (button) openDetail(request, button)
+                      }}
+                    >
+                      <td>
+                        <button
+                          className="requests-folio"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openDetail(request, e.currentTarget)
+                          }}
+                        >
+                          {request.folio}
+                        </button>
+                      </td>
+                      {!isCompact && (
+                        <td className="font-semibold">
+                          <span className="requests-clamp">{request.channel}</span>
+                        </td>
+                      )}
+                      <td className={isCompact ? "font-semibold" : "text-muted-foreground"}>
+                        <span className="requests-clamp">{request.description || "—"}</span>
+                      </td>
+                      {!isCompact && (
+                        <td className="text-muted-foreground">
+                          <span className="requests-clamp">{request.response || "—"}</span>
+                        </td>
+                      )}
+                      <td>
+                        <RequestStatusBadge status={request.status} />
+                      </td>
+                      {!isCompact && (
+                        <>
+                          <td>
+                            <span className={`requests-event ${request.event ? "requests-event-linked" : ""}`}>
+                              {request.event && <span aria-hidden="true">●</span>}
+                              {request.event?.folio ?? "Sin evento"}
+                            </span>
+                          </td>
+                          <td className="text-muted-foreground font-mono text-xs whitespace-nowrap">
+                            {displayDate.format(new Date(request.createdAt))}
+                          </td>
+                        </>
+                      )}
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <div className="delivery-row-actions">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Ver solicitud ${request.folio}`}
+                            onClick={(e) => openDetail(request, e.currentTarget)}
+                          >
+                            <Eye size={16} />
+                          </Button>
+                          {canUpdate && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Editar solicitud ${request.folio}`}
+                              onClick={() => setForm({ request })}
+                            >
+                              <Pencil size={16} />
+                            </Button>
+                          )}
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive"
+                              aria-label={`Eliminar solicitud ${request.folio}`}
+                              onClick={() => setDeleting(request)}
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Fragment>
         )}
       </div>
+      {mobileFilters && (
+        <RequestMobileFilters
+          initial={{ event, status, from, to, order }}
+          onApply={applyMobileFilters}
+          onClose={() => setMobileFilters(false)}
+        />
+      )}
       {form && <RequestFormDialog request={form.request} onClose={() => setForm(null)} />}
       {deleting && <DeleteRequestDialog key={deleting.id} request={deleting} onClose={() => setDeleting(null)} />}
       <Dialog

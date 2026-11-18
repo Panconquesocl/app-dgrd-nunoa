@@ -158,6 +158,19 @@ test("navegación, estados vacíos y diálogos respetan ambos roles", async () =
   }
 })
 
+test("barra móvil conserva destinos autorizados y omite Resumen", async () => {
+  const { AppMobileNavigation } = await import("../src/components/layout/app-mobile-navigation")
+  for (const current of ["admin", "regular", "unknown"]) {
+    const html = renderToStaticMarkup(
+      createElement(PermissionsProvider, { role: current }, createElement(AppMobileNavigation)),
+    )
+    assert.equal(html.includes('href="/solicitudes"'), current === "admin")
+    assert.equal(html.includes('href="/resumen"'), false)
+    assert.equal(html.includes('href="/plan/actividades"'), current !== "unknown")
+    assert.equal(html.includes('href="/entregas"'), current !== "unknown")
+  }
+})
+
 test("Catálogo conserva catálogos por rol y no consulta tipos de evento para usuarios normales", async () => {
   const { CatalogView } = await import("../src/features/catalog/components/catalog-view")
   const { default: Page } = await import("../src/app/(app)/catalogo/page")
